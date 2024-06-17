@@ -2,30 +2,31 @@ use crate::model::Triple;
 
 use std::{
     fs::File,
-    io::{stdin, stdout, BufRead, BufReader, BufWriter, Read, Stdin, Stdout, Write},
+    io::{BufRead, BufReader},
     iter::Iterator,
     path::Path,
 };
 
-// https://doc.rust-lang.org/std/result/enum.Result.html
-pub fn get_buffer(path: &str) -> BufReader<File> {
-    let path = Path::new(path);
-    let file = File::open(path).expect("Cannot open file");
-
-    return BufReader::new(file);
+pub fn get_buffer(path: &Path) -> BufReader<File> {
+    return match File::open(&path) {
+        Ok(file) => BufReader::new(file),
+        Err(e) => panic!("Cannot open file '{:?}': '{}'.", path, e),
+    };
 }
 
-pub fn parse_ntriples(reader: BufReader<File>) -> impl Iterator<Item = Triple> {
-    return reader.lines().map(|l| Triple::parse_nt(&l.unwrap()));
+// Parse RDF triples.
+pub fn parse_ntriples(reader: Box<dyn BufRead>) -> impl Iterator<Item = Triple> {
+    return reader.lines().map(|l| Triple::parse_ntriples(&l.unwrap()));
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
-    fn test_1() {}
-
-    #[test]
-    fn test_2() {}
+    // Test the parsing of a triple.
+    fn parse_ntriples() {
+        let input = "\n
+                <http://example.org/resource2> <http://example.org/relatedTo> <http://example.org/resource3>\n
+                <http://example.org/resource2> <http://example.org/relatedTo> <http://example.org/resource3>\n
+            ";
+    }
 }

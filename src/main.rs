@@ -1,25 +1,20 @@
 // Define the module.
-mod common;
-
-use std::path::PathBuf;
+mod crypto;
+mod io;
+mod log;
+mod model;
+mod pass_first;
+mod pass_second;
+mod rules;
 
 // Define the imports.
-use clap::{Args, Parser};
-use common::log::{create_logger, info};
-
-use std::{
-    error::Error,
-    fs::File,
-    io::{BufRead, BufReader},
-    iter::Iterator,
-    path::Path,
+use crate::{
+    log::{create_logger, info},
+    pass_second::encrypt,
 };
 
-use crate::{io::*, model::Triple};
-
-mod io;
-mod model;
-mod rules;
+use clap::{Args, Parser, Subcommand};
+use std::{fs::File, io::BufReader, path::PathBuf};
 
 #[derive(Parser)]
 #[command(name = "rdf-protect")]
@@ -38,59 +33,48 @@ struct TypeMapArgs {
 
 #[derive(Args, Debug)]
 struct EncryptArgs {
-    // The file which maps `node` ids to `type`s.
-    // This is used in `encrypt` as the second pass to encrypt RDF triples.
+    /// The file which maps `node` ids to `type`s.
+    /// This is used in `encrypt` as the second pass to encrypt RDF triples.
     #[arg(short, long)]
     type_map_file: PathBuf,
 
-    // The input file descriptor to use for outputting the RDF triples.
-    // Defaults to `stdin`.
+    /// The input file descriptor to use for outputting the RDF triples.
+    /// Defaults to `stdin`.
     #[arg(short, long, default_value = "-")]
     input: PathBuf,
 
-    // The output file descriptor to use for outputting the RDF triples.
+    /// The output file descriptor to use for outputting the RDF triples.
     // Defaults to `stdout`.
     #[arg(short, long, default_value = "-")]
     output: PathBuf,
 }
 
-#[derive(Parser, Debug)]
+#[derive(Subcommand, Debug)]
 enum Subcommands {
-    // Create the type map which is used in `encrypt` for the second pass to
+    /// 1. Pass: Create the node-to-type mapping.
+    // This is used in `encrypt` for the second pass to
     // encrypt RDF triples based on some rules.
     CreateTypeMap(TypeMapArgs),
-    // Encrypt RDF triples read from a file descriptor (default `stdin`) and
-    // based on rules and output them again on a file descriptor (default `stdout`)
+
+    /// 2. Pass: Encrypt RDF triples read from a file descriptor (default `stdin`)
+    // This is based on rules and output them again on a file descriptor (default `stdout`)
     Encrypt(EncryptArgs),
 }
 
 fn main() {
     let log = create_logger(true);
-    // let cli = Cli::parse();
+    let cli = Cli::parse();
 
-    // match cli.command {
-    //     Subcommands::CreateTypeMap(args) => {
-    //         info!(log, "Args: {:?}", args)
-    //     }
-    //     Subcommands::Encrypt(args) => {
-    //         info!(log, "Args: {:?}", args);
-    //     }
-    // }
-
-    let path: String = String::from("data/test.nt");
-    let buffer: BufReader<File> = io::get_buffer(&path);
-
-    let triples = io::parse_ntriples(buffer);
-    for triple in triples {
-        info!(log, "{:?}", triple.hash_parts())
+    match cli.command {
+        Subcommands::CreateTypeMap(args) => {
+            info!(log, "Args: {:?}", args)
+        }
+        Subcommands::Encrypt(args) => {
+            info!(log, "Args: {:?}", args);
+            encrypt(&log, &args.input, &args.output, &args.type_map_file)
+        }
     }
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn test_main() -> Result<(), Box<dyn Error>> {
-        Ok(())
-    }
-}
+mod tests {}

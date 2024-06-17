@@ -1,4 +1,5 @@
-use std::collections::HashMap;
+use crate::crypto::hash;
+use bitflags::bitflags;
 
 #[derive(Debug)]
 pub struct Triple {
@@ -8,11 +9,19 @@ pub struct Triple {
 }
 
 // should use bitflags, e.g. S = 0b100, P = 0b010 -> SP = S + P
-#[derive(Debug)]
-pub struct TriplePart {
-    s: bool,
-    p: bool,
-    o: bool,
+bitflags! {
+    pub struct TriplePart: u8 {
+        const SUBJECT = 1 << 0;
+        const PREDICATE = 1 << 1;
+        const OBJECT = 1 << 2;
+    }
+}
+
+impl TriplePart {
+    // Checks if a all bits in `mask` are set.
+    fn is_set(&self, mask: TriplePart) -> bool {
+        return self.bits() & mask.bits() == mask.bits();
+    }
 }
 
 impl Triple {
@@ -24,19 +33,30 @@ impl Triple {
         }
     }
 
-    pub fn hash_parts(&self) -> Triple {
-        // match logic
-        // ...
-        let hashed_sub = self.subject.clone();
-        let hashed_pred = self.subject.clone();
-        let hashed_obj = self.subject.clone();
-        let hashed = Triple::new(hashed_sub, hashed_pred, hashed_obj);
+    pub fn hash_parts(&self, mask: TriplePart) -> Triple {
+        let hash_subject = if mask.is_set(TriplePart::SUBJECT) {
+            hash(&self.subject)
+        } else {
+            self.subject.clone()
+        };
 
-        return hashed;
+        let hash_predicate = if mask.is_set(TriplePart::PREDICATE) {
+            hash(&self.predicate)
+        } else {
+            self.predicate.clone()
+        };
+
+        let hash_object = if mask.is_set(TriplePart::OBJECT) {
+            hash(&self.object)
+        } else {
+            self.object.clone()
+        };
+
+        return Triple::new(hash_subject, hash_predicate, hash_object);
     }
 
     // instantiate a triple from a ntriple string
-    pub fn parse_nt(triple: &str) -> Triple {
+    pub fn parse_ntriples(triple: &str) -> Triple {
         Triple::new(String::from("A"), String::from("B"), String::from("C"))
     }
 }

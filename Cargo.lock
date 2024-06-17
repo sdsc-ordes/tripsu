@@ -256,6 +256,7 @@ dependencies = [
 name = "rdf-protect"
 version = "0.1.0"
 dependencies = [
+ "bitflags",
  "clap",
  "serde",
  "slog",
