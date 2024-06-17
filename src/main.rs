@@ -10,15 +10,14 @@ use common::log::{create_logger, info};
 #[derive(Parser)]
 #[command(name = "rdf-protect")]
 #[command(version = "0.0.1")]
-#[command(about ="A tool to anonymize nodes in RDF graphs.", long_about = None)]
-
+#[command(about ="A tool to anonymize nodes/edges in RDF graphs.", long_about = None)]
 struct Cli {
     #[command(subcommand)]
     command: Subcommands,
 }
 
 #[derive(Args, Debug)]
-struct IndexArgs {
+struct TypeMapArgs {
     #[arg(short, long)]
     output_file: PathBuf,
 }
@@ -45,7 +44,7 @@ struct EncryptArgs {
 enum Subcommands {
     // Create the type map which is used in `encrypt` for the second pass to
     // encrypt RDF triples based on some rules.
-    CreateTypeMap(IndexArgs),
+    CreateTypeMap(TypeMapArgs),
     // Encrypt RDF triples read from a file descriptor (default `stdin`) and
     // based on rules and output them again on a file descriptor (default `stdout`)
     Encrypt(EncryptArgs),
@@ -53,6 +52,16 @@ enum Subcommands {
 
 fn main() {
     let log = create_logger(true);
+    let cli = Cli::parse();
 
-    info!(log, "This is {}", 3)
+    info!(log, "This is {}", 3);
+
+    match cli.command {
+        Subcommands::CreateTypeMap(args) => {
+            info!(log, "Args: {:?}", args)
+        }
+        Subcommands::Encrypt(args) => {
+            info!(log, "Args: {:?}", args);
+        }
+    }
 }

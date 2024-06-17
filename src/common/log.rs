@@ -67,6 +67,7 @@ macro_rules! log_info(
     };
 );
 
+#[allow(unused_imports)]
 pub use log_info as info;
 
 /// Log warn level record
