@@ -7,6 +7,20 @@ use std::path::PathBuf;
 use clap::{Args, Parser};
 use common::log::{create_logger, info};
 
+use std::{
+    error::Error,
+    fs::File,
+    io::{BufRead, BufReader},
+    iter::Iterator,
+    path::Path,
+};
+
+use crate::{io::*, model::Triple};
+
+mod io;
+mod model;
+mod rules;
+
 #[derive(Parser)]
 #[command(name = "rdf-protect")]
 #[command(version = "0.0.1")]
@@ -52,16 +66,31 @@ enum Subcommands {
 
 fn main() {
     let log = create_logger(true);
-    let cli = Cli::parse();
+    // let cli = Cli::parse();
 
-    info!(log, "This is {}", 3);
+    // match cli.command {
+    //     Subcommands::CreateTypeMap(args) => {
+    //         info!(log, "Args: {:?}", args)
+    //     }
+    //     Subcommands::Encrypt(args) => {
+    //         info!(log, "Args: {:?}", args);
+    //     }
+    // }
 
-    match cli.command {
-        Subcommands::CreateTypeMap(args) => {
-            info!(log, "Args: {:?}", args)
-        }
-        Subcommands::Encrypt(args) => {
-            info!(log, "Args: {:?}", args);
-        }
+    let path: String = String::from("data/test.nt");
+    let buffer: BufReader<File> = io::get_buffer(&path);
+
+    let triples = io::parse_ntriples(buffer);
+    for triple in triples {
+        info!(log, "{:?}", triple.hash_parts())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_main() -> Result<(), Box<dyn Error>> {
+        Ok(())
     }
 }
