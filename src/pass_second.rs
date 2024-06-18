@@ -68,12 +68,6 @@ mod tests {
         let output_path = Path::new("tests/data/output.nt");
         let type_map_path = Path::new("tests/data/type_map.nt");
         let logger = log::create_logger(true);
-        encrypt(
-            &logger,
-            &input_path,
-            &config_path,
-            &output_path,
-            &type_map_path,
-        );
+        pseudonymize_graph(&logger, &input_path, &output_path, &type_map_path);
     }
 }
