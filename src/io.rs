@@ -1,8 +1,7 @@
-use crate::rules::Config;
-
-use serde_yml;
-
 use rio_turtle::NTriplesParser;
+use crate::rules::Config;
+use serde_yaml;
+
 use std::{
     fs::File,
     io::{BufRead, BufReader},
@@ -35,9 +34,12 @@ pub fn parse_config(path: &Path) -> () {
 
 #[cfg(test)]
 mod tests {
-    use super::parse_ntriples;
+use super::{parse_config, parse_ntriples};
     use rio_api::parser::TriplesParser;
-    use std::io::{BufRead, BufReader};
+    use std::{
+        io::{BufRead, BufReader},
+        path::Path,
+    };
 
     #[test]
     // Test the parsing of a triple.
@@ -53,5 +55,11 @@ mod tests {
                 Ok(())
             })
             .expect("Error parsing triple");
+
+    }
+    // Test the parsing of a config file.
+    fn config_parsing() {
+        let config_path = Path::new("tests/data/config.yaml");
+        parse_config(config_path);
     }
 }

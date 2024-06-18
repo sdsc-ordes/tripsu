@@ -36,6 +36,7 @@ pub fn encrypt(log: &Logger, input: &Path, config: &Path, output: &Path, type_ma
     let mut triples = io::parse_ntriples(buffer);
     while !triples.is_end() {
         triples.parse_step(&mut |t| process_triple(&t)).unwrap();
+
     }
 }
 #[cfg(test)]
