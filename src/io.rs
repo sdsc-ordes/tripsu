@@ -21,12 +21,18 @@ pub fn parse_ntriples(reader: Box<dyn BufRead>) -> impl Iterator<Item = Triple> 
 
 #[cfg(test)]
 mod tests {
+    use super::parse_ntriples;
+    use std::io::{BufRead, BufReader};
+
     #[test]
     // Test the parsing of a triple.
-    fn parse_ntriples() {
-        let input = "\n
-                <http://example.org/resource2> <http://example.org/relatedTo> <http://example.org/resource3>\n
-                <http://example.org/resource2> <http://example.org/relatedTo> <http://example.org/resource3>\n
-            ";
+    fn simple_parsing() {
+        let input: &[u8] = "http://example.org/resource2> <http://example.org/relatedTo> <http://example.org/resource3> .\n".as_bytes();
+        let buffer_input: Box<dyn BufRead> = Box::new(BufReader::new(input));
+        parse_ntriples(buffer_input).for_each(|t| {
+            assert_eq!(t.subject, "A"); // to replace with http://example.org/resource2
+            assert_eq!(t.predicate, "B"); // to replace with http://example.org/relatedTo
+            assert_eq!(t.object, "C"); // to replace with http://example.org/resource3
+        });
     }
 }

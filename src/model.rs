@@ -3,9 +3,9 @@ use bitflags::bitflags;
 
 #[derive(Debug)]
 pub struct Triple {
-    subject: String,
-    predicate: String,
-    object: String,
+    pub subject: String,
+    pub predicate: String,
+    pub object: String,
 }
 
 // should use bitflags, e.g. S = 0b100, P = 0b010 -> SP = S + P

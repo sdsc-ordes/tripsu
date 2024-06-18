@@ -19,3 +19,19 @@ pub fn encrypt(log: &Logger, input: &Path, output: &Path, type_map_file: &Path) 
         info!(log, "{:?}", triple.hash_parts(TriplePart::SUBJECT));
     }
 }
+#[cfg(test)]
+mod tests {
+    use super::encrypt;
+    use crate::{log, log::Logger};
+    use std::path::Path;
+
+    #[test]
+    // Test the parsing of a triple.
+    fn simple_encryption() {
+        let input_path = Path::new("tests/data/test.nt");
+        let output_path = Path::new("tests/data/");
+        let type_map_path = Path::new("tests/data/type_map.nt");
+        let logger = log::create_logger(true);
+        encrypt(&logger, &input_path, &output_path, &type_map_path);
+    }
+}
