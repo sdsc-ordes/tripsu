@@ -2,6 +2,7 @@ use std::{
     io::{BufRead, BufReader},
     path::Path,
 };
+use rio_api::parser::TriplesParser;
 
 use crate::{info, io, log::Logger, model::TriplePart};
 
@@ -15,7 +16,8 @@ pub fn encrypt(log: &Logger, input: &Path, output: &Path, type_map_file: &Path) 
 
     let triples = io::parse_ntriples(buffer);
 
-    for triple in triples {
+    while !triples.is_end() {
+        let triple = triples.parse_step().unwrap();
         info!(log, "{:?}", triple.hash_parts(TriplePart::SUBJECT));
     }
 }

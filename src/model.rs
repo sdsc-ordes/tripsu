@@ -1,62 +1,67 @@
 use crate::crypto::hash;
 use bitflags::bitflags;
+use rio_api::model::{Literal, NamedNode, Term, Triple};
 
-#[derive(Debug)]
-pub struct Triple {
-    subject: String,
-    predicate: String,
-    object: String,
-}
 
-// should use bitflags, e.g. S = 0b100, P = 0b010 -> SP = S + P
 bitflags! {
-    pub struct TriplePart: u8 {
+    pub struct TripleMask: u8 {
         const SUBJECT = 1 << 0;
-        const PREDICATE = 1 << 1;
-        const OBJECT = 1 << 2;
+        const OBJECT = 1 << 1;
     }
 }
 
-impl TriplePart {
+impl TripleMask {
     // Checks if a all bits in `mask` are set.
-    fn is_set(&self, mask: TriplePart) -> bool {
+    fn is_set(&self, mask: TripleMask) -> bool {
         return self.bits() & mask.bits() == mask.bits();
     }
 }
 
-impl Triple {
-    pub fn new(subject: String, predicate: String, object: String) -> Triple {
-        Triple {
-            subject,
-            predicate,
-            object,
-        }
-    }
+pub trait HashTriple {
+    fn hash_parts(&self, mask: TripleMask) -> Triple;
+}
 
-    pub fn hash_parts(&self, mask: TriplePart) -> Triple {
-        let hash_subject = if mask.is_set(TriplePart::SUBJECT) {
+pub trait HashTerm {
+    fn hash_term(&self) -> Term;
+}
+
+
+impl HashTriple for Triple<'_> {
+
+    fn hash_parts(&self, mask: TripleMask) -> Triple {
+        let hash_subject = if mask.is_set(TripleMask::SUBJECT) {
             hash(&self.subject)
         } else {
             self.subject.clone()
         };
 
-        let hash_predicate = if mask.is_set(TriplePart::PREDICATE) {
-            hash(&self.predicate)
-        } else {
-            self.predicate.clone()
-        };
-
-        let hash_object = if mask.is_set(TriplePart::OBJECT) {
+        let hash_object = if mask.is_set(TripleMask::OBJECT) {
             hash(&self.object)
         } else {
             self.object.clone()
         };
-
+        return Triple {
+            subject: NamedNode { iri: "http://example.com/foo" }.into(),
+            predicate: self.predicate,
+            object: NamedNode { iri: "http://example.com/foo" }.into(),
+        }
         return Triple::new(hash_subject, hash_predicate, hash_object);
     }
 
-    // instantiate a triple from a ntriple string
-    pub fn parse_ntriples(triple: &str) -> Triple {
-        Triple::new(String::from("A"), String::from("B"), String::from("C"))
+}
+
+impl HashTerm for Literal<'_> {
+    fn hash_term(&self) -> Term {
+        return Term::Literal(Literal::new_hashed(self.value()));
     }
 }
+
+impl HashTerm for NamedNode<'_> {
+    fn hash_term(&self) -> Term {
+        return Term::NamedNode(NamedNode::new_hashed(self.iri()));
+    }
+}
+
+// TODO: implement for blanknodes
+// NOTE: Support for RDF-star?
+
