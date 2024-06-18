@@ -1,9 +1,10 @@
-use crate::crypto::hash;
+use std::fmt::Debug;
 use bitflags::bitflags;
-use rio_api::model::{Literal, NamedNode, Term, Triple};
+use rio_api::model::{Subject, Term, Triple};
 
 
 bitflags! {
+    #[derive(Debug)]
     pub struct TripleMask: u8 {
         const SUBJECT = 1 << 0;
         const OBJECT = 1 << 1;
@@ -17,50 +18,69 @@ impl TripleMask {
     }
 }
 
-pub trait HashTriple {
-    fn hash_parts(&self, mask: TripleMask) -> Triple;
+pub trait Pseudonymize {
+    fn pseudo(&self) -> Self;
 }
 
-pub trait HashTerm {
-    fn hash_term(&self) -> Term;
+#[derive(Debug)]
+pub(crate) struct MaskedTriple<'a> {
+    triple: Triple<'a>,
+    mask: TripleMask,
 }
 
+impl MaskedTriple<'_> {
+    pub fn new(triple: Triple, mask: TripleMask) -> MaskedTriple{
+        MaskedTriple{ triple, mask}
+    }
+}
 
-impl HashTriple for Triple<'_> {
-
-    fn hash_parts(&self, mask: TripleMask) -> Triple {
-        let hash_subject = if mask.is_set(TripleMask::SUBJECT) {
-            hash(&self.subject)
+// Pseudonymize parts of a triple set by its mask
+impl<'a> Pseudonymize for MaskedTriple<'a> {
+    fn pseudo(self: &MaskedTriple<'a>) -> MaskedTriple<'a> {
+        let pseudo_subject = if self.mask.is_set(TripleMask::SUBJECT) {
+            &self.triple.subject.pseudo()
         } else {
-            self.subject.clone()
+            &self.triple.subject.clone()
         };
 
-        let hash_object = if mask.is_set(TripleMask::OBJECT) {
-            hash(&self.object)
+        let pseudo_object = if self.mask.is_set(TripleMask::OBJECT) {
+            self.triple.object.pseudo()
         } else {
-            self.object.clone()
+            self.triple.object.clone()
         };
-        return Triple {
-            subject: NamedNode { iri: "http://example.com/foo" }.into(),
-            predicate: self.predicate,
-            object: NamedNode { iri: "http://example.com/foo" }.into(),
+        return MaskedTriple::new(
+            Triple {
+                subject: *pseudo_subject,
+                predicate: self.triple.predicate,
+                object: pseudo_object,
+            }, TripleMask::SUBJECT
+        )
+    }
+}
+
+// Pseudonymization of objects (Nodes or literals)
+impl Pseudonymize for Term<'_> {
+    fn pseudo(&self) -> Self{
+        match self {
+            Term::Literal(val) => return Term::Literal(*val),
+            Term::NamedNode(val) => return Term::NamedNode(*val),
+            Term::BlankNode(val) => return Term::BlankNode(*val),
+            Term::Triple(_) => panic!("RDF-star not supported (triple as object)"),
         }
-        return Triple::new(hash_subject, hash_predicate, hash_object);
-    }
-
-}
-
-impl HashTerm for Literal<'_> {
-    fn hash_term(&self) -> Term {
-        return Term::Literal(Literal::new_hashed(self.value()));
     }
 }
 
-impl HashTerm for NamedNode<'_> {
-    fn hash_term(&self) -> Term {
-        return Term::NamedNode(NamedNode::new_hashed(self.iri()));
+// Pseudonymization of subjects (always a URI / blank node)
+impl Pseudonymize for Subject<'_> {
+    fn pseudo(&self) -> Self{
+        match self {
+            Subject::NamedNode(val) => return Subject::NamedNode(*val),
+            Subject::BlankNode(val) => return Subject::BlankNode(*val),
+            Subject::Triple(_) => panic!("RDF-star not supported (triple as subject)"),
+        }
     }
 }
+
 
 // TODO: implement for blanknodes
 // NOTE: Support for RDF-star?

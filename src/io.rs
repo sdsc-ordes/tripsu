@@ -1,5 +1,3 @@
-use crate::model::Triple;
-
 use rio_turtle::NTriplesParser;
 use std::{
     fs::File,
