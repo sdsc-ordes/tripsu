@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Config {
+pub struct Config {
     // Replace values of nodes with a certain type.
     replace_values_of_nodes_with_type: Vec<String>,
 

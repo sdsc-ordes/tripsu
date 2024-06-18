@@ -33,13 +33,21 @@ struct TypeMapArgs {
 
 #[derive(Args, Debug)]
 struct EncryptArgs {
-    /// The file which maps `node` ids to `type`s.
+    /// The file (.nt) which maps `node` ids to `type`s.
     /// This is used in `encrypt` as the second pass to encrypt RDF triples.
+    /// Format: .nt
     #[arg(short, long)]
     type_map_file: PathBuf,
 
+    /// The config file descriptor to use for defining RDF elements to pseudonymize.
+    /// Defaults to `stdin`.
+    /// Format: yaml
+    #[arg(short, long, default_value = "-")]
+    config: PathBuf,
+
     /// The input file descriptor to use for outputting the RDF triples.
     /// Defaults to `stdin`.
+    /// Format: .nt
     #[arg(short, long, default_value = "-")]
     input: PathBuf,
 
@@ -71,7 +79,13 @@ fn main() {
         }
         Subcommands::Encrypt(args) => {
             info!(log, "Args: {:?}", args);
-            encrypt(&log, &args.input, &args.output, &args.type_map_file)
+            encrypt(
+                &log,
+                &args.input,
+                &args.config,
+                &args.output,
+                &args.type_map_file,
+            )
         }
     }
 }
