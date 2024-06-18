@@ -6,7 +6,7 @@ use serde_yml;
 use std::{
     boxed::Box,
     fs::File,
-    io::{BufRead, BufReader},
+    io::{BufRead, BufReader, stdin, BufWriter, Write, stdout},
     path::Path,
 };
 
@@ -65,6 +65,7 @@ use super::{parse_config, parse_ntriples};
                 Ok(())
             })
             .expect("Error parsing triple");
+
     }
     // Test the parsing of a config file.
     #[test]
