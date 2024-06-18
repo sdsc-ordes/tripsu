@@ -50,6 +50,17 @@ struct PseudoArgs {
     /// File descriptor to read input triples from.
     /// Defaults to `stdin`.
     #[arg(default_value = "-")]
+
+    /// The config file descriptor to use for defining RDF elements to pseudonymize.
+    /// Defaults to `stdin`.
+    /// Format: yaml
+    #[arg(short, long, default_value = "-")]
+    config: PathBuf,
+
+    /// The input file descriptor to use for outputting the RDF triples.
+    /// Defaults to `stdin`.
+    /// Format: .nt
+    #[arg(short, long, default_value = "-")]
     input: PathBuf,
 
     /// Output file descriptor for pseudonymized triples.

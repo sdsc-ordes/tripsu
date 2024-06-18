@@ -45,6 +45,7 @@ pub fn pseudonymize_graph(log: &Logger, input: &Path, output: &Path, index: &Pat
     let buf_input = io::get_reader(input);
     let buf_index = io::get_reader(index);
     let mut buf_output = io::get_writer(output);
+    let config = io::parse_config(config);
 
     let node_to_type: HashMap<String, String> = load_type_map(buf_index);
     let mut triples = io::parse_ntriples(buf_input);
