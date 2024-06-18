@@ -27,7 +27,7 @@ mod tests {
     #[test]
     // Test the parsing of a triple.
     fn simple_parsing() {
-        let input: &[u8] = "http://example.org/resource2> <http://example.org/relatedTo> <http://example.org/resource3> .\n".as_bytes();
+        let input: &[u8] = "<http://example.org/resource2> <http://example.org/relatedTo> <http://example.org/resource3> .\n".as_bytes();
         let buffer_input: Box<dyn BufRead> = Box::new(BufReader::new(input));
         parse_ntriples(buffer_input).for_each(|t| {
             assert_eq!(t.subject, "A"); // to replace with http://example.org/resource2
