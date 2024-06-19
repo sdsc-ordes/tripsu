@@ -8,14 +8,13 @@ use std::{
 use crate::{
     io,
     log::Logger,
-    model::{pseudonymize_triple, TripleMask, TriplePart},
+    model::{pseudonymize_triple, TripleMask},
 };
 
 // mask and encode input triple
 // NOTE: This will need the type-map to perform masking
 fn process_triple(triple: &Triple) -> Result<(), TurtleError> {
-    let mut mask = TripleMask::new();
-    mask.set(TriplePart::SUBJECT);
+    let mask = TripleMask::new();
     println!("{}", pseudonymize_triple(&triple, mask).to_string());
     Ok(())
 }
