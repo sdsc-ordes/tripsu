@@ -3,9 +3,20 @@ use std::{
     path::Path,
 };
 use rio_api::parser::TriplesParser;
+use rio_api::model::Triple;
 use rio_turtle::TurtleError;
 
-use crate::{info, io, log::Logger, model::{MaskedTriple, Pseudonymize, TripleMask}};
+use crate::{io, log::Logger, model::{pseudonymize_triple, TripleMask, TriplePart}};
+
+// mask and encode input triple
+// NOTE: This will need the type-map to perform masking
+fn process_triple(triple: &Triple) -> Result<(), TurtleError>{
+    let mut mask = TripleMask::new();
+    mask.set(TriplePart::SUBJECT);
+    println!("{}", pseudonymize_triple(&triple, mask).to_string());
+    Ok(()) as Result<(), TurtleError> 
+
+}
 
 pub fn encrypt(log: &Logger, input: &Path, output: &Path, type_map_file: &Path) {
     // Construct the buffer either from `stdio` or from an input file.
@@ -18,12 +29,8 @@ pub fn encrypt(log: &Logger, input: &Path, output: &Path, type_map_file: &Path) 
     let mut triples = io::parse_ntriples(buffer);
     while !triples.is_end() {
         triples.parse_step(
-            &mut |t|{
-                let pseudo_triple: MaskedTriple;
-                pseudo_triple = MaskedTriple::new(t, TripleMask::SUBJECT).pseudo();
-                info!(log, "{:?}", pseudo_triple);
-                Ok(()) as Result<(), TurtleError>
-            }
+            &mut |t| process_triple(&t) 
+            
         ).unwrap();
     }
 }
