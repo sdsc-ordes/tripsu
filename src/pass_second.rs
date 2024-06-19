@@ -14,7 +14,7 @@ use crate::{
 // mask and encode input triple
 // NOTE: This will need the type-map to perform masking
 fn process_triple(triple: &Triple) -> Result<(), TurtleError> {
-    let mask = TripleMask::new();
+    let mask = TripleMask::SUBJECT;
     println!("{}", pseudonymize_triple(&triple, mask).to_string());
     Ok(())
 }

@@ -1,51 +1,40 @@
+use bitflags;
 use rio_api::model::{Subject, Term, Triple};
 
 pub trait Pseudonymize {
     fn pseudo(&self) -> Self;
 }
 
-// Represent an individual component of a triple.
-#[repr(u8)]
-pub enum TriplePart {
-    SUBJECT = 0b100,
-    PREDICATE = 0b010,
-    OBJECT = 0b001,
+// Used to select any combination of fields in a triple
+bitflags::bitflags! {
+    #[derive(Debug, Copy, Clone)]
+    pub struct TripleMask: u8 {
+        const SUBJECT = 1 << 2 ;
+        const PREDICATE = 1 << 1;
+        const OBJECT = 1 << 0;
+    }
 }
 
-// Used to select any combination of fields in a triple
-pub struct TripleMask(u8);
 
 impl TripleMask {
-    pub fn new() -> Self {
-        return TripleMask(0);
+
+    // Checks if bit from another mask are all set in this mask
+    pub fn is_set(&self, other: &TripleMask) -> bool {
+
+        return (*other - *self).bits() != 0;
     }
 
-    pub fn union(&mut self, other: TripleMask) -> TripleMask {
-        return TripleMask(self.0 | other.0);
-    }
-
-    pub fn is_set(&self, part: TriplePart) -> bool {
-        return (self.0 & part as u8) != 0;
-    }
-
-    pub fn bits(&self) -> u8 {
-        return self.0;
-    }
-
-    pub fn set(&mut self, part: TriplePart) {
-        self.0 |= part as u8;
-    }
 }
 
 // Pseudonymize parts of a triple set by its mask
 pub fn pseudonymize_triple<'a>(triple: &Triple<'a>, mask: TripleMask) -> Triple<'a> {
-    let pseudo_subject = if mask.is_set(TriplePart::SUBJECT) {
+    let pseudo_subject = if mask.is_set(&TripleMask::SUBJECT) {
         &triple.subject.pseudo()
     } else {
         &triple.subject.clone()
     };
 
-    let pseudo_object = if mask.is_set(TriplePart::OBJECT) {
+    let pseudo_object = if mask.is_set(&TripleMask::OBJECT) {
         triple.object.pseudo()
     } else {
         triple.object.clone()
