@@ -17,7 +17,7 @@ fn process_triple(triple: &Triple) -> Result<(), TurtleError> {
     let mut mask = TripleMask::new();
     mask.set(TriplePart::SUBJECT);
     println!("{}", pseudonymize_triple(&triple, mask).to_string());
-    Ok(()) as Result<(), TurtleError>
+    Ok(())
 }
 
 pub fn encrypt(log: &Logger, input: &Path, output: &Path, type_map_file: &Path) {
