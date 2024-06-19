@@ -6,7 +6,7 @@ use serde_yml;
 use std::{
     boxed::Box,
     fs::File,
-    io::{stdin, stdout, BufRead, BufReader, BufWriter, Write},
+    io::{BufRead, BufReader},
     path::Path,
 };
 
@@ -27,8 +27,7 @@ pub fn get_writer(path: &Path) -> Box<dyn Write> {
 }
 
 // Parse RDF triples.
-// This function takes ownership of a generic type which implements `BufRead`.
-pub fn parse_ntriples(reader: impl BufRead) -> NTriplesParser<impl BufRead> {
+pub fn parse_ntriples(reader: Box<dyn BufRead>) -> NTriplesParser<Box<dyn BufRead>> {
     return NTriplesParser::new(reader);
 }
 

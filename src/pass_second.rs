@@ -12,6 +12,14 @@ use crate::{
     model::{pseudonymize_triple, TripleMask},
 };
 
+// mask and encode input triple
+// NOTE: This will need the type-map to perform masking
+fn process_triple(triple: &Triple) -> Result<(), TurtleError> {
+    let mask = TripleMask::SUBJECT;
+    println!("{}", pseudonymize_triple(&triple, mask).to_string());
+    Ok(())
+}
+
 fn mask_triple(triple: &Triple) -> TripleMask {
     return TripleMask::SUBJECT;
 }
@@ -46,6 +54,7 @@ pub fn pseudonymize_graph(log: &Logger, input: &Path, output: &Path, index: &Pat
     let buf_index = io::get_reader(index);
     let mut buf_output = io::get_writer(output);
     let config = io::parse_config(config);
+<<<<<<< HEAD
 
     let node_to_type: HashMap<String, String> = load_type_map(buf_index);
     let mut triples = io::parse_ntriples(buf_input);
@@ -53,6 +62,11 @@ pub fn pseudonymize_graph(log: &Logger, input: &Path, output: &Path, index: &Pat
         triples
             .parse_step(&mut |t| process_triple(&t, &mut buf_output))
             .unwrap();
+=======
+    let mut triples = io::parse_ntriples(buffer);
+    while !triples.is_end() {
+        triples.parse_step(&mut |t| process_triple(&t)).unwrap();
+>>>>>>> cb9b7eb (refactor: rio parsing (#13))
     }
 }
 #[cfg(test)]
