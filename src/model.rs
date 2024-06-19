@@ -1,6 +1,5 @@
 use rio_api::model::{Subject, Term, Triple};
 
-
 pub trait Pseudonymize {
     fn pseudo(&self) -> Self;
 }
@@ -8,9 +7,9 @@ pub trait Pseudonymize {
 // Represent an individual component of a triple.
 #[repr(u8)]
 pub enum TriplePart {
-    SUBJECT   = 0b100,
+    SUBJECT = 0b100,
     PREDICATE = 0b010,
-    OBJECT    = 0b001,
+    OBJECT = 0b001,
 }
 
 // Used to select any combination of fields in a triple
@@ -22,21 +21,20 @@ impl TripleMask {
     }
 
     pub fn union(&mut self, other: TripleMask) -> TripleMask {
-        return TripleMask(self.0 | other.0)
+        return TripleMask(self.0 | other.0);
     }
 
     pub fn is_set(&self, part: TriplePart) -> bool {
-        return (self.0 & part as u8) != 0
+        return (self.0 & part as u8) != 0;
     }
 
     pub fn bits(&self) -> u8 {
-        return self.0
+        return self.0;
     }
 
     pub fn set(&mut self, part: TriplePart) {
         self.0 |= part as u8;
     }
-
 }
 
 // Pseudonymize parts of a triple set by its mask
@@ -52,16 +50,17 @@ pub fn pseudonymize_triple<'a>(triple: &Triple<'a>, mask: TripleMask) -> Triple<
     } else {
         triple.object.clone()
     };
+
     return Triple {
-            subject: *pseudo_subject,
-            predicate: triple.predicate,
-            object: pseudo_object,
-        }
+        subject: *pseudo_subject,
+        predicate: triple.predicate,
+        object: pseudo_object,
+    };
 }
 
 // Pseudonymization of objects (Nodes or literals)
 impl Pseudonymize for Term<'_> {
-    fn pseudo(&self) -> Self{
+    fn pseudo(&self) -> Self {
         match self {
             Term::Literal(val) => Term::Literal(*val),
             Term::NamedNode(val) => Term::NamedNode(*val),
@@ -73,7 +72,7 @@ impl Pseudonymize for Term<'_> {
 
 // Pseudonymization of subjects (always a URI / blank node)
 impl Pseudonymize for Subject<'_> {
-    fn pseudo(&self) -> Self{
+    fn pseudo(&self) -> Self {
         match self {
             Subject::NamedNode(val) => Subject::NamedNode(*val),
             Subject::BlankNode(val) => Subject::BlankNode(*val),
@@ -82,7 +81,5 @@ impl Pseudonymize for Subject<'_> {
     }
 }
 
-
 // TODO: implement for blanknodes
 // NOTE: Support for RDF-star?
-
