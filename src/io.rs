@@ -1,9 +1,7 @@
-use crate::model::Triple;
-
+use rio_turtle::NTriplesParser;
 use std::{
     fs::File,
     io::{BufRead, BufReader},
-    iter::Iterator,
     path::Path,
 };
 
@@ -15,8 +13,8 @@ pub fn get_buffer(path: &Path) -> BufReader<File> {
 }
 
 // Parse RDF triples.
-pub fn parse_ntriples(reader: Box<dyn BufRead>) -> impl Iterator<Item = Triple> {
-    return reader.lines().map(|l| Triple::parse_ntriples(&l.unwrap()));
+pub fn parse_ntriples(reader: Box<dyn BufRead>) -> NTriplesParser<Box<dyn BufRead>> {
+    return NTriplesParser::new(reader);
 }
 
 #[cfg(test)]
