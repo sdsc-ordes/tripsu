@@ -31,7 +31,6 @@ pub fn encrypt(log: &Logger, input: &Path, config: &Path, output: &Path, type_ma
         "-" => &mut BufReader::new(std::io::stdin()),
         _ => &mut io::get_buffer(input),
     };
-
     let config = io::parse_config(config);
     let mut triples = io::parse_ntriples(buffer);
     while !triples.is_end() {
