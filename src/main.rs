@@ -14,7 +14,7 @@ use crate::{
 };
 
 use clap::{Args, Parser, Subcommand};
-use std::{fs::File, io::BufReader, path::PathBuf};
+use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(name = "rdf-protect")]
