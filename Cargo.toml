@@ -14,4 +14,6 @@ slog-async = "2.8.0"
 # Popular serialization library.
 serde = { version = "1.0", features = ['derive']}
 clap = { version = "4.5.7", features = ["derive"] }
+rio_turtle = "0.8.4"
+rio_api = "0.8.4"
 bitflags = "2.5.0"
