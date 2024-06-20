@@ -27,9 +27,9 @@ mod tests {
 
     #[test]
     // Test the parsing of a triple.
-    fn simple_encryption() {
+    fn encrypt_nt_file() {
         let input_path = Path::new("tests/data/test.nt");
-        let output_path = Path::new("tests/data/");
+        let output_path = Path::new("tests/data/output.nt");
         let type_map_path = Path::new("tests/data/type_map.nt");
         let logger = log::create_logger(true);
         encrypt(&logger, &input_path, &output_path, &type_map_path);
