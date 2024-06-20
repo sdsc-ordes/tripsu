@@ -4,8 +4,12 @@ comp_dir := justfile_directory()
 root_dir := `git rev-parse --show-toplevel`
 
 # General Variables:
-# You can chose either "podman" or "docker"
+# You can chose either "podman" or "docker".
 container_mgr := "podman"
+
+# Enter a Nix development shell.
+nix-develop:
+    cd "{{root_dir}}" && nix develop ./nix#default
 
 # Build the executable.
 build *args:
