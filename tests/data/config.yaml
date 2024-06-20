@@ -1,7 +1,7 @@
 # hash URIs of people and online accounts
 replace-uris-of-nodes-with-type:
   "http://xmlns.com/foaf/0.1/Person" # All nodes which are rdf:type Person
-  "http://xmlns.com/foaf/OnlineAccount" # "" OnlineAccount
+  "http://xmlns.com/foaf/OnlineAccount" # or `rdf::type OnlineAccount`
 
 # hash name only for instances of person and online account
 replace-values-of-predicate-object:
