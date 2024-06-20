@@ -10,6 +10,6 @@ replace-values-of-predicate-object:
   "http://xmlns.com/foaf/0.1/Person":
     "http://schema.org/name"
 
-# hash accesscode values for all nodes
+# Hash accesscode values for all nodes.
 replace-values-of-predicate:
   "http://schema.org/accessCode"
