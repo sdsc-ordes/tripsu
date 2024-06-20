@@ -1,6 +1,8 @@
 # RDF Protect
 
-A simple Rust CLI tool to protect sensistive values in RDF triples through [pseudonymization](https://en.wikipedia.org/wiki/Pseudonymization).
+A simple Rust CLI tool to protect sensitive values in
+[RDF triples](https://en.wikipedia.org/wiki/Semantic_triple) through
+[pseudonymization](https://en.wikipedia.org/wiki/Pseudonymization).
 
 <details>
     <summary>Table of Content</summary>
@@ -29,7 +31,7 @@ TODO
 
 ## Development
 
-### Development setup
+### Setup
 
 - Rust Toolchain: You need the `rust` toolchain corresponding to
   [`rust-toochain.md`](./rust-toochain.md) installed. Install Rust with
@@ -46,15 +48,19 @@ TODO
 
 ### Development Shell with `nix`
 
-If you have the package manager [`nix`](https://nixos.org/download) installed
-you can enter a development setup easily with
+If you have the package manager
+[`nix`](https://github.com/DeterminateSystems/nix-installer) installed you can
+enter a development setup easily with
 
 ```shell
 nix develop ./nix#default
 ```
 
 or `just nix-develop` or automatically when [`direnv`](https://direnv.net) is
-installed.
+installed and `direnv allow` was executed inside the repository.
+
+**Note:** Make sure to enable `flakes` and `nix-command` in
+[your `nix` config](https://nixos.wiki/wiki/Flakes#Other_Distros,_without_Home-Manager)
 
 ### Formatting
 
