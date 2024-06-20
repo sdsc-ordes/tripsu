@@ -9,12 +9,12 @@ Describe the big picture of your changes here to communicate to the maintainers 
 What types of changes does your code introduce? _Put an `x` in the boxes that
 apply_
 
-- [ ] A bug fix (non-breaking change which fixes an issue).
-- [ ] A new feature (non-breaking change which adds functionality).
-- [ ] A breaking change (fix or feature that would cause existing functionality
-      to not work as expected).
-- [ ] A non-productive update (documentation, tooling, etc. if none of the other
-      choices apply).
+- [ ] A **bug fix** (non-breaking change which fixes an issue).
+- [ ] A new **feature** (non-breaking change which adds functionality).
+- [ ] A **breaking change** (fix or feature that would cause existing
+      functionality to not work as expected).
+- [ ] A **non-productive** update (documentation, tooling, etc. if none of the
+      other choices apply).
 
 ## Checklist
 
@@ -24,9 +24,8 @@ help! This is simply a reminder of what we are going to look for before merging
 your code._
 
 - [ ] I have read the
-    [CONTRIBUTING](https://github.com/appium/appium/blob/master/CONTRIBUTING.md)
-    doc.
-<!-- - [ ] I have signed the CLA -->
+      [CONTRIBUTING](https://github.com/sdsc-order/rdf-protect/blob/master/CONTRIBUTING.md)
+      guidelines.
 - [ ] I have added tests that prove my fix is effective or that my feature
       works.
 - [ ] I have added the necessary documentation (if appropriate).
