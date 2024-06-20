@@ -1,6 +1,6 @@
 # RDF Protect
 
-A simple Rust CLI tool to protect values in RDF triples.
+A simple Rust CLI tool to protect sensistive values in RDF triples through [pseudonymization](https://en.wikipedia.org/wiki/Pseudonymization).
 
 <details>
     <summary>Table of Content</summary>
