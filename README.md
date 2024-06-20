@@ -29,7 +29,7 @@ TODO
 
 ## Development
 
-### Requirements
+### Development setup
 
 - Rust Toolchain: You need the `rust` toolchain corresponding to
   [`rust-toochain.md`](./rust-toochain.md) installed. Install Rust with
