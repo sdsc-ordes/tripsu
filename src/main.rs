@@ -26,21 +26,21 @@ struct Cli {
 }
 
 #[derive(Args, Debug)]
-struct TypeMapArgs {
+struct IndexArgs {
     #[arg(short, long)]
-    output_file: PathBuf,
+    output: PathBuf,
 }
 
 #[derive(Args, Debug)]
-struct EncryptArgs {
+struct PseudoArgs {
     /// The file which maps `node` ids to `type`s.
     /// This is used in `encrypt` as the second pass to encrypt RDF triples.
     #[arg(short, long)]
-    type_map_file: PathBuf,
+    index: PathBuf,
 
     /// The input file descriptor to use for outputting the RDF triples.
     /// Defaults to `stdin`.
-    #[arg(short, long, default_value = "-")]
+    #[arg(default_value = "-")]
     input: PathBuf,
 
     /// The output file descriptor to use for outputting the RDF triples.
@@ -51,14 +51,14 @@ struct EncryptArgs {
 
 #[derive(Subcommand, Debug)]
 enum Subcommands {
-    /// 1. Pass: Create the node-to-type mapping.
+    /// 1. Pass: Create the node-to-type index.
     // This is used in `encrypt` for the second pass to
     // encrypt RDF triples based on some rules.
-    CreateTypeMap(TypeMapArgs),
+    PrepareIndex(IndexArgs),
 
-    /// 2. Pass: Encrypt RDF triples read from a file descriptor (default `stdin`)
+    /// 2. Pass: Pseudonymize RDF triples read from a file descriptor (default `stdin`)
     // This is based on rules and output them again on a file descriptor (default `stdout`)
-    Encrypt(EncryptArgs),
+    Pseudonymize(PseudoArgs),
 }
 
 fn main() {
@@ -66,12 +66,12 @@ fn main() {
     let cli = Cli::parse();
 
     match cli.command {
-        Subcommands::CreateTypeMap(args) => {
+        Subcommands::PrepareIndex(args) => {
             info!(log, "Args: {:?}", args)
         }
-        Subcommands::Encrypt(args) => {
+        Subcommands::Pseudonymize(args) => {
             info!(log, "Args: {:?}", args);
-            encrypt(&log, &args.input, &args.output, &args.type_map_file)
+            encrypt(&log, &args.input, &args.output, &args.index)
         }
     }
 }
