@@ -1,8 +1,7 @@
 use rio_api::{model::Triple, parser::TriplesParser};
 use rio_turtle::TurtleError;
 use std::{
-    io::{BufRead, BufReader},
-    path::Path,
+    collections::HashMap, io::{BufRead, Write}, path::Path
 };
 
 use crate::{
@@ -11,15 +10,34 @@ use crate::{
     model::{pseudonymize_triple, TripleMask},
 };
 
+fn mask_triple(triple: &Triple) -> TripleMask {
+    return TripleMask::SUBJECT
+}
+
 // mask and encode input triple
 // NOTE: This will need the type-map to perform masking
-fn process_triple(triple: &Triple) -> Result<(), TurtleError> {
-    let mask = TripleMask::SUBJECT;
-    println!("{}", pseudonymize_triple(&triple, mask).to_string());
+fn process_triple(triple: &Triple, out: &mut impl Write) -> Result<(), TurtleError> {
+    let mask = mask_triple(triple);
+    let _ = out.write(&pseudonymize_triple(&triple, mask).to_string().into_bytes());
     Ok(())
 }
 
-pub fn pseudonymize_graph(log: &Logger, input: &Path, output: &Path, type_map_file: &Path) {
+// Create a index mapping node -> type from an input ntriples buffer 
+fn load_index(input: impl BufRead) -> HashMap<String, String> {
+   let mut node2type: HashMap<String, String> = HashMap::new();
+    let mut triples = io::parse_ntriples(input);
+
+    while !triples.is_end() {
+        triples.parse_step(&mut |t| {
+            node2type.insert(t.subject.to_string(), t.object.to_string());
+            Ok(()) as Result<(), TurtleError>
+        }
+    );
+    }
+    node2type
+}
+
+pub fn pseudonymize_graph(log: &Logger, input: &Path, output: &Path, index: &Path) {
     // Construct the buffer either from `stdio` or from an input file.
     //
     // This object is constructed on the stack and is a `trait object`.
@@ -27,13 +45,13 @@ pub fn pseudonymize_graph(log: &Logger, input: &Path, output: &Path, type_map_fi
     // and pointer to data on the stack.
     // Normally that would be done with `Box::new(std::io::stdin())` on the heap, but since the
     // newest version in Rust that also works on the stack (life-time extensions).
-    let buffer: &mut dyn BufRead = match input.to_str().unwrap() {
-        "-" => &mut BufReader::new(std::io::stdin()),
-        _ => &mut io::get_buffer(input),
-    };
+    let buf_input = io::get_reader(input);
+    let buf_index = io::get_reader(index);
+    let mut buf_output = io::get_writer(output);
 
-    let mut triples = io::parse_ntriples(buffer);
+    let node2type: HashMap<String, String> = load_index(buf_index);
+    let mut triples = io::parse_ntriples(buf_input);
     while !triples.is_end() {
-        triples.parse_step(&mut |t| process_triple(&t)).unwrap();
+        triples.parse_step(&mut |t| process_triple(&t, &mut buf_output)).unwrap();
     }
 }
