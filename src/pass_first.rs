@@ -23,7 +23,7 @@ pub fn create_index(input: &Path, output: &Path) {
 
     let buf_in: Box<dyn BufRead> = match input.to_str().unwrap() {
         "-" => Box::new(BufReader::new(stdin())),
-        _ => Box::new(io::get_buffer(input)),
+        _ => Box::new(io::get_reader(input)),
     };
     let mut buf_out = io::get_writer(output);
     let mut triples = io::parse_ntriples(buf_in);
