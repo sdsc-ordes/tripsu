@@ -18,7 +18,10 @@ fn mask_triple(triple: &Triple) -> TripleMask {
 // NOTE: This will need the type-map to perform masking
 fn process_triple(triple: &Triple, out: &mut impl Write) -> Result<(), TurtleError> {
     let mask = mask_triple(triple);
-    let _ = out.write(&pseudonymize_triple(&triple, mask).to_string().into_bytes());
+    let pseudo_triple = pseudonymize_triple(&triple, mask);
+    let _ = out.write(
+                &format!("{} .\n", &pseudo_triple.to_string()).into_bytes()
+    );
     Ok(())
 }
 
@@ -28,7 +31,7 @@ fn load_index(input: impl BufRead) -> HashMap<String, String> {
     let mut triples = io::parse_ntriples(input);
 
     while !triples.is_end() {
-        triples.parse_step(&mut |t| {
+        let _ = triples.parse_step(&mut |t| {
             node2type.insert(t.subject.to_string(), t.object.to_string());
             Ok(()) as Result<(), TurtleError>
         }
