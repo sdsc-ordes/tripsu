@@ -70,7 +70,7 @@ enum Subcommands {
 }
 
 fn main() {
-    let log = create_logger(true);
+    let log = create_logger(false);
     let cli = Cli::parse();
 
     match cli.command {
