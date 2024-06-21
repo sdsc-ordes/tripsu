@@ -60,12 +60,12 @@ enum Subcommands {
     /// 1. Pass: Create a node-to-type index from input triples.
     // This is used in `pseudonymize` for the second pass to
     // pseudonymize RDF triples based on a configuration.
-    PrepareIndex(IndexArgs),
+    Index(IndexArgs),
 
     /// 2. Pass: Pseudonymize input triples.
     // A config file defines pseudonymization rules. The deidentified triples are sent to the
     // output file descriptor. (default `stdout`)
-    Pseudonymize(PseudoArgs),
+    Pseudo(PseudoArgs),
 }
 
 fn main() {
@@ -73,10 +73,10 @@ fn main() {
     let cli = Cli::parse();
 
     match cli.command {
-        Subcommands::PrepareIndex(args) => {
+        Subcommands::Index(args) => {
             info!(log, "Args: {:?}", args)
         }
-        Subcommands::Pseudonymize(args) => {
+        Subcommands::Pseudo(args) => {
             info!(log, "Args: {:?}", args);
             encrypt(&log, &args.input, &args.output, &args.index)
         }
