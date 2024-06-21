@@ -28,11 +28,11 @@ struct Cli {
 
 #[derive(Args, Debug)]
 struct IndexArgs {
-    /// The output file descriptor to use for outputting the node-to-type index.
-    #[arg(short, long)]
+    /// Output file descriptor to for the node-to-type index.
+    #[arg(short, long, default_value = "-")]
     output: PathBuf,
     
-    /// The input file descriptor to use for outputting the RDF triples.
+    /// File descriptor to read triples from.
     /// Defaults to `stdin`.
     #[arg(default_value = "-")]
     input: PathBuf,
