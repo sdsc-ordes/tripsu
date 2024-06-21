@@ -27,37 +27,44 @@ struct Cli {
 
 #[derive(Args, Debug)]
 struct IndexArgs {
+    /// The output file descriptor to use for outputting the node-to-type index.
     #[arg(short, long)]
     output: PathBuf,
-}
-
-#[derive(Args, Debug)]
-struct PseudoArgs {
-    /// The file which maps `node` ids to `type`s.
-    /// This is used in `encrypt` as the second pass to encrypt RDF triples.
-    #[arg(short, long)]
-    index: PathBuf,
-
+    
     /// The input file descriptor to use for outputting the RDF triples.
     /// Defaults to `stdin`.
     #[arg(default_value = "-")]
     input: PathBuf,
+}
 
-    /// The output file descriptor to use for outputting the RDF triples.
-    // Defaults to `stdout`.
+#[derive(Args, Debug)]
+struct PseudoArgs {
+    /// Index file produced by prepare-index.
+    /// Required for pseudonymization. 
+    #[arg(short, long)]
+    index: PathBuf,
+
+    /// File descriptor to read input triples from.
+    /// Defaults to `stdin`.
+    #[arg(default_value = "-")]
+    input: PathBuf,
+
+    /// Output file descriptor for pseudonymized triples.
+    /// Defaults to `stdout`.
     #[arg(short, long, default_value = "-")]
     output: PathBuf,
 }
 
 #[derive(Subcommand, Debug)]
 enum Subcommands {
-    /// 1. Pass: Create the node-to-type index.
-    // This is used in `encrypt` for the second pass to
-    // encrypt RDF triples based on some rules.
+    /// 1. Pass: Create a node-to-type index from input triples.
+    // This is used in `pseudonymize` for the second pass to
+    // pseudonymize RDF triples based on a configuration.
     PrepareIndex(IndexArgs),
 
-    /// 2. Pass: Pseudonymize RDF triples read from a file descriptor (default `stdin`)
-    // This is based on rules and output them again on a file descriptor (default `stdout`)
+    /// 2. Pass: Pseudonymize input triples.
+    // A config file defines pseudonymization rules. The deidentified triples are sent to the
+    // output file descriptor. (default `stdout`)
     Pseudonymize(PseudoArgs),
 }
 
