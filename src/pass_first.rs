@@ -11,7 +11,9 @@ use crate::io;
 fn index_triple(t: Triple, out: &mut impl Write) -> Result<(), TurtleError> {
     match t.predicate.iri {
         "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" => {
-            let _ = out.write(t.predicate.iri.as_bytes());
+            let _ = out.write(
+                &format!("{} .\n", &t.to_string()).into_bytes()
+            );
         }
         _ => {}
             
