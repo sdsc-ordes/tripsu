@@ -19,7 +19,7 @@ fn process_triple(triple: &Triple) -> Result<(), TurtleError> {
     Ok(())
 }
 
-pub fn encrypt(log: &Logger, input: &Path, output: &Path, type_map_file: &Path) {
+pub fn pseudonymize_graph(log: &Logger, input: &Path, output: &Path, type_map_file: &Path) {
     // Construct the buffer either from `stdio` or from an input file.
     //
     // This object is constructed on the stack and is a `trait object`.

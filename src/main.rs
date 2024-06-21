@@ -10,7 +10,7 @@ mod rules;
 // Define the imports.
 use crate::{
     log::{create_logger, info},
-    pass_second::encrypt,
+    pass_second::pseudonymize_graph,
 };
 
 use clap::{Args, Parser, Subcommand};
@@ -78,7 +78,7 @@ fn main() {
         }
         Subcommands::Pseudo(args) => {
             info!(log, "Args: {:?}", args);
-            encrypt(&log, &args.input, &args.output, &args.index)
+            pseudonymize_graph(&log, &args.input, &args.output, &args.index)
         }
     }
 }
