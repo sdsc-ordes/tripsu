@@ -19,7 +19,7 @@ use std::path::PathBuf;
 #[derive(Parser)]
 #[command(name = "rdf-protect")]
 #[command(version = "0.0.1")]
-#[command(about ="A tool to pseudonymize nodes/edges in RDF graphs.", long_about = None)]
+#[command(about ="A tool to pseudonymize URIs and values in RDF graphs.", long_about = None)]
 struct Cli {
     #[command(subcommand)]
     command: Subcommands,
