@@ -10,6 +10,7 @@ mod rules;
 // Define the imports.
 use crate::{
     log::{create_logger, info},
+    pass_first::create_index,
     pass_second::pseudonymize_graph,
 };
 
@@ -74,7 +75,8 @@ fn main() {
 
     match cli.command {
         Subcommands::Index(args) => {
-            info!(log, "Args: {:?}", args)
+            info!(log, "Args: {:?}", args);
+            create_index(&args.input, &args.output)
         }
         Subcommands::Pseudo(args) => {
             info!(log, "Args: {:?}", args);
