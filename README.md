@@ -57,7 +57,8 @@ nix develop ./nix#default
 ```
 
 or `just nix-develop` or automatically when [`direnv`](https://direnv.net) is
-installed and `direnv allow` was executed inside the repository.
+installed and [setup for your shell](https://direnv.net/docs/hook.html) and
+`direnv allow` was executed inside the repository.
 
 **Note:** Make sure to enable `flakes` and `nix-command` in
 [your `nix` config](https://nixos.wiki/wiki/Flakes#Other_Distros,_without_Home-Manager)
