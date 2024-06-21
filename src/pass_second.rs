@@ -54,19 +54,13 @@ pub fn pseudonymize_graph(log: &Logger, input: &Path, output: &Path, index: &Pat
     let buf_index = io::get_reader(index);
     let mut buf_output = io::get_writer(output);
     let config = io::parse_config(config);
-<<<<<<< HEAD
-
+    
     let node_to_type: HashMap<String, String> = load_type_map(buf_index);
     let mut triples = io::parse_ntriples(buf_input);
     while !triples.is_end() {
         triples
             .parse_step(&mut |t| process_triple(&t, &mut buf_output))
             .unwrap();
-=======
-    let mut triples = io::parse_ntriples(buffer);
-    while !triples.is_end() {
-        triples.parse_step(&mut |t| process_triple(&t)).unwrap();
->>>>>>> cb9b7eb (refactor: rio parsing (#13))
     }
 }
 #[cfg(test)]
