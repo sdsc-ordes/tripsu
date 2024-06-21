@@ -6,6 +6,7 @@ use std::{
     path::Path,
 };
 
+// Get a reader based on input path, either from stdin or a file.
 pub fn get_reader(path: &Path) -> Box<dyn BufRead> {
 
     return match path.to_str().unwrap() {
@@ -13,15 +14,12 @@ pub fn get_reader(path: &Path) -> Box<dyn BufRead> {
         _ => Box::new(BufReader::new(File::open(&path).unwrap())),
     }
 }
-//    let buf_in: &mut dyn BufRead = match input.to_str().unwrap() {
-//        "-" => &mut BufReader::new(std::io::stdin()),
-//        _ => &mut io::get_buffer(input),
-//    };
 
+// Get a writer based on input path, either to stdout or a file.
 pub fn get_writer(path: &Path) -> Box<dyn Write> {
 
     return match path.to_str().unwrap() {
-        "" => Box::new(BufWriter::new(stdout())),
+        "-" => Box::new(BufWriter::new(stdout())),
         path => Box::new(BufWriter::new(File::open(path).unwrap())),
     };
 }
