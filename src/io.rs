@@ -2,25 +2,37 @@ use rio_turtle::NTriplesParser;
 use std::{
     boxed::Box,
     fs::File,
-    io::{stdin, stdout, BufRead, BufReader, Write, BufWriter},
+    io::{self, stdin, stdout, BufRead, BufReader, BufWriter, Write},
     path::Path,
 };
 
-// Get a reader based on input path, either from stdin or a file.
-pub fn get_reader(path: &Path) -> Box<dyn BufRead> {
+use io_enum::{BufRead, Read, Write};
 
+#[derive(Read, BufRead)]
+pub enum Reader {
+    Stdio(BufReader<io::Stdin>),
+    File(BufReader<File>),
+}
+
+#[derive(Write)]
+pub enum Writer {
+    Stdio(BufWriter<io::Stdout>),
+    File(BufWriter<File>),
+}
+
+// Get a reader based on input path, either from stdin or a file.
+pub fn get_reader(path: &Path) -> Reader {
     return match path.to_str().unwrap() {
-        "-" => Box::new(BufReader::new(stdin())),
-        _ => Box::new(BufReader::new(File::open(&path).unwrap())),
-    }
+        "-" => Reader::Stdio(BufReader::new(stdin())),
+        _ => Reader::File(BufReader::new(File::open(&path).unwrap())),
+    };
 }
 
 // Get a writer based on input path, either to stdout or a file.
-pub fn get_writer(path: &Path) -> Box<dyn Write> {
-
+pub fn get_writer(path: &Path) -> Writer {
     return match path.to_str().unwrap() {
-        "-" => Box::new(BufWriter::new(stdout())),
-        path => Box::new(BufWriter::new(File::open(path).unwrap())),
+        "-" => Writer::Stdio(BufWriter::new(stdout())),
+        path => Writer::File(BufWriter::new(File::open(path).unwrap())),
     };
 }
 
