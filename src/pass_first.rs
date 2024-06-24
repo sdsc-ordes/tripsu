@@ -21,7 +21,7 @@ fn index_triple(t: Triple, out: &mut impl Write) -> Result<(), TurtleError> {
     Ok(())
 }
 
-pub fn create_index(input: &Path, output: &Path) {
+pub fn create_type_map(input: &Path, output: &Path) {
 
     let buf_in: Box<dyn BufRead> = match input.to_str().unwrap() {
         "-" => Box::new(BufReader::new(stdin())),

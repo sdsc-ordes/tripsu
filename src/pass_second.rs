@@ -26,18 +26,18 @@ fn process_triple(triple: &Triple, out: &mut impl Write) -> Result<(), TurtleErr
 }
 
 // Create a index mapping node -> type from an input ntriples buffer 
-fn load_index(input: impl BufRead) -> HashMap<String, String> {
-   let mut node2type: HashMap<String, String> = HashMap::new();
+fn load_type_map(input: impl BufRead) -> HashMap<String, String> {
+    let mut node_to_type: HashMap<String, String> = HashMap::new();
     let mut triples = io::parse_ntriples(input);
 
     while !triples.is_end() {
         let _ = triples.parse_step(&mut |t| {
-            node2type.insert(t.subject.to_string(), t.object.to_string());
+            node_to_type.insert(t.subject.to_string(), t.object.to_string());
             Ok(()) as Result<(), TurtleError>
-        }
-    );
+        });
     }
-    node2type
+
+    return node_to_type
 }
 
 pub fn pseudonymize_graph(log: &Logger, input: &Path, output: &Path, index: &Path) {
@@ -45,7 +45,7 @@ pub fn pseudonymize_graph(log: &Logger, input: &Path, output: &Path, index: &Pat
     let buf_index = io::get_reader(index);
     let mut buf_output = io::get_writer(output);
 
-    let node2type: HashMap<String, String> = load_index(buf_index);
+    let node_to_type: HashMap<String, String> = load_type_map(buf_index);
     let mut triples = io::parse_ntriples(buf_input);
     while !triples.is_end() {
         triples.parse_step(&mut |t| process_triple(&t, &mut buf_output)).unwrap();

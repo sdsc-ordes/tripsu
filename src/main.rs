@@ -76,7 +76,7 @@ fn main() {
     match cli.command {
         Subcommands::Index(args) => {
             info!(log, "Args: {:?}", args);
-            create_index(&args.input, &args.output)
+            create_type_map(&args.input, &args.output)
         }
         Subcommands::Pseudo(args) => {
             info!(log, "Args: {:?}", args);
