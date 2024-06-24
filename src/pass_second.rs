@@ -37,3 +37,19 @@ pub fn encrypt(log: &Logger, input: &Path, output: &Path, type_map_file: &Path) 
         triples.parse_step(&mut |t| process_triple(&t)).unwrap();
     }
 }
+#[cfg(test)]
+mod tests {
+    use super::encrypt;
+    use crate::log;
+    use std::path::Path;
+
+    #[test]
+    // Test the parsing of a triple.
+    fn encrypt_nt_file() {
+        let input_path = Path::new("tests/data/test.nt");
+        let output_path = Path::new("tests/data/output.nt");
+        let type_map_path = Path::new("tests/data/type_map.nt");
+        let logger = log::create_logger(true);
+        encrypt(&logger, &input_path, &output_path, &type_map_path);
+    }
+}
