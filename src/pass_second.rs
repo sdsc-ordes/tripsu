@@ -1,7 +1,9 @@
 use rio_api::{model::Triple, parser::TriplesParser};
 use rio_turtle::TurtleError;
 use std::{
-    collections::HashMap, io::{BufRead, Write}, path::Path
+    collections::HashMap,
+    io::{BufRead, Write},
+    path::Path,
 };
 
 use crate::{
@@ -11,7 +13,7 @@ use crate::{
 };
 
 fn mask_triple(triple: &Triple) -> TripleMask {
-    return TripleMask::SUBJECT
+    return TripleMask::SUBJECT;
 }
 
 // mask and encode input triple
@@ -19,14 +21,12 @@ fn mask_triple(triple: &Triple) -> TripleMask {
 fn process_triple(triple: &Triple, out: &mut impl Write) -> Result<(), TurtleError> {
     let mask = mask_triple(triple);
     let pseudo_triple = pseudonymize_triple(&triple, mask);
-    let _ = out.write(
-                &format!("{} .\n", &pseudo_triple.to_string()).into_bytes()
-    );
-    
+    let _ = out.write(&format!("{} .\n", &pseudo_triple.to_string()).into_bytes());
+
     Ok(())
 }
 
-// Create a index mapping node -> type from an input ntriples buffer 
+// Create a index mapping node -> type from an input ntriples buffer
 fn load_type_map(input: impl BufRead) -> HashMap<String, String> {
     let mut node_to_type: HashMap<String, String> = HashMap::new();
     let mut triples = io::parse_ntriples(input);
@@ -38,7 +38,7 @@ fn load_type_map(input: impl BufRead) -> HashMap<String, String> {
         });
     }
 
-    return node_to_type
+    return node_to_type;
 }
 
 pub fn pseudonymize_graph(log: &Logger, input: &Path, output: &Path, index: &Path) {
@@ -49,6 +49,8 @@ pub fn pseudonymize_graph(log: &Logger, input: &Path, output: &Path, index: &Pat
     let node_to_type: HashMap<String, String> = load_type_map(buf_index);
     let mut triples = io::parse_ntriples(buf_input);
     while !triples.is_end() {
-        triples.parse_step(&mut |t| process_triple(&t, &mut buf_output)).unwrap();
+        triples
+            .parse_step(&mut |t| process_triple(&t, &mut buf_output))
+            .unwrap();
     }
 }

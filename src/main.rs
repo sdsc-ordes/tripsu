@@ -31,7 +31,7 @@ struct IndexArgs {
     /// Output file descriptor to for the node-to-type index.
     #[arg(short, long, default_value = "-")]
     output: PathBuf,
-    
+
     /// File descriptor to read triples from.
     /// Defaults to `stdin`.
     #[arg(default_value = "-")]
@@ -41,7 +41,7 @@ struct IndexArgs {
 #[derive(Args, Debug)]
 struct PseudoArgs {
     /// Index file produced by prepare-index.
-    /// Required for pseudonymization. 
+    /// Required for pseudonymization.
     #[arg(short, long)]
     index: PathBuf,
 
