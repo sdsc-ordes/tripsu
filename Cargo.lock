@@ -338,10 +338,6 @@ dependencies = [
  "rio_api",
  "rio_turtle",
  "serde",
-<<<<<<< HEAD
- "serde_yaml",
-=======
->>>>>>> 6aeaacb (feat: config option and config parser)
  "serde_yml",
  "slog",
  "slog-async",
@@ -592,12 +588,6 @@ name = "unicode-ident"
 version = "1.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3354b9ac3fae1ff6755cb6db53683adb661634f67557942dea4facebec0fee4b"
-
-[[package]]
-name = "unsafe-libyaml"
-version = "0.2.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "673aac59facbab8a9007c7f6108d11f63b603f7cabff99fabf650fea5c32b861"
 
 [[package]]
 name = "utf8parse"
