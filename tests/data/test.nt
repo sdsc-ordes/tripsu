@@ -5,7 +5,7 @@
 <http://example.org/Alice-Bank-Account> <http://schema.org/accessCode> "secret-123" .
 <http://example.org/Alice> <http://schema.org/name> "Alice" .
 <http://example.org/Bob> <http://xmlns.com/foaf/0.1/knows> <http://example.org/Alice> .
-<http://example.org/Bob> <http://www.w3.org/2000/01/rdf-schema#type> <http://xmlns.com/foaf/0.1/Person> 
+<http://example.org/Bob> <http://www.w3.org/2000/01/rdf-schema#type> <http://xmlns.com/foaf/0.1/Person> .
 <http://example.org/Bob> <http://xmlns.com/foaf/0.1/holdsAccount> <http://example.org/Bob-Bank-Account> .
 <http://example.org/Bob-Bank-Account> <http://www.w3.org/2000/01/rdf-schema#type> <http://xmlns.com/foaf/OnlineAccount> .
 <http://example.org/Bob-Bank-Account> <http://schema.org/name> "my_account12" .

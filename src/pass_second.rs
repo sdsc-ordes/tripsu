@@ -40,7 +40,7 @@ pub fn encrypt(log: &Logger, input: &Path, output: &Path, type_map_file: &Path) 
 #[cfg(test)]
 mod tests {
     use super::encrypt;
-    use crate::{log, log::Logger};
+    use crate::log;
     use std::path::Path;
 
     #[test]
