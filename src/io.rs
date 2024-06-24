@@ -1,6 +1,7 @@
 use rio_turtle::NTriplesParser;
 use crate::rules::Config;
-use serde_yaml;
+use serde_yml;
+
 
 use std::{
     boxed::Box,
@@ -35,7 +36,7 @@ pub fn parse_ntriples(reader: impl BufRead) -> NTriplesParser<impl BufRead> {
 pub fn parse_config(path: &Path) -> Config {
     return match File::open(&path) {
         Ok(file) => {
-            serde_yaml::from_reader(file).unwrap()
+            serde_yml::from_reader(file).unwrap()
         }
         Err(e) => panic!("Cannot open file '{:?}': '{}'.", path, e),
     };
