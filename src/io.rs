@@ -25,7 +25,7 @@ pub fn parse_ntriples(reader: impl BufRead) -> NTriplesParser<impl BufRead> {
 pub fn parse_config(path: &Path) -> () {
     return match File::open(&path) {
         Ok(file) => {
-            let res: Config = serde_yml::from_reader(file).unwrap();
+            let res: Config = serde_yaml::from_reader(file).unwrap();
             println!("{:?}", res);
         }
         Err(e) => panic!("Cannot open file '{:?}': '{}'.", path, e),
