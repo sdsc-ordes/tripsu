@@ -28,6 +28,7 @@ pub fn create_type_map(input: &Path, output: &Path) {
         "-" => Box::new(BufReader::new(stdin())),
         _ => Box::new(io::get_reader(input)),
     };
+    
     let mut buf_out = io::get_writer(output);
     let mut triples = io::parse_ntriples(buf_in);
     while !triples.is_end() {
