@@ -1,7 +1,6 @@
 use bitflags;
 use rio_api::model::{Subject, Term, Triple};
 
-
 pub trait Pseudonymize {
     fn pseudo(&self) -> Self;
 }
@@ -16,15 +15,11 @@ bitflags::bitflags! {
     }
 }
 
-
 impl TripleMask {
-
     // Checks if bit from another mask are all set in this mask
     pub fn is_set(&self, other: &TripleMask) -> bool {
-
         return (*other - *self).bits() != 0;
     }
-
 }
 
 // Pseudonymize parts of a triple set by its mask
