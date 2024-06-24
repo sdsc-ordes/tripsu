@@ -41,13 +41,6 @@ fn load_index(input: impl BufRead) -> HashMap<String, String> {
 }
 
 pub fn pseudonymize_graph(log: &Logger, input: &Path, output: &Path, index: &Path) {
-    // Construct the buffer either from `stdio` or from an input file.
-    //
-    // This object is constructed on the stack and is a `trait object`.
-    // The wide-pointer `buffer` will have a pointer to the vtable
-    // and pointer to data on the stack.
-    // Normally that would be done with `Box::new(std::io::stdin())` on the heap, but since the
-    // newest version in Rust that also works on the stack (life-time extensions).
     let buf_input = io::get_reader(input);
     let buf_index = io::get_reader(index);
     let mut buf_output = io::get_writer(output);

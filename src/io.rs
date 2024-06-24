@@ -15,7 +15,7 @@ pub fn get_reader(path: &Path) -> Box<dyn BufRead> {
     }
 }
 
-// Get a writer based on input path, either to stdout or a file.
+/// Get a writer based on input path, either to stdout or a file.
 pub fn get_writer(path: &Path) -> Box<dyn Write> {
 
     return match path.to_str().unwrap() {
