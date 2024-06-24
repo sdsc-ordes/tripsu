@@ -4,7 +4,6 @@ use rio_api::model::{Subject, Term, Triple};
 
 pub trait Pseudonymize {
     fn pseudo(&self) -> Self;
-    
 }
 
 // Used to select any combination of fields in a triple
