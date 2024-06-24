@@ -10,7 +10,8 @@ mod rules;
 // Define the imports.
 use crate::{
     log::{create_logger, info},
-    pass_second::encrypt,
+    pass_first::create_type_map,
+    pass_second::pseudonymize_graph,
 };
 
 use clap::{Args, Parser, Subcommand};
@@ -19,73 +20,69 @@ use std::path::PathBuf;
 #[derive(Parser)]
 #[command(name = "rdf-protect")]
 #[command(version = "0.0.1")]
-#[command(about ="A tool to anonymize nodes/edges in RDF graphs.", long_about = None)]
+#[command(about ="A tool to pseudonymize URIs and values in RDF graphs.", long_about = None)]
 struct Cli {
     #[command(subcommand)]
     command: Subcommands,
 }
 
 #[derive(Args, Debug)]
-struct TypeMapArgs {
-    #[arg(short, long)]
-    output_file: PathBuf,
+struct IndexArgs {
+    /// Output file descriptor to for the node-to-type index.
+    #[arg(short, long, default_value = "-")]
+    output: PathBuf,
+
+    /// File descriptor to read triples from.
+    /// Defaults to `stdin`.
+    #[arg(default_value = "-")]
+    input: PathBuf,
 }
 
 #[derive(Args, Debug)]
-struct EncryptArgs {
-    /// The file (.nt) which maps `node` ids to `type`s.
-    /// This is used in `encrypt` as the second pass to encrypt RDF triples.
-    /// Format: .nt
+
+struct PseudoArgs {
+    /// Index file produced by prepare-index.
+    /// Required for pseudonymization.
     #[arg(short, long)]
-    type_map_file: PathBuf,
+    index: PathBuf,
 
-    /// The config file descriptor to use for defining RDF elements to pseudonymize.
-    /// Defaults to `stdin`.
-    /// Format: yaml
-    #[arg(short, long, default_value = "-")]
-    config: PathBuf,
 
-    /// The input file descriptor to use for outputting the RDF triples.
+    /// File descriptor to read input triples from.
     /// Defaults to `stdin`.
-    /// Format: .nt
-    #[arg(short, long, default_value = "-")]
+    #[arg(default_value = "-")]
     input: PathBuf,
 
-    /// The output file descriptor to use for outputting the RDF triples.
-    // Defaults to `stdout`.
+    /// Output file descriptor for pseudonymized triples.
+    /// Defaults to `stdout`.
     #[arg(short, long, default_value = "-")]
     output: PathBuf,
 }
 
 #[derive(Subcommand, Debug)]
 enum Subcommands {
-    /// 1. Pass: Create the node-to-type mapping.
-    // This is used in `encrypt` for the second pass to
-    // encrypt RDF triples based on some rules.
-    CreateTypeMap(TypeMapArgs),
+    /// 1. Pass: Create a node-to-type index from input triples.
+    // This is used in `pseudonymize` for the second pass to
+    // pseudonymize RDF triples based on a configuration.
+    Index(IndexArgs),
 
-    /// 2. Pass: Encrypt RDF triples read from a file descriptor (default `stdin`)
-    // This is based on rules and output them again on a file descriptor (default `stdout`)
-    Encrypt(EncryptArgs),
+    /// 2. Pass: Pseudonymize input triples.
+    // A config file defines pseudonymization rules. The deidentified triples are sent to the
+    // output file descriptor. (default `stdout`)
+    Pseudo(PseudoArgs),
 }
 
 fn main() {
-    let log = create_logger(true);
+    let log = create_logger(false);
     let cli = Cli::parse();
 
     match cli.command {
-        Subcommands::CreateTypeMap(args) => {
-            info!(log, "Args: {:?}", args)
-        }
-        Subcommands::Encrypt(args) => {
+        Subcommands::Index(args) => {
             info!(log, "Args: {:?}", args);
-            encrypt(
-                &log,
-                &args.input,
-                &args.config,
-                &args.output,
-                &args.type_map_file,
-            )
+            create_type_map(&args.input, &args.output)
+        }
+        Subcommands::Pseudo(args) => {
+            info!(log, "Args: {:?}", args);
+            pseudonymize_graph(&log, &args.input, &args.output, &args.index)
         }
     }
 }

@@ -3,13 +3,25 @@ use crate::rules::Config;
 use serde_yaml;
 
 use std::{
-    fs::File, io::{BufRead, BufReader}, iter::Map, path::Path
+    boxed::Box,
+    fs::File,
+    io::{stdin, stdout, BufRead, BufReader, BufWriter, Write},
+    path::Path,
 };
 
-pub fn get_buffer(path: &Path) -> BufReader<File> {
-    return match File::open(&path) {
-        Ok(file) => BufReader::new(file),
-        Err(e) => panic!("Cannot open file '{path:?}': '{e}'."),
+/// Get a reader based on input path, either from stdin or a file.
+pub fn get_reader(path: &Path) -> Box<dyn BufRead> {
+    return match path.to_str().unwrap() {
+        "-" => Box::new(BufReader::new(stdin())),
+        _ => Box::new(BufReader::new(File::open(&path).unwrap())),
+    };
+}
+
+/// Get a writer based on input path, either to stdout or a file.
+pub fn get_writer(path: &Path) -> Box<dyn Write> {
+    return match path.to_str().unwrap() {
+        "-" => Box::new(BufWriter::new(stdout())),
+        path => Box::new(BufWriter::new(File::open(path).unwrap())),
     };
 }
 

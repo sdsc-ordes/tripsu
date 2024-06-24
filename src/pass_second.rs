@@ -1,7 +1,8 @@
 use rio_api::{model::Triple, parser::TriplesParser};
 use rio_turtle::TurtleError;
 use std::{
-    io::{BufRead, BufReader},
+    collections::HashMap,
+    io::{BufRead, Write},
     path::Path,
 };
 
@@ -11,36 +12,51 @@ use crate::{
     model::{pseudonymize_triple, TripleMask},
 };
 
+fn mask_triple(triple: &Triple) -> TripleMask {
+    return TripleMask::SUBJECT;
+}
+
 // mask and encode input triple
 // NOTE: This will need the type-map to perform masking
-fn process_triple(triple: &Triple) -> Result<(), TurtleError> {
-    let mask = TripleMask::SUBJECT;
-    println!("{}", pseudonymize_triple(&triple, mask).to_string());
+fn process_triple(triple: &Triple, out: &mut impl Write) -> Result<(), TurtleError> {
+    let mask = mask_triple(triple);
+    let pseudo_triple = pseudonymize_triple(&triple, mask);
+    let _ = out.write(&format!("{} .\n", &pseudo_triple.to_string()).into_bytes());
+
     Ok(())
 }
 
-pub fn encrypt(log: &Logger, input: &Path, config: &Path, output: &Path, type_map_file: &Path) {
-    // Construct the buffer either from `stdio` or from an input file.
-    //
-    // This object is constructed on the stack and is a `trait object`.
-    // The wide-pointer `buffer` will have a pointer to the vtable
-    // and pointer to data on the stack.
-    // Normally that would be done with `Box::new(std::io::stdin())` on the heap, but since the
-    // newest version in Rust that also works on the stack (life-time extensions).
-    let buffer: &mut dyn BufRead = match input.to_str().unwrap() {
-        "-" => &mut BufReader::new(std::io::stdin()),
-        _ => &mut io::get_buffer(input),
-    };
-    let config = io::parse_config(config);
-    let mut triples = io::parse_ntriples(buffer);
-    while !triples.is_end() {
-        triples.parse_step(&mut |t| process_triple(&t)).unwrap();
+// Create a index mapping node -> type from an input ntriples buffer
+fn load_type_map(input: impl BufRead) -> HashMap<String, String> {
+    let mut node_to_type: HashMap<String, String> = HashMap::new();
+    let mut triples = io::parse_ntriples(input);
 
+    while !triples.is_end() {
+        let _: Result<(), TurtleError> = triples.parse_step(&mut |t| {
+            node_to_type.insert(t.subject.to_string(), t.object.to_string());
+            Ok(())
+        });
+    }
+
+    return node_to_type;
+}
+
+pub fn pseudonymize_graph(log: &Logger, input: &Path, output: &Path, index: &Path) {
+    let buf_input = io::get_reader(input);
+    let buf_index = io::get_reader(index);
+    let mut buf_output = io::get_writer(output);
+
+    let node_to_type: HashMap<String, String> = load_type_map(buf_index);
+    let mut triples = io::parse_ntriples(buf_input);
+    while !triples.is_end() {
+        triples
+            .parse_step(&mut |t| process_triple(&t, &mut buf_output))
+            .unwrap();
     }
 }
 #[cfg(test)]
 mod tests {
-    use super::encrypt;
+    use super::pseudonymize_graph;
     use crate::log;
     use std::path::Path;
 
