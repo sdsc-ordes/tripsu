@@ -52,7 +52,6 @@ use super::{parse_config, parse_ntriples};
                 Ok(())
             })
             .expect("Error parsing triple");
-
     }
     // Test the parsing of a config file.
     #[test]
