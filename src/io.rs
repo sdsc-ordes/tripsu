@@ -35,28 +35,23 @@ pub fn parse_config(path: &Path) -> () {
 
 #[cfg(test)]
 mod tests {
-    use super::{parse_config, parse_ntriples};
-    use std::{
-        io::{BufRead, BufReader},
-        path::Path,
-    };
+    use super::parse_ntriples;
+    use rio_api::parser::TriplesParser;
+    use std::io::{BufRead, BufReader};
 
     #[test]
     // Test the parsing of a triple.
-    fn simple_parsing() {
+    fn triple_parsing() {
         let input: &[u8] = "<http://example.org/resource2> <http://example.org/relatedTo> <http://example.org/resource3> .\n".as_bytes();
         let buffer_input: Box<dyn BufRead> = Box::new(BufReader::new(input));
-        parse_ntriples(buffer_input).for_each(|t| {
-            assert_eq!(t.subject, "A"); // to replace with http://example.org/resource2
-            assert_eq!(t.predicate, "B"); // to replace with http://example.org/relatedTo
-            assert_eq!(t.object, "C"); // to replace with http://example.org/resource3
-        });
-
-        #[test]
-        // Test the parsing of a config file.
-        fn config_parsing() {
-            let config_path = Path::new("tests/data/config.yaml");
-            parse_config(config_path);
-        }
+        let mut triples = parse_ntriples(buffer_input);
+        triples
+            .parse_all(&mut |t| -> Result<(), Box<dyn std::error::Error>> {
+                assert_eq!(t.subject.to_string(), "<http://example.org/resource2>");
+                assert_eq!(t.predicate.to_string(), "<http://example.org/relatedTo>");
+                assert_eq!(t.object.to_string(), "<http://example.org/resource3>");
+                Ok(())
+            })
+            .expect("Error parsing triple");
     }
 }

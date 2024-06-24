@@ -46,7 +46,7 @@ mod tests {
 
     #[test]
     // Test the parsing of a triple.
-    fn simple_encryption() {
+    fn encrypt_nt_file() {
         let input_path = Path::new("tests/data/test.nt");
         let config_path = Path::new("tests/data/config.yaml");
         let output_path = Path::new("tests/data/output.nt");
