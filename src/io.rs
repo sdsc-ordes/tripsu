@@ -1,11 +1,10 @@
 use rio_turtle::NTriplesParser;
+use serde::de::DeserializeOwned;
 use crate::rules::Config;
 use serde_yaml;
 
 use std::{
-    fs::File,
-    io::{BufRead, BufReader},
-    path::Path,
+    fs::File, io::{BufRead, BufReader}, iter::Map, path::Path
 };
 
 pub fn get_buffer(path: &Path) -> BufReader<File> {
@@ -22,11 +21,10 @@ pub fn parse_ntriples(reader: impl BufRead) -> NTriplesParser<impl BufRead> {
 }
 
 // Parse yaml configuration file.
-pub fn parse_config(path: &Path) -> () {
+pub fn parse_config(path: &Path) -> Config {
     return match File::open(&path) {
         Ok(file) => {
-            let res: Config = serde_yaml::from_reader(file).unwrap();
-            println!("{:?}", res);
+            serde_yaml::from_reader(file).unwrap()
         }
         Err(e) => panic!("Cannot open file '{:?}': '{}'.", path, e),
     };
@@ -58,8 +56,14 @@ use super::{parse_config, parse_ntriples};
 
     }
     // Test the parsing of a config file.
+    #[test]
     fn config_parsing() {
         let config_path = Path::new("tests/data/config.yaml");
-        parse_config(config_path);
+        let config = parse_config(config_path);
+        assert_eq!(config.replace_values_of_nodes_with_type[0], "http://xmlns.com/foaf/0.1/Person");
+        assert_eq!(config.replace_values_of_nodes_with_type[1], "http://xmlns.com/foaf/OnlineAccount");
+        assert_eq!(config.replace_values_of_subject_predicate[0].1, "http://schema.org/name");
+        assert_eq!(config.replace_values_of_subject_predicate[1].0, "http://xmlns.com/foaf/0.1/Person");
+        assert_eq!(config.replace_value_of_predicate[0], "http://schema.org/accessCode")
     }
 }
