@@ -1,4 +1,5 @@
 use rio_turtle::NTriplesParser;
+use serde::de::DeserializeOwned;
 use crate::rules::Config;
 use serde_yml;
 
