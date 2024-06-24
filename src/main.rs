@@ -39,7 +39,6 @@ struct IndexArgs {
 }
 
 #[derive(Args, Debug)]
-
 struct PseudoArgs {
     /// Index file produced by prepare-index.
     /// Required for pseudonymization.

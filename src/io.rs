@@ -1,8 +1,6 @@
 use crate::rules::Config;
 use rio_turtle::NTriplesParser;
 use serde_yml;
-
-
 use std::{
     boxed::Box,
     fs::File,
@@ -38,6 +36,7 @@ pub fn parse_config(path: &Path) -> Config {
         Ok(file) => serde_yml::from_reader(file).expect("Error parsing config file."),
         Err(e) => panic!("Cannot open file '{:?}': '{}'.", path, e),
     };
+  
 }
 
 #[cfg(test)]
