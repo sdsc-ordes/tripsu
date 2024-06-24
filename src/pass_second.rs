@@ -32,9 +32,9 @@ fn load_type_map(input: impl BufRead) -> HashMap<String, String> {
     let mut triples = io::parse_ntriples(input);
 
     while !triples.is_end() {
-        let _ = triples.parse_step(&mut |t| {
+        let _: Result<(), TurtleError> = triples.parse_step(&mut |t| {
             node_to_type.insert(t.subject.to_string(), t.object.to_string());
-            Ok(()) as Result<(), TurtleError>
+            Ok(()) 
         });
     }
 

@@ -10,7 +10,7 @@ mod rules;
 // Define the imports.
 use crate::{
     log::{create_logger, info},
-    pass_first::create_index,
+    pass_first::create_type_map,
     pass_second::pseudonymize_graph,
 };
 
