@@ -34,7 +34,7 @@ fn load_type_map(input: impl BufRead) -> HashMap<String, String> {
     while !triples.is_end() {
         let _: Result<(), TurtleError> = triples.parse_step(&mut |t| {
             node_to_type.insert(t.subject.to_string(), t.object.to_string());
-            Ok(()) 
+            Ok(())
         });
     }
 

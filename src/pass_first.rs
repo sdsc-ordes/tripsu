@@ -1,9 +1,6 @@
 use rio_api::{model::Triple, parser::TriplesParser};
 use rio_turtle::TurtleError;
-use std::{
-    io::{stdin, BufRead, BufReader, Write},
-    path::Path,
-};
+use std::{io::Write, path::Path};
 
 use crate::io;
 
@@ -19,11 +16,7 @@ fn index_triple(t: Triple, out: &mut impl Write) -> Result<(), TurtleError> {
 }
 
 pub fn create_type_map(input: &Path, output: &Path) {
-    let buf_in: Box<dyn BufRead> = match input.to_str().unwrap() {
-        "-" => Box::new(BufReader::new(stdin())),
-        _ => Box::new(io::get_reader(input)),
-    };
-    
+    let buf_in = io::get_reader(input);
     let mut buf_out = io::get_writer(output);
     let mut triples = io::parse_ntriples(buf_in);
     while !triples.is_end() {
