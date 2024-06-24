@@ -6,7 +6,7 @@ use std::{
     path::Path,
 };
 
-// Get a reader based on input path, either from stdin or a file.
+/// Get a reader based on input path, either from stdin or a file.
 pub fn get_reader(path: &Path) -> Box<dyn BufRead> {
 
     return match path.to_str().unwrap() {
