@@ -1,13 +1,12 @@
-use rio_turtle::NTriplesParser;
-use serde::de::DeserializeOwned;
 use crate::rules::Config;
+use rio_turtle::NTriplesParser;
 use serde_yml;
 
 
 use std::{
     boxed::Box,
     fs::File,
-    io::{BufRead, BufReader, stdin, BufWriter, Write, stdout},
+    io::{stdin, stdout, BufRead, BufReader, BufWriter, Write},
     path::Path,
 };
 
@@ -23,7 +22,7 @@ pub fn get_reader(path: &Path) -> Box<dyn BufRead> {
 pub fn get_writer(path: &Path) -> Box<dyn Write> {
     return match path.to_str().unwrap() {
         "-" => Box::new(BufWriter::new(stdout())),
-        path => Box::new(BufWriter::new(File::open(path).unwrap())),
+        path => Box::new(BufWriter::new(File::create(path).unwrap())),
     };
 }
 
@@ -36,16 +35,14 @@ pub fn parse_ntriples(reader: impl BufRead) -> NTriplesParser<impl BufRead> {
 // Parse yaml configuration file.
 pub fn parse_config(path: &Path) -> Config {
     return match File::open(&path) {
-        Ok(file) => {
-            serde_yml::from_reader(file).unwrap()
-        }
+        Ok(file) => serde_yml::from_reader(file).expect("Error parsing config file."),
         Err(e) => panic!("Cannot open file '{:?}': '{}'.", path, e),
     };
 }
 
 #[cfg(test)]
 mod tests {
-use super::{parse_config, parse_ntriples};
+    use super::{parse_config, parse_ntriples};
     use rio_api::parser::TriplesParser;
     use std::{
         io::{BufRead, BufReader},
@@ -66,17 +63,31 @@ use super::{parse_config, parse_ntriples};
                 Ok(())
             })
             .expect("Error parsing triple");
-
     }
     // Test the parsing of a config file.
     #[test]
     fn config_parsing() {
         let config_path = Path::new("tests/data/config.yaml");
         let config = parse_config(config_path);
-        assert_eq!(config.replace_values_of_nodes_with_type[0], "http://xmlns.com/foaf/0.1/Person");
-        assert_eq!(config.replace_values_of_nodes_with_type[1], "http://xmlns.com/foaf/OnlineAccount");
-        assert_eq!(config.replace_values_of_subject_predicate[0].1, "http://schema.org/name");
-        assert_eq!(config.replace_values_of_subject_predicate[1].0, "http://xmlns.com/foaf/0.1/Person");
-        assert_eq!(config.replace_value_of_predicate[0], "http://schema.org/accessCode")
+        assert_eq!(
+            config.replace_values_of_nodes_with_type[0],
+            "http://xmlns.com/foaf/0.1/Person"
+        );
+        assert_eq!(
+            config.replace_values_of_nodes_with_type[1],
+            "http://xmlns.com/foaf/OnlineAccount"
+        );
+        assert_eq!(
+            config.replace_values_of_subject_predicate[0].1,
+            "http://schema.org/name"
+        );
+        assert_eq!(
+            config.replace_values_of_subject_predicate[1].0,
+            "http://xmlns.com/foaf/0.1/Person"
+        );
+        assert_eq!(
+            config.replace_value_of_predicate[0],
+            "http://schema.org/accessCode"
+        )
     }
 }

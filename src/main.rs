@@ -46,22 +46,15 @@ struct PseudoArgs {
     #[arg(short, long)]
     index: PathBuf,
 
-
     /// File descriptor to read input triples from.
     /// Defaults to `stdin`.
     #[arg(default_value = "-")]
+    input: PathBuf,
 
     /// The config file descriptor to use for defining RDF elements to pseudonymize.
-    /// Defaults to `stdin`.
     /// Format: yaml
     #[arg(short, long, default_value = "-")]
     config: PathBuf,
-
-    /// The input file descriptor to use for outputting the RDF triples.
-    /// Defaults to `stdin`.
-    /// Format: .nt
-    #[arg(short, long, default_value = "-")]
-    input: PathBuf,
 
     /// Output file descriptor for pseudonymized triples.
     /// Defaults to `stdout`.
@@ -93,7 +86,7 @@ fn main() {
         }
         Subcommands::Pseudo(args) => {
             info!(log, "Args: {:?}", args);
-            pseudonymize_graph(&log, &args.input, &args.output, &args.index)
+            pseudonymize_graph(&log, &args.input, &args.config, &args.output, &args.index)
         }
     }
 }
