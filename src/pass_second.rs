@@ -22,6 +22,7 @@ fn process_triple(triple: &Triple, out: &mut impl Write) -> Result<(), TurtleErr
     let _ = out.write(
                 &format!("{} .\n", &pseudo_triple.to_string()).into_bytes()
     );
+    
     Ok(())
 }
 
