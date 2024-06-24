@@ -18,6 +18,7 @@ fn index_triple(t: Triple, out: &mut impl Write) -> Result<(), TurtleError> {
         _ => {}
             
     }
+
     Ok(())
 }
 
