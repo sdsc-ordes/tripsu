@@ -22,7 +22,7 @@ COPY rust-toolchain.toml /container-setup/
 RUN cd /container-setup && \
     git init && git add . && \
     nix --accept-flake-config \
-    build --no-link "./tools/nix#devShells.x86_64-linux.ci"
+    build --no-link "./nix#devShells.x86_64-linux.ci"
 
 # Format image.
 # ===============================================
