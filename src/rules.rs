@@ -10,5 +10,5 @@ pub struct Config {
     pub replace_values_of_subject_predicate: HashMap<String, HashSet<String>>,
 
     // Replace values in matched `predicates`.
-    pub replace_value_of_predicate: Vec<String>,
+    pub replace_value_of_predicate: HashSet<String>,
 }
