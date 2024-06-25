@@ -12,16 +12,6 @@ stages:
   - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
     when: always
 
-lint:
-  stage: lint
-  needs: []
-  image: ghcr.io/sdsc-ordes/rdf-protect:ci-lint-1.0.0
-  rules:
-    - *defaults-rules
-  script:
-    - source .gitlab/scripts/before-script.sh
-    - nix develop .#ci --command just lint
-
 format:
   stage: format
   needs: []
@@ -30,8 +20,18 @@ format:
     - *defaults-rules
   script:
     - source .gitlab/scripts/before-script.sh
-    - nix develop .#ci --command just format-general
-    - nix develop .#ci --command just format
+    - just nix-develop-ci just format-general
+    - just nix-develop-ci just format
+
+lint:
+  stage: lint
+  needs: []
+  image: ghcr.io/sdsc-ordes/rdf-protect:ci-lint-1.0.0
+  rules:
+    - *defaults-rules
+  script:
+    - source .gitlab/scripts/before-script.sh
+    - just nix-develop-ci just lint
 
 build:
   stage: build
@@ -41,4 +41,4 @@ build:
     - *defaults-rules
   script:
     - source .gitlab/scripts/before-script.sh
-    - nix develop .#ci --command just build
+    - just nix-develop-ci just build
