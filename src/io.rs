@@ -34,7 +34,7 @@ pub fn get_reader(path: &Path) -> Reader {
 pub fn get_writer(path: &Path) -> Writer {
     return match path.to_str().unwrap() {
         "-" => Writer::Stdio(BufWriter::new(stdout())),
-        path => Writer::File(BufWriter::new(File::open(path).unwrap())),
+        path => Writer::File(BufWriter::new(File::create(path).unwrap())),
     };
 }
 
