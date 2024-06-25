@@ -57,7 +57,7 @@
         };
 
         # Set the rust toolchain from the `rust-toolchain.toml`.
-        rustToolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile ../rust-toolchain.toml;
+        rustToolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile ../../rust-toolchain.toml;
 
         # Things needed only at compile-time.
         nativeBuildInputsBasic = with pkgs; [
@@ -84,7 +84,7 @@
 
             ci = mkShell {
               inherit buildInputs;
-              nativeBuildInputs = nativeBuildInputsBasic;
+              nativeBuildInputs = nativeBuildInputsBasic ++ nativeBuildInputsDev;
             };
           };
         }

@@ -1,0 +1,44 @@
+stages:
+  - lint
+  - format
+  - build
+
+.defaults-rules: &defaults-rules
+  - if: "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^feature|bugfix/ ||
+      $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+    when: always
+
+.main-rules: &main-rules
+  - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+    when: always
+
+lint:
+  stage: lint
+  needs: []
+  image: ghcr.io/sdsc-ordes/rdf-protect:ci-lint-1.0.0
+  rules:
+    - *defaults-rules
+  script:
+    - source .gitlab/scripts/before-script.sh
+    - nix develop .#ci --command just lint
+
+format:
+  stage: format
+  needs: []
+  image: ghcr.io/sdsc-order/rdf-protect:ci-format-1.0.0
+  rules:
+    - *defaults-rules
+  script:
+    - source .gitlab/scripts/before-script.sh
+    - nix develop .#ci --command just format-general
+    - nix develop .#ci --command just format
+
+build:
+  stage: build
+  needs: []
+  image: ghcr.io/sdsc-ordes/rdf-protect:ci-build-1.0.0
+  rules:
+    - *defaults-rules
+  script:
+    - source .gitlab/scripts/before-script.sh
+    - nix develop .#ci --command just build
