@@ -20,21 +20,22 @@ The tool works in two steps:
 
 <details>
     <summary>Table of Content</summary>
+
 <!--toc:start-->
 
 - [RDF Protect](#rdf-protect)
   - [Installation & Usage](#installation-usage)
     - [Usage](#usage)
-    - [Use Case](#use-cases)
+    - [Use Case](#use-case)
     - [Example](#example)
-  - [Development](#development)
-    - [Requirements](#requirements)
-    - [Nix](#nix)
-    - [Formatting](#formatting)
-    - [Building](#building)
-    - [Testing](#testing)
+      - [1. Pseudonymize the URI of nodes with `rdf:type`](#1-pseudonymize-the-uri-of-nodes-with-rdftype)
+      - [2. Pseudonymize values for specific subject-predicate combinations](#2-pseudonymize-values-for-specific-subject-predicate-combinations)
+      - [3. Pseudonymize any value for a given predicate](#3-pseudonymize-any-value-for-a-given-predicate)
+  - [Development](#development) - [Setup](#setup) -
+  [Development Shell with `nix`](#development-shell-with-nix) -
+  [Formatting](#formatting) - [Building](#building) - [Testing](#testing)
+  <!--toc:end-->
 
-<!--toc:end-->
 </details>
 
 ## Installation & Usage
