@@ -36,7 +36,6 @@ pub fn parse_config(path: &Path) -> Config {
         Ok(file) => serde_yml::from_reader(file).expect("Error parsing config file."),
         Err(e) => panic!("Cannot open file '{:?}': '{}'.", path, e),
     };
-  
 }
 
 #[cfg(test)]
@@ -77,12 +76,20 @@ mod tests {
             "http://xmlns.com/foaf/OnlineAccount"
         );
         assert_eq!(
-            config.replace_values_of_subject_predicate.get("http://xmlns.com/foaf/OnlineAccount").unwrap()[0],
-            "http://schema.org/name"
+            config
+                .replace_values_of_subject_predicate
+                .get("http://xmlns.com/foaf/OnlineAccount")
+                .expect("Error parsing replace_values_of_subject_predicate in config.yaml")
+                .contains("http://schema.org/name"),
+            true
         );
         assert_eq!(
-            config.replace_values_of_subject_predicate.get("http://xmlns.com/foaf/0.1/Person").unwrap()[0],
-            "http://schema.org/name"
+            config
+                .replace_values_of_subject_predicate
+                .get("http://xmlns.com/foaf/0.1/Person")
+                .expect("Error parsing replace_values_of_subject_predicate in config.yaml")
+                .contains("http://schema.org/name"),
+            true
         );
         assert_eq!(
             config.replace_value_of_predicate[0],
