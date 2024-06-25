@@ -1,4 +1,6 @@
+use crate::rules::Config;
 use rio_turtle::NTriplesParser;
+use serde_yml;
 use std::{
     boxed::Box,
     fs::File,
@@ -24,7 +26,7 @@ pub enum Writer {
 pub fn get_reader(path: &Path) -> Reader {
     return match path.to_str().unwrap() {
         "-" => Reader::Stdio(BufReader::new(stdin())),
-        _ => Reader::File(BufReader::new(File::open(&path).unwrap())),
+        path => Reader::File(BufReader::new(File::open(path).unwrap())),
     };
 }
 
@@ -42,14 +44,42 @@ pub fn parse_ntriples(reader: impl BufRead) -> NTriplesParser<impl BufRead> {
     return NTriplesParser::new(reader);
 }
 
+// Parse yaml configuration file.
+pub fn parse_config(path: &Path) -> Config {
+    return match File::open(&path) {
+        Ok(file) => serde_yml::from_reader(file).expect("Error parsing config file."),
+        Err(e) => panic!("Cannot open file '{:?}': '{}'.", path, e),
+    };
+}
+
 #[cfg(test)]
 mod tests {
+    use super::{parse_config, parse_ntriples};
+    use rio_api::parser::TriplesParser;
+    use std::{
+        io::{BufRead, BufReader},
+        path::Path,
+    };
+
     #[test]
     // Test the parsing of a triple.
-    fn parse_ntriples() {
-        let input = "\n
-                <http://example.org/resource2> <http://example.org/relatedTo> <http://example.org/resource3>\n
-                <http://example.org/resource2> <http://example.org/relatedTo> <http://example.org/resource3>\n
-            ";
+    fn triple_parsing() {
+        let input: &[u8] = "<http://example.org/resource2> <http://example.org/relatedTo> <http://example.org/resource3> .\n".as_bytes();
+        let buffer_input: Box<dyn BufRead> = Box::new(BufReader::new(input));
+        let mut triples = parse_ntriples(buffer_input);
+        triples
+            .parse_all(&mut |t| -> Result<(), Box<dyn std::error::Error>> {
+                assert_eq!(t.subject.to_string(), "<http://example.org/resource2>");
+                assert_eq!(t.predicate.to_string(), "<http://example.org/relatedTo>");
+                assert_eq!(t.object.to_string(), "<http://example.org/resource3>");
+                Ok(())
+            })
+            .expect("Error parsing triple");
+    }
+    // Test the parsing of a config file.
+    #[test]
+    fn config_parsing() {
+        let config_path = Path::new("tests/data/config.yaml");
+        parse_config(&config_path);
     }
 }

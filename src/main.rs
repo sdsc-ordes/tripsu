@@ -10,7 +10,7 @@ mod rules;
 // Define the imports.
 use crate::{
     log::{create_logger, info},
-    pass_first::create_index,
+    pass_first::create_type_map,
     pass_second::pseudonymize_graph,
 };
 
@@ -31,7 +31,7 @@ struct IndexArgs {
     /// Output file descriptor to for the node-to-type index.
     #[arg(short, long, default_value = "-")]
     output: PathBuf,
-    
+
     /// File descriptor to read triples from.
     /// Defaults to `stdin`.
     #[arg(default_value = "-")]
@@ -41,7 +41,7 @@ struct IndexArgs {
 #[derive(Args, Debug)]
 struct PseudoArgs {
     /// Index file produced by prepare-index.
-    /// Required for pseudonymization. 
+    /// Required for pseudonymization.
     #[arg(short, long)]
     index: PathBuf,
 
@@ -49,6 +49,11 @@ struct PseudoArgs {
     /// Defaults to `stdin`.
     #[arg(default_value = "-")]
     input: PathBuf,
+
+    /// The config file descriptor to use for defining RDF elements to pseudonymize.
+    /// Format: yaml
+    #[arg(short, long)]
+    config: PathBuf,
 
     /// Output file descriptor for pseudonymized triples.
     /// Defaults to `stdout`.
@@ -76,11 +81,12 @@ fn main() {
     match cli.command {
         Subcommands::Index(args) => {
             info!(log, "Args: {:?}", args);
-            create_index(&args.input, &args.output)
+            create_type_map(&args.input, &args.output)
         }
         Subcommands::Pseudo(args) => {
             info!(log, "Args: {:?}", args);
-            pseudonymize_graph(&log, &args.input, &args.output, &args.index)
+            pseudonymize_graph(&log, &args.input, &args.config, &args.output, &args.index)
+
         }
     }
 }
