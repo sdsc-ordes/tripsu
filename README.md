@@ -74,36 +74,17 @@ Options:
 Indexing only requires an RDF file as input:
 
 ```shell
-$ rdf-protect index --help
-1. Pass: Create a node-to-type index from input triples
-
-Usage: rdf-protect index [OPTIONS] [INPUT]
-
-Arguments:
-  [INPUT]  File descriptor to read triples from. Defaults to `stdin` [default: -]
-
-Options:
-  -o, --output <OUTPUT>  Output file descriptor to for the node-to-type index [default: -]
-  -h, --help             Print help
+$ rdf-protect index input.nt > index.nt
 ```
 
 Pseudonomyzation requires an RDF file, index and config as input:
 
 ```shell
-$ rdf-protect pseudo --help
-2. Pass: Pseudonymize input triples
-
-Usage: rdf-protect pseudo [OPTIONS] --index <INDEX> --config <CONFIG> [INPUT]
-
-Arguments:
-  [INPUT]  File descriptor to read input triples from. Defaults to `stdin` [default: -]
-
-Options:
-  -i, --index <INDEX>    Index file produced by prepare-index. Required for pseudonymization
-  -c, --config <CONFIG>  The config file descriptor to use for defining RDF elements to pseudonymize. Format: yaml
-  -o, --output <OUTPUT>  Output file descriptor for pseudonymized triples. Defaults to `stdout` [default: -]
-  -h, --help             Print help
+$ rdf-protect pseudo --index index.nt --config rules.yaml input.nt > output.nt
 ```
+
+> [!TIP]
+> For each subcommand, you can use `--help` to see all options. 
 
 In both subcommands, the input defaults to stdin and the output to stdout,
 allowing to pipe both up- and downstream `rdf-protect` (see next section).
@@ -132,9 +113,12 @@ There are three possible ways to pseudonymize RDF triples:
 2. Pseudonymize values for specific subject-predicate combinations.
 3. Pseudonymize any value for a given predicate.
 
+
 By using all three ways together, we're able to get an RDF file with sensitive
 information:
-
+<details>
+    <summary><b>Click to show input</b></summary>
+    
 ```ntriples
 <http://example.org/Alice> <http://www.w3.org/2000/01/rdf-schema#type> <http://xmlns.com/foaf/0.1/Person> .
 <http://example.org/Alice> <http://xmlns.com/foaf/0.1/holdsAccount> <http://example.org/Alice-Bank-Account> .
@@ -146,9 +130,14 @@ information:
 <http://example.org/Bank> <http://schema.org/name> "Bank" .
 ```
 
+</details>
+
 And pseudonymize the sensitive information such as people's names, personal and
 secret information while keeping the rest as is:
 
+<details>
+    <summary><b>Click to show output</b></summary>
+    
 ```
 <http://example.org/af321bbc> <http://www.w3.org/2000/01/rdf-schema#type> <http://xmlns.com/foaf/0.1/Person> .
 <http://example.org/af321bbc> <http://xmlns.com/foaf/0.1/holdsAccount> <http://example.org/bs2313bc> .
@@ -160,11 +149,16 @@ secret information while keeping the rest as is:
 <http://example.org/Bank> <http://schema.org/name> "Bank" .
 ```
 
+</details>
+
 The next subsections break down each of the three pseudonymization approaches to
 better understand how they operate.
 
 #### 1. Pseudonymize the URI of nodes with `rdf:type`
 
+<details>
+    <summary><b>Click to show</b></summary>
+    
 Given the following config:
 
 ```yaml
@@ -185,7 +179,12 @@ Would become:
 <http://example.org/af321bbc> <http://www.w3.org/2000/01/rdf-schema#type> <http://xmlns.com/foaf/0.1/Person> .
 ```
 
+</details>
+
 #### 2. Pseudonymize values for specific subject-predicate combinations
+
+<details>
+    <summary><b>Click to show</b></summary>
 
 Given the following config:
 
@@ -214,7 +213,12 @@ Would become:
 <http://example.org/Bank> <http://schema.org/name> "Bank" .
 ```
 
+</details>
+
 #### 3. Pseudonymize any value for a given predicate
+
+<details>
+    <summary><b>Click to show</b></summary>
 
 Given the following config:
 
@@ -241,6 +245,7 @@ Would become:
 <http://example.org/Bank> <http://www.w3.org/2000/01/rdf-schema#type> <http://xmlns.com/foaf/0.1/Organization> .
 <http://example.org/Bank> <http://schema.org/name> "38a3dd71" .
 ```
+</details>
 
 ## Development
 
