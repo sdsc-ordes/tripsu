@@ -34,7 +34,7 @@ The tool works in two steps:
 
 The package must be compiled from source using [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html):
 
-```sh
+```shell
 git clone https://github.com/sdsc-ordes/rdf-protect
 cd rdf-protect
 cargo build --release
@@ -97,7 +97,7 @@ Options:
 
 In both subcommands, the input defaults to stdin and the output to stdout, allowing to pipe both up- and downstream `rdf-protect` (see next section).
 
-### Use case
+### Use Case
 
 The main idea behind `rdf-protect` is to integrate smoothly into other CLI tools up- and downstream via  piping.  
 Let us assume that we're running a SPARQL query on a large graph and we would like to pseudonymize some of the triples. This is how the flow should look like:
@@ -112,9 +112,9 @@ For this flow to stream data instead of loading everything into memory, we had t
 
 There are three possible ways to pseudonymize RDF triples:
 
-1. Pseudonymize the URI of nodes with `rdf:type`
-2. Pseudonymize values for specific subject-predicate combinations
-3. Pseudonymize any value for a given predicate
+1. Pseudonymize the URI of nodes with `rdf:type`.
+2. Pseudonymize values for specific subject-predicate combinations.
+3. Pseudonymize any value for a given predicate.
 
 By using all three ways together, we're able to get an RDF file with sensitive information:
 
