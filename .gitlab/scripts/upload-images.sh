@@ -22,7 +22,7 @@ function build_ci_image() {
         -t "$image_name" \
         . || die "Could not build image."
 
-    ci_container_mgr push -f "$image_name" || die "Could not upload image."
+    ci_container_mgr push "$image_name" || die "Could not upload image."
 }
 
 repository="${1:-ghcr.io/sdsc-ordes/rdf-protect}"

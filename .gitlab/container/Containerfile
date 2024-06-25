@@ -14,15 +14,15 @@ RUN apk add findutils coreutils git jq curl bash just parallel podman
 # ===============================================
 FROM base-podman as ci-nix
 RUN [ "TARGETPLATFORM" = "linux/amd64" ] || echo "Platform not yet supported."
-COPY ./tools /container-setup
+COPY ./tools /container-setup/tools
 
 # Install Nix and pre-cache the env.
-RUN bash -c ". /container-setup/general.sh && ci_setup_nix"
+RUN bash -c ". /container-setup/tools/general.sh && ci_setup_nix"
 COPY rust-toolchain.toml /container-setup/
 RUN cd /container-setup && \
     git init && git add . && \
     nix --accept-flake-config \
-    build --no-link "./nix#devShells.x86_64-linux.ci"
+    build --no-link "./tools/nix#devShells.x86_64-linux.ci"
 
 # Format image.
 # ===============================================

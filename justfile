@@ -8,8 +8,8 @@ root_dir := `git rev-parse --show-toplevel`
 container_mgr := "podman"
 
 # Enter a Nix development shell.
-nix-develop:
-    cd "{{root_dir}}" && nix develop ./tools/nix#default
+nix-develop shell="zsh":
+    cd "{{root_dir}}" && nix develop ./tools/nix#default --command zsh
 
 # Build the executable.
 build *args:
