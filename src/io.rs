@@ -67,7 +67,7 @@ mod tests {
     #[test]
     fn config_parsing() {
         let config_path = Path::new("tests/data/config.yaml");
-        let config = parse_config(config_path);
+        let config = parse_config(&config_path);
         assert_eq!(
             config.replace_values_of_nodes_with_type[0],
             "http://xmlns.com/foaf/0.1/Person"
@@ -77,12 +77,12 @@ mod tests {
             "http://xmlns.com/foaf/OnlineAccount"
         );
         assert_eq!(
-            config.replace_values_of_subject_predicate[0].1,
+            config.replace_values_of_subject_predicate.get("http://xmlns.com/foaf/OnlineAccount").unwrap()[0],
             "http://schema.org/name"
         );
         assert_eq!(
-            config.replace_values_of_subject_predicate[1].0,
-            "http://xmlns.com/foaf/0.1/Person"
+            config.replace_values_of_subject_predicate.get("http://xmlns.com/foaf/0.1/Person").unwrap()[0],
+            "http://schema.org/name"
         );
         assert_eq!(
             config.replace_value_of_predicate[0],
