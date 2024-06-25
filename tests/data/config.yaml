@@ -1,15 +1,15 @@
-# Hash URIs of people and online accounts.
-replace-uris-of-nodes-with-type:
-  "http://xmlns.com/foaf/0.1/Person" # All nodes which are `rdf:type Person`.
-  "http://xmlns.com/foaf/OnlineAccount" # or `rdf::type OnlineAccount`
+# hash URIs of people and online accounts
+replace_uri_of_nodes_with_type:
+  - "http://xmlns.com/foaf/0.1/Person" # All nodes which are rdf:type Person
+  - "http://xmlns.com/foaf/OnlineAccount" # "" OnlineAccount
 
-# Hash name only for instances of person and online account.
-replace-values-of-predicate-object:
+# hash name only for instances of person and online account
+replace_values_of_subject_predicate:
   "http://xmlns.com/foaf/OnlineAccount":
-    "http://schema.org/name"
+   - "http://schema.org/name"
   "http://xmlns.com/foaf/0.1/Person":
-    "http://schema.org/name"
+   - "http://schema.org/name"
 
-# Hash accesscode values for all nodes.
-replace-values-of-predicate:
-  "http://schema.org/accessCode"
+# hash accesscode values for all nodes
+replace_value_of_predicate:
+  - "http://schema.org/accessCode"
