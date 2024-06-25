@@ -1,5 +1,5 @@
 # hash URIs of people and online accounts
-replace_values_of_nodes_with_type:
+replace_uri_of_nodes_with_type:
   - "http://xmlns.com/foaf/0.1/Person" # All nodes which are rdf:type Person
   - "http://xmlns.com/foaf/OnlineAccount" # "" OnlineAccount
 

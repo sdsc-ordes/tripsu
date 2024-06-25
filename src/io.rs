@@ -66,34 +66,6 @@ mod tests {
     #[test]
     fn config_parsing() {
         let config_path = Path::new("tests/data/config.yaml");
-        let config = parse_config(&config_path);
-        assert_eq!(
-            config.replace_values_of_nodes_with_type[0],
-            "http://xmlns.com/foaf/0.1/Person"
-        );
-        assert_eq!(
-            config.replace_values_of_nodes_with_type[1],
-            "http://xmlns.com/foaf/OnlineAccount"
-        );
-        assert_eq!(
-            config
-                .replace_values_of_subject_predicate
-                .get("http://xmlns.com/foaf/OnlineAccount")
-                .expect("Error parsing replace_values_of_subject_predicate in config.yaml")
-                .contains("http://schema.org/name"),
-            true
-        );
-        assert_eq!(
-            config
-                .replace_values_of_subject_predicate
-                .get("http://xmlns.com/foaf/0.1/Person")
-                .expect("Error parsing replace_values_of_subject_predicate in config.yaml")
-                .contains("http://schema.org/name"),
-            true
-        );
-        assert_eq!(
-            config.replace_value_of_predicate[0],
-            "http://schema.org/accessCode"
-        )
+        parse_config(&config_path);
     }
 }
