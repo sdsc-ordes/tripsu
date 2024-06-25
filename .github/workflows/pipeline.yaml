@@ -5,14 +5,15 @@ on: [push]
 jobs:
   trigger-gitlab:
     runs-on: ubuntu-latest
+    environment: "CI Gitlab"
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Mirror + Trigger CI
         uses: SvanBoxel/gitlab-mirror-and-ci-action@master
         with:
-          args: "https://gitlab.com/<namespace>/<repository>"
+          args: "https://gitlab.datascience.ch/gabriel.nuetzi/rdf-protect"
         env:
           FOLLOW_TAGS: "false"
           FORCE_PUSH: "true"
