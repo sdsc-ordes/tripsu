@@ -52,7 +52,7 @@ struct PseudoArgs {
 
     /// The config file descriptor to use for defining RDF elements to pseudonymize.
     /// Format: yaml
-    #[arg(short, long, default_value = "-")]
+    #[arg(short, long)]
     config: PathBuf,
 
     /// Output file descriptor for pseudonymized triples.
