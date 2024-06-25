@@ -1,6 +1,10 @@
-use rio_api::{model::Triple, parser::TriplesParser};
+use std::path::Path;
+use std::io::{BufRead, BufReader, stdin, Write};
+use rio_api::{
+    parser::TriplesParser,
+    model::Triple,
+};
 use rio_turtle::TurtleError;
-use std::{io::Write, path::Path};
 
 use crate::io;
 

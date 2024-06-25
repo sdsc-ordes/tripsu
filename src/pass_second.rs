@@ -1,9 +1,7 @@
 use rio_api::{model::Triple, parser::TriplesParser};
 use rio_turtle::TurtleError;
 use std::{
-    collections::HashMap,
-    io::{BufRead, Write},
-    path::Path,
+    collections::HashMap, io::{BufRead, Write}, path::Path
 };
 
 use crate::{
@@ -14,7 +12,7 @@ use crate::{
 };
 
 fn mask_triple(triple: &Triple) -> TripleMask {
-    return TripleMask::SUBJECT;
+    return TripleMask::SUBJECT
 }
 
 // mask and encode input triple

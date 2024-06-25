@@ -17,5 +17,6 @@ clap = { version = "4.5.7", features = ["derive"] }
 rio_turtle = "0.8.4"
 rio_api = "0.8.4"
 bitflags = "2.5.0"
+io-enum = "1.1.3"
 serde_yml = "0.0.10"
 tempfile = "3.10.1"
