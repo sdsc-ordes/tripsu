@@ -1,5 +1,8 @@
+use std::hash::Hash;
+
+use crate::crypto::{hash_literal, Hasher};
 use bitflags;
-use rio_api::model::{Subject, Term, Triple};
+use rio_api::model::{Literal, Subject, Term, Triple};
 
 pub trait Pseudonymize {
     fn pseudo(&self) -> Self;
@@ -47,7 +50,7 @@ pub fn pseudonymize_triple<'a>(triple: &Triple<'a>, mask: TripleMask) -> Triple<
 impl Pseudonymize for Term<'_> {
     fn pseudo(&self) -> Self {
         match self {
-            Term::Literal(val) => Term::Literal(*val),
+            Term::Literal(val) => Term::Literal(hash_literal(*val)),
             Term::NamedNode(val) => Term::NamedNode(*val),
             Term::BlankNode(val) => Term::BlankNode(*val),
             Term::Triple(_) => panic!("RDF-star not supported (triple as object)"),
