@@ -61,30 +61,43 @@
 
         # Things needed only at compile-time.
         nativeBuildInputsBasic = with pkgs; [
-          rustToolchain
-          cargo-watch
+          findutils
+          coreutils
+          bash
+          zsh
+          curl
+          git
+          jq
 
-          just
-          parallel
           podman
         ];
 
         # Things needed only at compile-time.
-        nativeBuildInputsDev = [];
+        nativeBuildInputsDev = with pkgs; [
+          rustToolchain
+          cargo-watch
+          just
+        ];
 
         # Things needed at runtime.
         buildInputs = [];
       in
-        with pkgs; {
-          devShells = {
+        with pkgs; rec {
+          devShells = rec {
             default = mkShell {
               inherit buildInputs;
               nativeBuildInputs = nativeBuildInputsBasic ++ nativeBuildInputsDev;
             };
 
-            ci = mkShell {
-              inherit buildInputs;
-              nativeBuildInputs = nativeBuildInputsBasic ++ nativeBuildInputsDev;
+            ci = default;
+          };
+
+          packages = {
+            images = {
+              ci = (import ./images/ci.nix) {
+                inherit pkgs;
+                devShellDrv = devShells.ci;
+              };
             };
           };
         }

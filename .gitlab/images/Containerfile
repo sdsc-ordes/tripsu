@@ -23,7 +23,6 @@ RUN cd /container-setup && \
     git init && git add . && \
     nix --accept-flake-config \
     build --no-link "./tools/nix#devShells.x86_64-linux.ci" && \
-    nix store gc && \
     nix store optimise
 
 # Format image.

@@ -27,7 +27,7 @@ function build_ci_image() {
 
 repository="${1:-ghcr.io/sdsc-ordes/rdf-protect}"
 tag="${2:-1.0.0}"
-container_file=".gitlab/container/Containerfile"
+container_file=".gitlab/images/Containerfile"
 
 if [ "${CI:-}" = "true" ]; then
     ci_container_mgr_login "$DOCKER_REPOSITORY_READ_USERNAME" "$DOCKER_REPOSITORY_READ_TOKEN"
