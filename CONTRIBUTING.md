@@ -29,7 +29,7 @@ welcome your pull requests:
 By contributing, you agree that your contributions will be licensed under this
 [license](LICENSE).
 
-## Important links
+## Important Links
 
 - [Open Issues](https://github.com/sdsc-ordes/rdf-protect/issues)
 - [Open Pull Requests](https://github.com/sdsc-ordes/rdf-protect/pulls)
