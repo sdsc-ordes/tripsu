@@ -1,7 +1,5 @@
-use std::rc::Rc;
-
 use blake3;
-use rio_api::model::{Literal, NamedNode, Term};
+use rio_api::model::{Literal, NamedNode};
 
 enum BoxLiteral<'a> {
     Simple {
@@ -18,8 +16,15 @@ enum BoxLiteral<'a> {
 }
 
 impl BoxLiteral<'_> {
-    fn to_literal<'a>(&'a self) -> Literal<'a> {
-        Literal::Simple { value: self }
+    pub fn to_literal<'a>(&'a self) -> Literal<'a> {
+        return Literal::Simple { value: self }
+    }
+    pub fn as_bytes(&self) -> &[u8] {
+        match self {
+            BoxLiteral::Simple { value } => value.as_bytes(),
+            BoxLiteral::LanguageTaggedString { value, language } => value.as_bytes(),
+            BoxLiteral::Typed { value, datatype } => value.as_bytes(),
+        }
     }
 }
 
@@ -43,5 +48,8 @@ impl<'a> From<Literal<'a>> for BoxLiteral<'a> {
 
 pub fn hash_literal(l: Literal) -> BoxLiteral {
     let bl = BoxLiteral::from(l);
-    return BoxLiteral.from(l)
+    let hashed_l = blake3::hash(&bl.as_bytes());
+    &hashed_l.to_hex().to_string();
+    
+    return bl
 }
