@@ -25,6 +25,8 @@ RUN cd /container-setup && \
     build --no-link "./tools/nix#devShells.x86_64-linux.ci" && \
     nix store optimise
 
+RUN git config --global safe.directory "*"
+
 # Format image.
 # ===============================================
 FROM ci-nix as ci-format

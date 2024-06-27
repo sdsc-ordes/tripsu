@@ -6,7 +6,6 @@ set -u
 ROOT_DIR=$(git rev-parse --show-toplevel)
 . "$ROOT_DIR/tools/general.sh"
 
-git config --global safe.directory "*"
 # ci_container_mgr_setup
 
 unset ROOT_DIR

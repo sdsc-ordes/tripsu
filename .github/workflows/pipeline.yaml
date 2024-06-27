@@ -48,3 +48,8 @@ jobs:
         run: |
           source .gitlab/scripts/before-script.sh &&
           just nix-develop-ci just build
+
+  deploy:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/sdsc-ordes/rdf-protect:ci-build-1.0.0
