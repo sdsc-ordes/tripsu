@@ -51,8 +51,8 @@ impl Pseudonymize for Term<'_> {
     fn pseudo(&self) -> Self {
         match self {
             Term::Literal(val) => {
-                let hashed = hash_literal(val);
-                Term::Literal(hashed.literal) // Use the literal part of the struct
+                let hashed = hash_literal(*val);
+                Term::Literal(hashed) // Use the literal part of the struct
             }
             Term::NamedNode(val) => Term::NamedNode(*val),
             Term::BlankNode(val) => Term::BlankNode(*val),
