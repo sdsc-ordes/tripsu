@@ -34,6 +34,14 @@
         flake-utils.follows = "flake-utils";
       };
     };
+
+    # The library to build the rust package.
+    crane = {
+      url = "https://github.com/ipetkov/crane";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+      };
+    };
   };
 
   outputs = {
@@ -42,8 +50,11 @@
     nixpkgsStable,
     flake-utils,
     rust-overlay,
+    crane,
     ...
-  } @ inputs:
+  } @ inputs: let
+    rootDir = "./" + "../../";
+  in
     flake-utils.lib.eachDefaultSystem
     # Creates an attribute map `{ devShells.<system>.default = ...}`
     # by calling this function:
@@ -93,6 +104,11 @@
           };
 
           packages = {
+            rdf-protect = (import pkgs/rdf-protect) {
+              inherit crane;
+              inherit rootDir;
+            };
+
             images = {
               ci = (import ./images/ci.nix) {
                 inherit pkgs;
