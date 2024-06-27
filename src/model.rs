@@ -50,7 +50,10 @@ pub fn pseudonymize_triple<'a>(triple: &Triple<'a>, mask: TripleMask) -> Triple<
 impl Pseudonymize for Term<'_> {
     fn pseudo(&self) -> Self {
         match self {
-            Term::Literal(val) => Term::Literal(hash_literal(*val)),
+            Term::Literal(val) => {
+                let hashed = hash_literal(val);
+                Term::Literal(hashed.literal) // Use the literal part of the struct
+            }
             Term::NamedNode(val) => Term::NamedNode(*val),
             Term::BlankNode(val) => Term::BlankNode(*val),
             Term::Triple(_) => panic!("RDF-star not supported (triple as object)"),
