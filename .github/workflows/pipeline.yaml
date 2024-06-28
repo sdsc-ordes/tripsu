@@ -43,9 +43,9 @@ jobs:
         uses: actions/checkout@v4
       - name: 1 - format
         run: |
-          source .gitlab/scripts/before-script.sh
-          cat justfile
-          just nix-develop-ci just format
+          source .gitlab/scripts/before-script.sh &&
+          cat justfile &&
+          just nix-develop just format
 
   lint:
     runs-on: ubuntu-latest
@@ -57,7 +57,7 @@ jobs:
       - name: 2 - lint
         run: |
           source .gitlab/scripts/before-script.sh &&
-          just nix-develop-ci just lint
+          just nix-develop just lint
 
   build:
     runs-on: ubuntu-latest
@@ -69,11 +69,11 @@ jobs:
       - name: 3 - build
         run: |
           source .gitlab/scripts/before-script.sh &&
-          just nix-develop-ci just build
+          just nix-develop just build
       # - name: 3.1 - tests
       #   run: |
       #     source .gitlab/scripts/before-script.sh &&
-      #     just nix-develop-ci just test
+      #     just nix-develop just test
 
   test:
     runs-on: ubuntu-latest
@@ -85,7 +85,7 @@ jobs:
       - name: 4 - test
         run: |
           source .gitlab/scripts/before-script.sh &&
-          just nix-develop-ci just test
+          just nix-develop just test
 
   package:
     runs-on: ubuntu-latest

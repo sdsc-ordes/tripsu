@@ -55,7 +55,10 @@ lint *args:
 ## CI stuff ===================================================================
 # Enter a Nix development shell for CI.
 nix-develop-ci:
-    cd "{{root_dir}}" && nix develop ./tools/nix#default --command "$@"
+    cd "{{root_dir}}" && \
+    cmd=("$@") && \
+    { [ -n "${cmd:-}" ] || cmd=("zsh"); } && \
+    cd "{{root_dir}}" && nix develop ./tools/nix#ci --command "$@"
 
 # Build the nix package into the folder `package` (first argument).
 nix-package *args:
