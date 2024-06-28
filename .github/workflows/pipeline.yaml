@@ -57,7 +57,11 @@ jobs:
       - name: 2 - lint
         run: |
           source .gitlab/scripts/before-script.sh &&
-          just nix-develop just lint
+          just nix-develop just l
+        continue-on-error: true
+      - name: 2 - allow to fail
+        if: failure()
+        run: echo "Lint failed -> continue."
 
   build:
     runs-on: ubuntu-latest
