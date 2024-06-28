@@ -105,6 +105,8 @@
           };
 
           packages = {
+            inherit rdf-protect;
+
             images = {
               ci = (import ./images/ci.nix) {
                 inherit pkgs;

@@ -72,7 +72,7 @@ nix-package *args:
         "${@:2}"
 
 nix-image *args:
-    dir="${1:-build/image}" && \
+    dir="${1:-build}/image.tar.gz" && \
         cd "{{root_dir}}" && \
         nix build "./tools/nix#images.rdf-protect" \
         --out-link "$dir" \
