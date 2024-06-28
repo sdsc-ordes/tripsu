@@ -55,13 +55,17 @@ function ci_is_running() {
 
 function ci_wrap_container() {
     local container="$1"
-    shift 1
+    local nix_shell="$2"
+    shift 2
     local cmd=("$@")
 
-    if [ "$OSTYPE" = "nixos" ]; then
-        "${cmd[@]}"
+    if command -v nix &>/dev/null; then
+        # Nix available, wrap over Nix shell.
+        nix develop "$nix_shell" --command "${cmd[@]}"
     else
-        ci_container_mgr_run_mounted "$(pwd)" "$container" "${cmd[@]}"
+        # No Nix available, wrap over Nix container
+        ci_container_mgr_run_mounted "$(pwd)" "$container" \
+            nix develop "$nix_shell" --command "${cmd[@]}"
     fi
 }
 

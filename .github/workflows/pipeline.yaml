@@ -70,10 +70,10 @@ jobs:
         run: |
           source .gitlab/scripts/before-script.sh &&
           just nix-develop just build
-      # - name: 3.1 - tests
-      #   run: |
-      #     source .gitlab/scripts/before-script.sh &&
-      #     just nix-develop just test
+      - name: 3.1 - tests
+        run: |
+          source .gitlab/scripts/before-script.sh &&
+          just nix-develop just test
 
   test:
     runs-on: ubuntu-latest

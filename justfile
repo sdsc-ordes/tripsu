@@ -1,11 +1,14 @@
 set positional-arguments
 set shell := ["bash", "-cue"]
-comp_dir := justfile_directory()
 root_dir := `git rev-parse --show-toplevel`
 
 # General Variables:
 # You can chose either "podman" or "docker".
 container_mgr := "podman"
+
+# Deterministic steps such as `lint`, `format`
+# will run
+use_container := ""
 
 # Default recipe to list all recipes.
 default:
@@ -37,29 +40,24 @@ test:
 
 # Format the code.
 format *args:
-    cd "{{comp_dir}}" && \
+    cd "{{root_dir}}" && \
         "{{root_dir}}/tools/format-rust.sh" {{args}}
 
-# Format all files other files.
+# Format all files.
 format-general *args:
     # Not implemented yet.
+    # That should run all hooks which are configured by Githooks.
     true
 
 # Lint all code.
 lint *args:
-    cd "{{comp_dir}}" && \
+    cd "{{root_dir}}" && \
         "{{root_dir}}/tools/lint-rust.sh" {{args}}
+
 ## ============================================================================
 
 
 ## CI stuff ===================================================================
-# Enter a Nix development shell for CI.
-nix-develop-ci:
-    cd "{{root_dir}}" && \
-    cmd=("$@") && \
-    { [ -n "${cmd:-}" ] || cmd=("zsh"); } && \
-    cd "{{root_dir}}" && nix develop ./tools/nix#ci --command "$@"
-
 # Build the nix package into the folder `package` (first argument).
 nix-package *args:
     dir="${1:-package}" && \
