@@ -7,11 +7,15 @@ root_dir := `git rev-parse --show-toplevel`
 # You can chose either "podman" or "docker".
 container_mgr := "podman"
 
+# Default recipe to list all recipes.
+default:
+  just --list
+
 # Enter a Nix development shell.
 nix-develop shell="zsh":
     cd "{{root_dir}}" && nix develop ./tools/nix#default --command zsh
 
-
+## Standard stuff =============================================================
 # Build the executable.
 build *args:
     cd "{{root_dir}}" && cargo build "${@:1}"
@@ -23,6 +27,10 @@ watch:
 # Run the executable.
 run:
     cd "{{root_dir}}" && cargo run "${@:1}"
+
+# Run the tests.
+test:
+    cd "{{root_dir}}" && cargo test "${@:1}"
 
 # Format the code.
 format *args:
@@ -38,12 +46,24 @@ format-general *args:
 lint *args:
     cd "{{comp_dir}}" && \
         "{{root_dir}}/tools/lint-rust.sh" {{args}}
+## ============================================================================
+
+
+## CI stuff ===================================================================
+# Enter a Nix development shell for CI.
+nix-develop-ci:
+    cd "{{root_dir}}" && nix develop ./tools/nix#default --command "$@"
+
+# Build the nix package into the folder `package` (first argument).
+nix-package *args:
+    dir="${1:-package}" && \
+        cd "{{root_dir}}" && \
+        nix build "./tools/nix#rdf-protect" \
+        --out-link "$dir" \
+        "${@:2}"
 
 # Upload all images for CI.
 upload-ci-images:
     cd "{{root_dir}}" && \
         .gitlab/scripts/upload-images.sh
-
-# Enter a Nix development shell for CI.
-nix-develop-ci:
-    cd "{{root_dir}}" && nix develop ./tools/nix#default --command "$@"
+## ============================================================================

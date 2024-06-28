@@ -31,15 +31,6 @@
       url = "github:oxalica/rust-overlay";
       inputs = {
         nixpkgs.follows = "nixpkgs";
-        flake-utils.follows = "flake-utils";
-      };
-    };
-
-    # The library to build the rust package.
-    crane = {
-      url = "https://github.com/ipetkov/crane";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
       };
     };
   };
@@ -50,10 +41,9 @@
     nixpkgsStable,
     flake-utils,
     rust-overlay,
-    crane,
     ...
   } @ inputs: let
-    rootDir = "./" + "../../";
+    rootDir = ./. + "../../..";
   in
     flake-utils.lib.eachDefaultSystem
     # Creates an attribute map `{ devShells.<system>.default = ...}`
@@ -63,6 +53,7 @@
         overlays = [(import rust-overlay)];
 
         # Import nixpkgs and load it into pkgs.
+        # Overlay the rust toolchain
         pkgs = import nixpkgs {
           inherit system overlays;
         };
@@ -104,9 +95,8 @@
           };
 
           packages = {
-            rdf-protect = (import pkgs/rdf-protect) {
-              inherit crane;
-              inherit rootDir;
+            rdf-protect = (import ./pkgs/rdf-protect.nix) {
+              inherit rootDir rustToolchain pkgs lib;
             };
 
             images = {

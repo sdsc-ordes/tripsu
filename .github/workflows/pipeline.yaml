@@ -1,4 +1,5 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+---
 name: rdf-protect
 
 on:
@@ -48,8 +49,31 @@ jobs:
         run: |
           source .gitlab/scripts/before-script.sh &&
           just nix-develop-ci just build
+      # - name: 3.1 - tests
+      #   run: |
+      #     source .gitlab/scripts/before-script.sh &&
+      #     just nix-develop-ci just test
 
-  deploy:
+  test:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/sdsc-ordes/rdf-protect:ci-build-1.0.0
+      image: ghcr.io/sdsc-ordes/rdf-protect:ci-test-1.0.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: 4 - test
+        run: |
+          source .gitlab/scripts/before-script.sh &&
+          just nix-develop-ci just test
+
+  package:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/sdsc-ordes/rdf-protect:ci-package-1.0.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: 5 - package (nix)
+        run: |
+          source .gitlab/scripts/before-script.sh &&
+          just build-package

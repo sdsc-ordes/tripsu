@@ -38,3 +38,11 @@ FROM ci-nix as ci-lint
 # Build image.
 # ===============================================
 FROM ci-nix as ci-build
+
+# Test image.
+# ===============================================
+FROM ci-nix as ci-test
+
+# Package image.
+# ===============================================
+FROM ci-nix as ci-package
