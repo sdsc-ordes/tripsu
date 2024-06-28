@@ -1,6 +1,26 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
----
+#
+# This a demonstration pipeline which uses Nix in a container to drive the toolchain.
+#
+# - The Nix container (with cached toolchain) are quite big (~ 2Gb) and with no caching makes the
+#   pull up to 2min at the start.
+# - Without caching they result in ~500mb which is better but the toolchain needs to be installed
+#   during the `nix develop` call.
+#
+# Remedies: Either to use own runners with proper image caching or do some Github trickery
+# (not sure if they work), use the action/cache to cache docker layers and in the next step use
+# a step with `uses: docker://...` but then `run:` does not work, how stupid ...
+# (need to write an own action in the repo, 💩)
+#
 name: rdf-protect
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
 
 on:
   push:
@@ -23,57 +43,58 @@ jobs:
         uses: actions/checkout@v4
       - name: 1 - format
         run: |
+          cat /etc/os-release
           source .gitlab/scripts/before-script.sh
           just nix-develop-ci just format
 
-  lint:
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/sdsc-ordes/rdf-protect:ci-lint-1.0.0
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: 2 - lint
-        run: |
-          source .gitlab/scripts/before-script.sh &&
-          just nix-develop-ci just lint
-
-  build:
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/sdsc-ordes/rdf-protect:ci-build-1.0.0
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: 3 - build
-        run: |
-          source .gitlab/scripts/before-script.sh &&
-          just nix-develop-ci just build
-      # - name: 3.1 - tests
-      #   run: |
-      #     source .gitlab/scripts/before-script.sh &&
-      #     just nix-develop-ci just test
-
-  test:
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/sdsc-ordes/rdf-protect:ci-test-1.0.0
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: 4 - test
-        run: |
-          source .gitlab/scripts/before-script.sh &&
-          just nix-develop-ci just test
-
-  package:
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/sdsc-ordes/rdf-protect:ci-package-1.0.0
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: 5 - package (nix)
-        run: |
-          source .gitlab/scripts/before-script.sh &&
-          just build-package
+  # lint:
+  #   runs-on: ubuntu-latest
+  #   container:
+  #     image: ghcr.io/sdsc-ordes/rdf-protect:ci-lint-1.0.0
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #     - name: 2 - lint
+  #       run: |
+  #         source .gitlab/scripts/before-script.sh &&
+  #         just nix-develop-ci just lint
+  #
+  # build:
+  #   runs-on: ubuntu-latest
+  #   container:
+  #     image: ghcr.io/sdsc-ordes/rdf-protect:ci-build-1.0.0
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #     - name: 3 - build
+  #       run: |
+  #         source .gitlab/scripts/before-script.sh &&
+  #         just nix-develop-ci just build
+  #     # - name: 3.1 - tests
+  #     #   run: |
+  #     #     source .gitlab/scripts/before-script.sh &&
+  #     #     just nix-develop-ci just test
+  #
+  # test:
+  #   runs-on: ubuntu-latest
+  #   container:
+  #     image: ghcr.io/sdsc-ordes/rdf-protect:ci-test-1.0.0
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #     - name: 4 - test
+  #       run: |
+  #         source .gitlab/scripts/before-script.sh &&
+  #         just nix-develop-ci just test
+  #
+  # package:
+  #   runs-on: ubuntu-latest
+  #   container:
+  #     image: ghcr.io/sdsc-ordes/rdf-protect:ci-package-1.0.0
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #     - name: 5 - package (nix)
+  #       run: |
+  #         source .gitlab/scripts/before-script.sh &&
+  #         just build-package

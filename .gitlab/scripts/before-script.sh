@@ -3,8 +3,15 @@
 # This script is sourced.
 set -u
 
+git config --global safe.directory "*" || {
+    echo "Could not overwrite safe.directory in Git config." >&2
+    exit 1
+}
+
 ROOT_DIR=$(git rev-parse --show-toplevel)
 . "$ROOT_DIR/tools/general.sh"
+
+print_info "Running as user: $(id)"
 
 # ci_container_mgr_setup
 
