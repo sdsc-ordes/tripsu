@@ -97,4 +97,4 @@ jobs:
       - name: 5 - package (nix)
         run: |
           source .gitlab/scripts/before-script.sh &&
-          just build-package
+          just nix-package
