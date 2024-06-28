@@ -16,6 +16,7 @@ FROM base-podman as ci-nix
 ARG USER_NAME=ci
 ARG USER_UID=1000
 ARG USER_GID=1000
+ARG CACHE_TOOLCHAIN=false
 # ARG USER_HOME="/github/home"
 
 RUN [ "TARGETPLATFORM" = "linux/amd64" ] || echo "Platform not yet supported."
@@ -24,7 +25,7 @@ COPY ./tools /container-setup/tools
 # Install Nix and pre-cache the env.
 RUN bash -c ". /container-setup/tools/general.sh && ci_setup_nix"
 
-# Create user.
+# Create user (does not work because action/checkout uses `root` in its own container ... 💩)
 # RUN mkdir -p "$USER_HOME" && \
 #     adduser "$USER_NAME" -s /bin/zsh -D -u "$USER_UID" -g "$USER_GID" -h "$USER_HOME/$USER_NAME" && \
 #     mkdir -p /etc/sudoers.d && \
@@ -33,12 +34,12 @@ RUN bash -c ". /container-setup/tools/general.sh && ci_setup_nix"
 #     chown -R "$USER_NAME:$USER_NAME" /home /container-setup
 # USER "$USER_NAME"
 
-# COPY rust-toolchain.toml /container-setup/
-# RUN cd /container-setup && \
-#     git init && git add . && \
-#     nix --accept-flake-config \
-#     build --no-link "./tools/nix#devShells.x86_64-linux.ci" && \
-#     nix store optimise
+COPY rust-toolchain.toml /container-setup/
+RUN [ "${CACHE_TOOLCHAIN}" = "false" ] || { cd /container-setup && \
+    git init && git add . && \
+    nix --accept-flake-config \
+    build --no-link "./tools/nix#devShells.x86_64-linux.ci" && \
+    nix store optimise }
 
 
 # Format image.
