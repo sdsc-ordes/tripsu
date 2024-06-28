@@ -8,8 +8,6 @@ ROOT_DIR=$(git rev-parse --show-toplevel)
 
 cd "$ROOT_DIR"
 
-print_info "Run Rust format."
-
 fmt_args=()
 if ci_is_running; then
     fmt_args+=("--check")
@@ -18,4 +16,7 @@ fi
 cargo --version
 cargo fmt --version
 
+print_info "Run Rust format."
 cargo fmt "${fmt_args[@]}" "$@"
+
+print_info "Done."

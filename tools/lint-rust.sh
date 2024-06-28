@@ -15,4 +15,9 @@ print_info "Run Rust Clippy linter."
 print_warning "Currently warnings are not errors!"
 
 cargo clippy --no-deps -- -A clippy::needless_return "$@" ||
-    die "Rust clippy failed."
+    {
+        die "Rust clippy failed."
+        git diff --name-status || true
+    }
+
+print_info "Done."
