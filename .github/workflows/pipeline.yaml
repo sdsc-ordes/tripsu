@@ -41,6 +41,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: format
         run: |
           source .gitlab/scripts/before-script.sh &&
@@ -54,14 +55,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: lint
         run: |
           source .gitlab/scripts/before-script.sh &&
-          just nix-develop just l
-        continue-on-error: true
+          just nix-develop just lint
+
+      - name: lint-undefined-behavior
+        run: |
+          source .gitlab/scripts/before-script.sh &&
+          just nix-develop just lint-ub
+
       - name: allow to fail
         if: failure()
-        run: echo "Lint failed -> continue."
+        run: echo "lint-up failed -> continue."
 
   build:
     runs-on: ubuntu-latest
@@ -70,6 +77,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: build
         run: |
           source .gitlab/scripts/before-script.sh &&
@@ -86,6 +94,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: test
         run: |
           source .gitlab/scripts/before-script.sh &&
@@ -98,6 +107,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: package (nix)
         run: |
           source .gitlab/scripts/before-script.sh &&

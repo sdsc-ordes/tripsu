@@ -54,6 +54,11 @@ lint *args:
     cd "{{root_dir}}" && \
         "{{root_dir}}/tools/lint-rust.sh" {{args}}
 
+# Lint all code (undefined behavior).
+lint-ub *args:
+    cd "{{root_dir}}" && \
+        "{{root_dir}}/tools/lint-ub-rust.sh" {{args}}
+
 ## ============================================================================
 
 

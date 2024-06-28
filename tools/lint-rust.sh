@@ -10,12 +10,9 @@ cd "$ROOT_DIR"
 
 cargo --version
 cargo clippy --version
-cargo miri --version
 
 print_info "Run Rust Clippy linter."
+print_warning "Currently warnings are not errors!"
+
 cargo clippy --no-deps -- -A clippy::needless_return "$@" ||
     die "Rust clippy failed."
-
-print_info "Run Rust Miri to check undefined behaviour."
-cargo miri test "$@" ||
-    die "Rust Miri failed."
