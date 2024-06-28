@@ -54,6 +54,7 @@
 
         # Import nixpkgs and load it into pkgs.
         # Overlay the rust toolchain
+        lib = nixpkgs.lib;
         pkgs = import nixpkgs {
           inherit system overlays;
         };
@@ -83,6 +84,15 @@
 
         # Things needed at runtime.
         buildInputs = [];
+
+        # The package of this CLI tool.
+        # The global version for rdf-protect.
+        # This is gonna get tooled later.
+        rdf-protect-version = "1.0.0";
+        rdf-protect = (import ./pkgs/rdf-protect.nix) {
+          inherit rootDir rustToolchain pkgs lib;
+          version = rdf-protect-version;
+        };
       in
         with pkgs; rec {
           devShells = rec {
@@ -95,14 +105,14 @@
           };
 
           packages = {
-            rdf-protect = (import ./pkgs/rdf-protect.nix) {
-              inherit rootDir rustToolchain pkgs lib;
-            };
-
             images = {
               ci = (import ./images/ci.nix) {
                 inherit pkgs;
                 devShellDrv = devShells.ci;
+              };
+
+              rdf-protect = (import ./images/rdf-protect.nix) {
+                inherit pkgs rdf-protect;
               };
             };
           };

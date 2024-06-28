@@ -65,9 +65,16 @@ lint-ub *args:
 ## CI stuff ===================================================================
 # Build the nix package into the folder `package` (first argument).
 nix-package *args:
-    dir="${1:-package}" && \
+    dir="${1:-build/package}" && \
         cd "{{root_dir}}" && \
         nix build "./tools/nix#rdf-protect" \
+        --out-link "$dir" \
+        "${@:2}"
+
+nix-image *args:
+    dir="${1:-build/image}" && \
+        cd "{{root_dir}}" && \
+        nix build "./tools/nix#images.rdf-protect" \
         --out-link "$dir" \
         "${@:2}"
 

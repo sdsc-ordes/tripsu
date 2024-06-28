@@ -3,6 +3,7 @@
   lib,
   rustToolchain,
   rootDir,
+  version,
   ...
 }: let
   rustPlatform = pkgs.makeRustPlatform {
@@ -13,7 +14,7 @@ in
   rustPlatform.buildRustPackage {
     name = "rdf-protect";
     src = rootDir;
-    version = "1.0.0";
+    inherit version;
 
     cargoLock = {
       lockFile = rootDir + "/Cargo.lock";

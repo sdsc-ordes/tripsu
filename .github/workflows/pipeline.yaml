@@ -106,7 +106,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: package (nix)
+      - name: build derivation with nix
         run: |
           source .gitlab/scripts/before-script.sh &&
           just nix-package
+
+  deploy:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/sdsc-ordes/rdf-protect:ci-deploy-1.0.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: build container image (nix)
+        run: |
+          source .gitlab/scripts/before-script.sh &&
+          just nix-image

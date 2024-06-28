@@ -14,3 +14,5 @@ cargo miri --version
 print_info "Run Rust Miri to check undefined behaviour."
 cargo miri test "$@" ||
     die "Rust Miri failed."
+
+print_info "Done."
