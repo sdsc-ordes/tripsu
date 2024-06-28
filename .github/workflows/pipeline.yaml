@@ -41,7 +41,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: 1 - format
+      - name: format
         run: |
           source .gitlab/scripts/before-script.sh &&
           cat justfile &&
@@ -54,12 +54,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: 2 - lint
+      - name: lint
         run: |
           source .gitlab/scripts/before-script.sh &&
           just nix-develop just l
         continue-on-error: true
-      - name: 2 - allow to fail
+      - name: allow to fail
         if: failure()
         run: echo "Lint failed -> continue."
 
@@ -70,11 +70,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: 3 - build
+      - name: build
         run: |
           source .gitlab/scripts/before-script.sh &&
           just nix-develop just build
-      - name: 3.1 - tests
+      - name: tests
         run: |
           source .gitlab/scripts/before-script.sh &&
           just nix-develop just test
@@ -86,7 +86,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: 4 - test
+      - name: test
         run: |
           source .gitlab/scripts/before-script.sh &&
           just nix-develop just test
@@ -98,7 +98,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: 5 - package (nix)
+      - name: package (nix)
         run: |
           source .gitlab/scripts/before-script.sh &&
           just nix-package
