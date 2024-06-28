@@ -12,8 +12,11 @@ default:
   just --list
 
 # Enter a Nix development shell.
-nix-develop shell="zsh":
-    cd "{{root_dir}}" && nix develop ./tools/nix#default --command zsh
+nix-develop *args:
+    cd "{{root_dir}}" && \
+    cmd=("$@") && \
+    { [ -n "${cmd:-}" ] || cmd=("zsh"); } && \
+    nix develop ./tools/nix#default --command "${cmd[@]}"
 
 ## Standard stuff =============================================================
 # Build the executable.

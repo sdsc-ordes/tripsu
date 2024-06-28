@@ -46,54 +46,54 @@ jobs:
           source .gitlab/scripts/before-script.sh
           just nix-develop-ci just format
 
-  # lint:
-  #   runs-on: ubuntu-latest
-  #   container:
-  #     image: ghcr.io/sdsc-ordes/rdf-protect:ci-lint-1.0.0
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #     - name: 2 - lint
-  #       run: |
-  #         source .gitlab/scripts/before-script.sh &&
-  #         just nix-develop-ci just lint
-  #
-  # build:
-  #   runs-on: ubuntu-latest
-  #   container:
-  #     image: ghcr.io/sdsc-ordes/rdf-protect:ci-build-1.0.0
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #     - name: 3 - build
-  #       run: |
-  #         source .gitlab/scripts/before-script.sh &&
-  #         just nix-develop-ci just build
-  #     # - name: 3.1 - tests
-  #     #   run: |
-  #     #     source .gitlab/scripts/before-script.sh &&
-  #     #     just nix-develop-ci just test
-  #
-  # test:
-  #   runs-on: ubuntu-latest
-  #   container:
-  #     image: ghcr.io/sdsc-ordes/rdf-protect:ci-test-1.0.0
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #     - name: 4 - test
-  #       run: |
-  #         source .gitlab/scripts/before-script.sh &&
-  #         just nix-develop-ci just test
-  #
-  # package:
-  #   runs-on: ubuntu-latest
-  #   container:
-  #     image: ghcr.io/sdsc-ordes/rdf-protect:ci-package-1.0.0
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #     - name: 5 - package (nix)
-  #       run: |
-  #         source .gitlab/scripts/before-script.sh &&
-  #         just build-package
+  lint:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/sdsc-ordes/rdf-protect:ci-lint-1.0.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: 2 - lint
+        run: |
+          source .gitlab/scripts/before-script.sh &&
+          just nix-develop-ci just lint
+
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/sdsc-ordes/rdf-protect:ci-build-1.0.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: 3 - build
+        run: |
+          source .gitlab/scripts/before-script.sh &&
+          just nix-develop-ci just build
+      # - name: 3.1 - tests
+      #   run: |
+      #     source .gitlab/scripts/before-script.sh &&
+      #     just nix-develop-ci just test
+
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/sdsc-ordes/rdf-protect:ci-test-1.0.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: 4 - test
+        run: |
+          source .gitlab/scripts/before-script.sh &&
+          just nix-develop-ci just test
+
+  package:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/sdsc-ordes/rdf-protect:ci-package-1.0.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: 5 - package (nix)
+        run: |
+          source .gitlab/scripts/before-script.sh &&
+          just build-package
