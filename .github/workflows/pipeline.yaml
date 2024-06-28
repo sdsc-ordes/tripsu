@@ -44,6 +44,7 @@ jobs:
       - name: 1 - format
         run: |
           source .gitlab/scripts/before-script.sh
+          cat justfile
           just nix-develop-ci just format
 
   lint:
