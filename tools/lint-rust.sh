@@ -8,6 +8,10 @@ ROOT_DIR=$(git rev-parse --show-toplevel)
 
 cd "$ROOT_DIR"
 
+cargo --version
+cargo clippy --version
+cargo miri --version
+
 print_info "Run Rust Clippy linter."
 cargo clippy --no-deps -- -A clippy::needless_return "$@" ||
     die "Rust clippy failed."

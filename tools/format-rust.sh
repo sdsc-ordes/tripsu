@@ -15,4 +15,7 @@ if ci_is_running; then
     fmt_args+=("--check")
 fi
 
+cargo --version
+cargo fmt --version
+
 cargo fmt "${fmt_args[@]}" "$@"
