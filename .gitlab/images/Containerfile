@@ -39,7 +39,7 @@ RUN [ "${CACHE_TOOLCHAIN}" = "false" ] || { cd /container-setup && \
     git init && git add . && \
     nix --accept-flake-config \
     build --no-link "./tools/nix#devShells.x86_64-linux.ci" && \
-    nix store optimise }
+    nix store optimise; }
 
 
 # Format image.
@@ -61,3 +61,7 @@ FROM ci-nix as ci-test
 # Package image.
 # ===============================================
 FROM ci-nix as ci-package
+
+# Deploy image.
+# ===============================================
+FROM ci-nix as ci-deploy

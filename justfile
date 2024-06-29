@@ -59,24 +59,26 @@ lint-ub *args:
     cd "{{root_dir}}" && \
         "{{root_dir}}/tools/lint-ub-rust.sh" {{args}}
 
+# Create a new release for version `version` by
+# updating the version file and
+# triggering the release workflow.
+release version:
+    cd "{{root_dir}}" && \
+        "{{root_dir}}/tools/release.sh" "{{version}}"
 ## ============================================================================
 
 
 ## CI stuff ===================================================================
+
 # Build the nix package into the folder `package` (first argument).
 nix-package *args:
-    dir="${1:-build/package}" && \
-        cd "{{root_dir}}" && \
-        nix build "./tools/nix#rdf-protect" \
-        --out-link "$dir" \
-        "${@:2}"
+    cd "{{root_dir}}" && \
+       "./tools/build-package.sh" "$@"
 
+# Build the Docker image with Nix (distroless by default!).
 nix-image *args:
-    dir="${1:-build}/image.tar.gz" && \
-        cd "{{root_dir}}" && \
-        nix build "./tools/nix#images.rdf-protect" \
-        --out-link "$dir" \
-        "${@:2}"
+    cd "{{root_dir}}" && \
+       "./tools/build-image.sh" "$@"
 
 # Upload all images for CI.
 upload-ci-images:

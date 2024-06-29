@@ -88,14 +88,12 @@
         # The package of this CLI tool.
         # The global version for rdf-protect.
         # This is gonna get tooled later.
-        rdf-protect-version = "1.0.0";
         rdf-protect = (import ./pkgs/rdf-protect.nix) {
           inherit rootDir rustToolchain pkgs lib;
-          version = rdf-protect-version;
         };
       in
         with pkgs; rec {
-          devShells = rec {
+          devShells = {
             default = mkShell {
               inherit buildInputs;
               nativeBuildInputs = nativeBuildInputsBasic ++ nativeBuildInputsDev;

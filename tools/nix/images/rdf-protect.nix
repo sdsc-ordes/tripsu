@@ -3,7 +3,7 @@
   rdf-protect,
 }:
 pkgs.dockerTools.buildImage {
-  name = "ghcr.io/sdsc-order/rdf-protect";
+  name = "ghcr.io/sdsc-ordes/rdf-protect";
   tag = rdf-protect.version;
 
   copyToRoot = pkgs.buildEnv {
@@ -13,7 +13,7 @@ pkgs.dockerTools.buildImage {
   };
 
   config = {
-    Cmd = ["/bin/rdf-protect"];
+    Entrypoint = ["/bin/rdf-protect"];
     WorkingDir = "/";
   };
 }

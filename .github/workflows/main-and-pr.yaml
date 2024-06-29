@@ -1,0 +1,24 @@
+name: Main and PR Pipeline
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  normal:
+    uses: ./.github/workflows/normal.yaml
+    with:
+      is_release: false

@@ -53,6 +53,18 @@ function ci_is_running() {
     return 1
 }
 
+function ci_is_release() {
+    if [ "${CI_IS_RELEASE:-}" = "true" ]; then
+        return 0
+    fi
+
+    return 1
+}
+
+function ci_nix_image_version_file() {
+    echo "tools/nix/pkgs/rdf-protect.json"
+}
+
 function ci_wrap_container() {
     local container="$1"
     local nix_shell="$2"

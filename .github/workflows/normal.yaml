@@ -12,7 +12,7 @@
 # a step with `uses: docker://...` but then `run:` does not work, how stupid ...
 # (need to write an own action in the repo, 💩)
 #
-name: rdf-protect
+name: Normal Pipeline
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -23,13 +23,11 @@ defaults:
     shell: bash
 
 on:
-  push:
-    branches:
-      - main
-
-  pull_request:
-    branches:
-      - main
+  workflow_call:
+    inputs:
+      is_release:
+        required: true
+        type: boolean
 
 jobs:
   format:
@@ -39,8 +37,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: format
+      - name: Format
         run: |
           source .gitlab/scripts/before-script.sh &&
           cat justfile &&
@@ -53,18 +53,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: lint
+      - name: Lint
         run: |
           source .gitlab/scripts/before-script.sh &&
           just nix-develop just lint
 
-      - name: lint-undefined-behavior
+      - name: Lint Undefined-Behavior
+        continue-on-error: true
         run: |
           source .gitlab/scripts/before-script.sh &&
           just nix-develop just lint-ub
 
-      - name: allow to fail
+      - name: Allow to fail
         if: failure()
         run: echo "lint-up failed -> continue."
 
@@ -92,8 +95,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: test
+      - name: Test
         run: |
           source .gitlab/scripts/before-script.sh &&
           just nix-develop just test
@@ -102,24 +107,55 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/sdsc-ordes/rdf-protect:ci-package-1.0.0
+
+    if: ${{ ! input.is_release }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: build derivation with nix
+      - name: Build derivation with nix
+        run: |
+          source .gitlab/scripts/before-script.sh &&
+          just nix-package
+
+      - name: Build the image with nix
         run: |
           source .gitlab/scripts/before-script.sh &&
           just nix-package
 
   deploy:
     runs-on: ubuntu-latest
+    needs: [format, lint, build, test]
     container:
       image: ghcr.io/sdsc-ordes/rdf-protect:ci-deploy-1.0.0
+
+    if: ${{ input.is_release }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: build container image (nix)
+      - name: Create version tag (if release)
+        run: |
+          source .gitlab/scripts/before-script.sh &&
+          ./tools/ci/assert-tag.sh "$GITHUB_REF"
+
+      - name: Build container image (nix)
         run: |
           source .gitlab/scripts/before-script.sh &&
           just nix-image
+
+      - name: Push image (if release)
+        run: |
+          source .gitlab/scripts/before-script.sh &&
+          ./tools/ci/push-image.sh
+
+      - name: Push tag (if release)
+        run: |
+          source .gitlab/scripts/before-script.sh &&
+          ./tools/ci/assert-tag.sh --push "$GITHUB_REF"
