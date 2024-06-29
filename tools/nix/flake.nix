@@ -71,8 +71,6 @@
           curl
           git
           jq
-
-          podman
         ];
 
         # Things needed only at compile-time.
@@ -80,6 +78,8 @@
           rustToolchain
           cargo-watch
           just
+
+          skopeo
         ];
 
         # Things needed at runtime.
@@ -100,8 +100,6 @@
               inherit buildInputs;
               nativeBuildInputs = nativeBuildInputsBasic ++ nativeBuildInputsDev;
             };
-
-            ci = default;
           };
 
           packages = {
