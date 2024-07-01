@@ -5,6 +5,7 @@ mod log;
 mod model;
 mod pass_first;
 mod pass_second;
+mod rdf_types;
 mod rules;
 
 // Define the imports.

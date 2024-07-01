@@ -1,9 +1,227 @@
 use rio_api;
+use std::{fmt, fmt::Write, ops::Sub};
 
-#[derive(Eq, PartialEq, Ord, PartialOrd, Debug, Clone, Copy, Hash)]
+// Rewrite all the rio types to be able to instanciate triples
+// Rename rio types as XXXView to distinguish them from our types
+// Use rio types for parsing and serializing
+// Define mappers between the two types
+
+#[derive(Eq, PartialEq, Ord, PartialOrd, Debug, Clone, Hash)]
 pub struct NamedNode {
     /// The [IRI](https://www.w3.org/TR/rdf11-concepts/#dfn-iri) itself.
     pub iri: String,
 }
 
+impl fmt::Display for NamedNode {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "<{}>", self.iri)
+    }
+}
+
 type NamedNodeView<'a> = rio_api::model::NamedNode<'a>;
+
+#[derive(Eq, PartialEq, Debug, Clone, Hash)]
+pub enum Literal {
+    /// A [simple literal](https://www.w3.org/TR/rdf11-concepts/#dfn-simple-literal) without datatype or language form.
+    Simple {
+        /// The [lexical form](https://www.w3.org/TR/rdf11-concepts/#dfn-lexical-form).
+        value: String,
+    },
+    /// A [language-tagged string](https://www.w3.org/TR/rdf11-concepts/#dfn-language-tagged-string)
+    LanguageTaggedString {
+        /// The [lexical form](https://www.w3.org/TR/rdf11-concepts/#dfn-lexical-form).
+        value: String,
+        /// The [language tag](https://www.w3.org/TR/rdf11-concepts/#dfn-language-tag).
+        language: String,
+    },
+    /// A literal with an explicit datatype
+    Typed {
+        /// The [lexical form](https://www.w3.org/TR/rdf11-concepts/#dfn-lexical-form).
+        value: String,
+        /// The [datatype IRI](https://www.w3.org/TR/rdf11-concepts/#dfn-datatype-iri).
+        datatype: NamedNode,
+    },
+}
+
+impl fmt::Display for Literal {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Literal::Simple { value } => fmt_quoted_str(value, f),
+            Literal::LanguageTaggedString { value, language } => {
+                fmt_quoted_str(value, f)?;
+                write!(f, "@{}", language)
+            }
+            Literal::Typed { value, datatype } => {
+                fmt_quoted_str(value, f)?;
+                write!(f, "^^{}", datatype)
+            }
+        }
+    }
+}
+
+type LiteralView<'a> = rio_api::model::Literal<'a>;
+
+#[derive(Eq, PartialEq, Debug, Clone, Hash)]
+pub enum Term {
+    NamedNode(NamedNode),
+    BlankNode(BlankNode),
+    Literal(Literal),
+}
+
+impl fmt::Display for Term {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Term::NamedNode(node) => node.fmt(f),
+            Term::BlankNode(node) => node.fmt(f),
+            Term::Literal(literal) => literal.fmt(f),
+        }
+    }
+}
+
+type TermView<'a> = rio_api::model::Term<'a>;
+
+#[derive(Eq, PartialEq, Debug, Clone, Hash)]
+pub struct Triple {
+    pub subject: Subject,
+    pub predicate: NamedNode,
+    pub object: Term,
+}
+
+impl fmt::Display for Triple {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} {} {}", self.subject, self.predicate, self.object)
+    }
+}
+
+impl<'a> From<TripleView<'a>> for Triple {
+    fn from(t: TripleView<'a>) -> Self {
+        match t {
+            TripleView {
+                subject,
+                predicate,
+                object,
+            } => Triple {
+                subject: subject.into(),
+                predicate: predicate.into(),
+                object: object.into(),
+            },
+        }
+    }
+}
+
+type TripleView<'a> = rio_api::model::Triple<'a>;
+
+#[derive(Eq, PartialEq, Debug, Clone, Hash)]
+pub enum Subject {
+    NamedNode(NamedNode),
+    BlankNode(BlankNode),
+}
+
+impl fmt::Display for Subject {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Subject::NamedNode(node) => node.fmt(f),
+            Subject::BlankNode(node) => node.fmt(f),
+        }
+    }
+}
+
+impl<'a> From<SubjectView<'a>> for Subject {
+    #[inline]
+    fn from(resource: SubjectView) -> Self {
+        match resource {
+            SubjectView::NamedNode(node) => Subject::NamedNode(node.into()),
+            SubjectView::BlankNode(node) => Subject::BlankNode(node.into()),
+            _ => panic!("Unexpected subject type"),
+        }
+    }
+}
+
+impl<'a> From<TermView<'a>> for Term {
+    #[inline]
+    fn from(term: TermView<'a>) -> Self {
+        match term {
+            TermView::NamedNode(node) => Term::NamedNode(node.into()),
+            TermView::BlankNode(node) => Term::BlankNode(node.into()),
+            TermView::Literal(literal) => Term::Literal(literal.into()),
+            _ => panic!("Unexpected term type"),
+        }
+    }
+}
+
+impl<'a> From<NamedNodeView<'a>> for NamedNode {
+    #[inline]
+    fn from(node: NamedNodeView<'a>) -> Self {
+        NamedNode {
+            iri: node.iri.to_string(),
+        }
+    }
+}
+
+impl<'a> From<BlankNodeView<'a>> for BlankNode {
+    #[inline]
+    fn from(node: BlankNodeView<'a>) -> Self {
+        BlankNode {
+            id: node.id.to_string(),
+        }
+    }
+}
+
+type SubjectView<'a> = rio_api::model::Subject<'a>;
+
+#[derive(Eq, PartialEq, Debug, Clone, Hash)]
+pub struct BlankNode {
+    /// The [blank node identifier](https://www.w3.org/TR/rdf11-concepts/#dfn-blank-node-identifier).
+    pub id: String,
+}
+
+impl fmt::Display for BlankNode {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "_:{}", self.id)
+    }
+}
+
+type BlankNodeView<'a> = rio_api::model::BlankNode<'a>;
+
+impl<'a> From<LiteralView<'a>> for Literal {
+    fn from(l: LiteralView<'a>) -> Self {
+        match l {
+            LiteralView::Simple { value } => Literal::Simple {
+                value: value.to_string(),
+            },
+            LiteralView::LanguageTaggedString { value, language } => {
+                Literal::LanguageTaggedString {
+                    value: value.to_string(),
+                    language: language.to_string(),
+                }
+            }
+            LiteralView::Typed { value, datatype } => Literal::Typed {
+                value: value.to_string(),
+                datatype: NamedNode {
+                    iri: datatype.iri.to_string(),
+                },
+            },
+        }
+    }
+}
+
+#[inline]
+fn fmt_quoted_str(string: &String, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    f.write_char('"')?;
+    for c in string.chars() {
+        match c {
+            '\n' => f.write_str("\\n"),
+            '\r' => f.write_str("\\r"),
+            '"' => f.write_str("\\\""),
+            '\\' => f.write_str("\\\\"),
+            c => f.write_char(c),
+        }?;
+    }
+    f.write_char('"')
+}

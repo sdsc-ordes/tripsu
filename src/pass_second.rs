@@ -13,21 +13,21 @@ use crate::{
     rules::Config,
 };
 
-fn mask_triple(triple: &Triple) -> TripleMask {
+fn mask_triple(triple: Triple) -> TripleMask {
     return TripleMask::SUBJECT;
 }
 
 // mask and encode input triple
 // NOTE: This will need the type-map to perform masking
 fn process_triple(
-    triple: &Triple,
+    triple: Triple,
     rules_config: &Config,
     node_to_type: &HashMap<String, String>,
     out: &mut impl Write,
 ) -> Result<(), TurtleError> {
     let mask = mask_triple(triple);
-    let pseudo_triple = pseudonymize_triple(&triple, mask);
-    let _ = out.write(&format!("{} .\n", &pseudo_triple.to_string()).into_bytes());
+    let pseudo_triple = pseudonymize_triple(triple.into(), mask);
+    let _ = out.write(&format!("{} .\n", pseudo_triple.to_string()).into_bytes());
 
     Ok(())
 }
@@ -57,7 +57,7 @@ pub fn pseudonymize_graph(log: &Logger, input: &Path, config: &Path, output: &Pa
     let mut triples = io::parse_ntriples(buf_input);
     while !triples.is_end() {
         triples
-            .parse_step(&mut |t| process_triple(&t, &rules_config, &node_to_type, &mut buf_output))
+            .parse_step(&mut |t| process_triple(t, &rules_config, &node_to_type, &mut buf_output))
             .unwrap();
     }
 }

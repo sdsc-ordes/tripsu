@@ -1,11 +1,36 @@
 use std::hash::Hash;
 
-use crate::crypto::{hash_literal, Hasher};
+use crate::rdf_types::*;
 use bitflags;
-use rio_api::model::{Literal, Subject, Term, Triple};
+
+pub enum Entity {
+    Literal(Literal),
+    Subject(Subject),
+    NamedNode(NamedNode),
+    Triple(Triple),
+    BlankNode(BlankNode),
+}
 
 pub trait Pseudonymize {
-    fn pseudo(&self) -> Self;
+    fn pseudo(&self, e: Entity) -> Entity {
+        match e {
+            Literal => self.pseudo_literal(e),
+            Subject => self.pseudo_uri(e),
+            NamedNode => self.pseudo_uri(e),
+            Triple => self.pseudo_triple(e),
+            BlankNode => e,
+        }
+    }
+    // private methods? Blanket implementations
+    fn pseudo_triple(&self, t: Entity) -> Entity {
+        return t;
+    }
+    fn pseudo_literal(&self, l: Entity) -> Entity {
+        return l;
+    }
+    fn pseudo_uri(&self, u: Entity) -> Entity {
+        return u;
+    }
 }
 
 // Used to select any combination of fields in a triple
@@ -24,53 +49,3 @@ impl TripleMask {
         return (*other - *self).bits() != 0;
     }
 }
-
-// Pseudonymize parts of a triple set by its mask
-pub fn pseudonymize_triple<'a>(triple: &Triple<'a>, mask: TripleMask) -> Triple<'a> {
-    let pseudo_subject = if mask.is_set(&TripleMask::SUBJECT) {
-        &triple.subject.pseudo()
-    } else {
-        &triple.subject.clone()
-    };
-
-    let pseudo_object = if mask.is_set(&TripleMask::OBJECT) {
-        triple.object.pseudo()
-    } else {
-        triple.object.clone()
-    };
-
-    return Triple {
-        subject: *pseudo_subject,
-        predicate: triple.predicate,
-        object: pseudo_object,
-    };
-}
-
-// Pseudonymization of objects (Nodes or literals)
-impl Pseudonymize for Term<'_> {
-    fn pseudo(&self) -> Self {
-        match self {
-            Term::Literal(val) => {
-                let hashed = hash_literal(*val);
-                Term::Literal(hashed.to_literal()) // Use the literal part of the struct
-            }
-            Term::NamedNode(val) => Term::NamedNode(*val),
-            Term::BlankNode(val) => Term::BlankNode(*val),
-            Term::Triple(_) => panic!("RDF-star not supported (triple as object)"),
-        }
-    }
-}
-
-// Pseudonymization of subjects (always a URI / blank node)
-impl Pseudonymize for Subject<'_> {
-    fn pseudo(&self) -> Self {
-        match self {
-            Subject::NamedNode(val) => Subject::NamedNode(*val),
-            Subject::BlankNode(val) => Subject::BlankNode(*val),
-            Subject::Triple(_) => panic!("RDF-star not supported (triple as subject)"),
-        }
-    }
-}
-
-// TODO: implement for blanknodes
-// NOTE: Support for RDF-star?
