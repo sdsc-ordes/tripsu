@@ -6,12 +6,7 @@ use std::{
     path::Path,
 };
 
-use crate::{
-    io,
-    log::Logger,
-    model::{pseudonymize_triple, TripleMask},
-    rules::Config,
-};
+use crate::{io, log::Logger, model::TripleMask, rules::Config};
 
 fn mask_triple(triple: Triple) -> TripleMask {
     return TripleMask::SUBJECT;
