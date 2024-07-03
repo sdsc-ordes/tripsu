@@ -1,6 +1,6 @@
+use super::model::Entity;
 use rio_api;
 use std::{fmt, fmt::Write, ops::Sub};
-use super::model::Entity;
 
 // Rewrite all the rio types to be able to instanciate triples
 // Rename rio types as XXXView to distinguish them from our types
@@ -212,7 +212,7 @@ impl<'a> From<LiteralView<'a>> for Literal {
     }
 }
 
-impl From <Subject> for Entity {
+impl From<Subject> for Entity {
     fn from(subject: Subject) -> Entity {
         match subject {
             Subject::NamedNode(node) => Entity::NamedNode(node),
@@ -221,7 +221,7 @@ impl From <Subject> for Entity {
     }
 }
 
-impl From <Term> for Entity {
+impl From<Term> for Entity {
     fn from(term: Term) -> Entity {
         match term {
             Term::NamedNode(node) => Entity::NamedNode(node),
@@ -231,7 +231,7 @@ impl From <Term> for Entity {
     }
 }
 
-impl From <Entity> for Subject {
+impl From<Entity> for Subject {
     fn from(entity: Entity) -> Subject {
         match entity {
             Entity::NamedNode(node) => Subject::NamedNode(node),
@@ -241,7 +241,7 @@ impl From <Entity> for Subject {
     }
 }
 
-impl From <Entity> for Term {
+impl From<Entity> for Term {
     fn from(entity: Entity) -> Term {
         match entity {
             Entity::NamedNode(node) => Term::NamedNode(node),

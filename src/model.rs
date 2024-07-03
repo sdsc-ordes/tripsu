@@ -23,6 +23,20 @@ bitflags::bitflags! {
 impl TripleMask {
     // Checks if bit from another mask are all set in this mask
     pub fn is_set(&self, other: &TripleMask) -> bool {
-        return (*other - *self).bits() != 0;
+        return (*other - *self).bits() == 0;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    // Test the parsing of a triple.
+    fn is_subject_set() {
+        let mask_s = TripleMask::SUBJECT;
+        let mask_so = TripleMask::SUBJECT | TripleMask::OBJECT;
+        assert!(mask_s.is_set(&TripleMask::SUBJECT));
+        assert!(mask_so.is_set(&TripleMask::SUBJECT));
     }
 }

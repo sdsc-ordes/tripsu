@@ -1,15 +1,40 @@
 use rio_api::parser::TriplesParser;
 use rio_turtle::TurtleError;
 use std::{
-    collections::HashMap,
-    io::{BufRead, Write},
-    path::Path,
+    collections::HashMap, fmt::{Debug, Display}, io::{BufRead, Write}, path::Path,
 };
 
-use crate::{io, log::Logger, model::TripleMask, rules::Config, crypto::{DefaultHasher, Pseudonymize}, rdf_types::{Triple, Term}};
+use crate::{
+    crypto::{DefaultHasher, Pseudonymize},
+    io,
+    log::Logger,
+    model::TripleMask,
+    rdf_types::*,
+    rules::Config,
+};
 
-fn mask_triple(triple: Triple) -> TripleMask {
-    return TripleMask::SUBJECT;
+fn mask_triple(triple: Triple, rules: &Config, type_map: &HashMap<String, String>) -> TripleMask {
+    // Check each field of the triple against the rules
+    // rules.replace_uri_of_nodes_with_type has to to with OBJECT and SUBJECT
+    // rules.replace_value_of_predicate has to do with OBJECT
+    // rules.replace_value_of_object has to do with OBJECT
+    // We will start by checking the subject and then the object
+    match triple.subject {
+        Subject::NamedNode(n) => {
+            // First check if the iri is in any of the types
+            let type_check = type_map.contains_key(&n.iri);
+            // If the iri is in the type map, check if it is in the rules
+            if type_check {
+                let iri_type = type_map.get(&n.iri).unwrap();
+                let config_check = rules.replace_uri_of_nodes_with_type.contains(iri_type);
+                if config_check {
+                    return TripleMask::SUBJECT;
+                }
+            }
+        }
+        Subject::BlankNode(_) => {}
+    }
+    return TripleMask::from_bits_truncate(0b0)
 }
 
 // mask and encode input triple
@@ -20,9 +45,11 @@ fn process_triple(
     node_to_type: &HashMap<String, String>,
     out: &mut impl Write,
 ) -> Result<(), TurtleError> {
-    let mask = mask_triple(triple.clone());
+    let mask = mask_triple(triple.clone(), &rules_config, &node_to_type);
+    println!("Mask: {:?}", mask.bits());
     let hasher = DefaultHasher::new();
-    let _ = out.write(&format!("{} .\n", hasher.pseudo_triple(&triple, mask).to_string()).into_bytes());
+    let _ =
+        out.write(&format!("{} .\n", hasher.pseudo_triple(&triple, mask).to_string()).into_bytes());
 
     Ok(())
 }
@@ -34,7 +61,7 @@ fn load_type_map(input: impl BufRead) -> HashMap<String, String> {
 
     while !triples.is_end() {
         let _: Result<(), TurtleError> = triples.parse_step(&mut |t| {
-            node_to_type.insert(t.subject.to_string(), t.object.to_string());
+            node_to_type.insert(t.subject.to_string().replace(&['<','>'][..], ""), t.object.to_string().replace(&['<','>'][..], ""));
             Ok(())
         });
     }
@@ -52,7 +79,9 @@ pub fn pseudonymize_graph(log: &Logger, input: &Path, config: &Path, output: &Pa
     let mut triples = io::parse_ntriples(buf_input);
     while !triples.is_end() {
         triples
-            .parse_step(&mut |t| process_triple(t.into(), &rules_config, &node_to_type, &mut buf_output))
+            .parse_step(&mut |t| {
+                process_triple(t.into(), &rules_config, &node_to_type, &mut buf_output)
+            })
             .unwrap();
     }
 }
