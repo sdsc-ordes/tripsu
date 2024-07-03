@@ -3,6 +3,7 @@ use std::hash::Hash;
 use crate::rdf_types::*;
 use bitflags;
 
+#[derive(Eq, PartialEq, Debug, Clone, Hash)]
 pub enum Entity {
     Literal(Literal),
     NamedNode(NamedNode),

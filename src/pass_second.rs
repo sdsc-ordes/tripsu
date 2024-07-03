@@ -1,4 +1,4 @@
-use rio_api::{model::Triple, parser::TriplesParser};
+use rio_api::parser::TriplesParser;
 use rio_turtle::TurtleError;
 use std::{
     collections::HashMap,
@@ -6,7 +6,7 @@ use std::{
     path::Path,
 };
 
-use crate::{io, log::Logger, model::TripleMask, rules::Config};
+use crate::{io, log::Logger, model::TripleMask, rules::Config, crypto::{DefaultHasher, Pseudonymize}, rdf_types::{Triple, Term}};
 
 fn mask_triple(triple: Triple) -> TripleMask {
     return TripleMask::SUBJECT;
@@ -20,9 +20,9 @@ fn process_triple(
     node_to_type: &HashMap<String, String>,
     out: &mut impl Write,
 ) -> Result<(), TurtleError> {
-    let mask = mask_triple(triple);
-    let pseudo_triple = pseudonymize_triple(triple.into(), mask);
-    let _ = out.write(&format!("{} .\n", pseudo_triple.to_string()).into_bytes());
+    let mask = mask_triple(triple.clone());
+    let hasher = DefaultHasher::new();
+    let _ = out.write(&format!("{} .\n", hasher.pseudo_triple(&triple, mask).to_string()).into_bytes());
 
     Ok(())
 }
@@ -52,7 +52,7 @@ pub fn pseudonymize_graph(log: &Logger, input: &Path, config: &Path, output: &Pa
     let mut triples = io::parse_ntriples(buf_input);
     while !triples.is_end() {
         triples
-            .parse_step(&mut |t| process_triple(t, &rules_config, &node_to_type, &mut buf_output))
+            .parse_step(&mut |t| process_triple(t.into(), &rules_config, &node_to_type, &mut buf_output))
             .unwrap();
     }
 }

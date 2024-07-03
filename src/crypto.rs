@@ -6,15 +6,15 @@ pub trait Pseudonymize {
     // Pseudonymize parts of a triple set by its mask
     fn pseudo_triple(&self, triple: &Triple, mask: TripleMask) -> Triple {
         let pseudo_subject = if mask.is_set(&TripleMask::SUBJECT) {
-            &self.pseudo_entity(&triple.subject.into())
+            &self.pseudo_entity(&triple.subject.clone().into())
         } else {
-            &triple.subject.into()
+            &triple.subject.clone().into()
         };
 
         let pseudo_object = if mask.is_set(&TripleMask::OBJECT) {
-            &self.pseudo_entity(&triple.object.into())
+            &self.pseudo_entity(&triple.object.clone().into())
         } else {
-            &triple.object.into()
+            &triple.object.clone().into()
         };
 
         return Triple {
@@ -42,19 +42,19 @@ pub trait Pseudonymize {
     // return u.clone()
 }
 
-pub struct Hasher {
+pub struct DefaultHasher {
     hasher: blake3::Hasher,
 }
 
-impl Hasher {
+impl DefaultHasher {
     pub fn new() -> Self {
-        return Hasher {
+        return DefaultHasher {
             hasher: blake3::Hasher::new(),
         };
     }
 }
 
-impl Pseudonymize for Hasher {
+impl Pseudonymize for DefaultHasher {
     fn pseudo_named_node(&self, t: &NamedNode) -> NamedNode {
         return t.clone();
     }
