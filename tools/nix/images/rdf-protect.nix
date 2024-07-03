@@ -2,18 +2,14 @@
   pkgs,
   rdf-protect,
 }:
-pkgs.dockerTools.buildImage {
+pkgs.dockerTools.buildLayeredImage {
   name = "ghcr.io/sdsc-ordes/rdf-protect";
   tag = rdf-protect.version;
 
-  copyToRoot = pkgs.buildEnv {
-    name = "image-root";
-    paths = [rdf-protect];
-    pathsToLink = ["/bin"];
-  };
+  contents = [rdf-protect];
 
   config = {
-    Entrypoint = ["/bin/rdf-protect"];
+    Entrypoint = ["rdf-protect"];
     WorkingDir = "/";
   };
 }

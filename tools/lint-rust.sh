@@ -16,8 +16,8 @@ print_warning "Currently warnings are not errors!"
 
 cargo clippy --no-deps -- -A clippy::needless_return "$@" ||
     {
-        die "Rust clippy failed."
         git diff --name-status || true
+        die "Rust clippy failed."
     }
 
 print_info "Done."

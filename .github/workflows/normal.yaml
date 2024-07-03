@@ -42,7 +42,7 @@ jobs:
 
       - name: Format
         run: |
-          source .gitlab/scripts/before-script.sh &&
+          source .github/scripts/before-script.sh &&
           cat justfile &&
           just nix-develop just format
 
@@ -58,13 +58,13 @@ jobs:
 
       - name: Lint
         run: |
-          source .gitlab/scripts/before-script.sh &&
+          source .github/scripts/before-script.sh &&
           just nix-develop just lint
 
       - name: Lint Undefined-Behavior
         continue-on-error: true
         run: |
-          source .gitlab/scripts/before-script.sh &&
+          source .github/scripts/before-script.sh &&
           just nix-develop just lint-ub
 
       - name: Allow to fail
@@ -81,11 +81,11 @@ jobs:
 
       - name: build
         run: |
-          source .gitlab/scripts/before-script.sh &&
+          source .github/scripts/before-script.sh &&
           just nix-develop just build
       - name: tests
         run: |
-          source .gitlab/scripts/before-script.sh &&
+          source .github/scripts/before-script.sh &&
           just nix-develop just test
 
   test:
@@ -100,7 +100,7 @@ jobs:
 
       - name: Test
         run: |
-          source .gitlab/scripts/before-script.sh &&
+          source .github/scripts/before-script.sh &&
           just nix-develop just test
 
   package:
@@ -118,12 +118,12 @@ jobs:
 
       - name: Build derivation with nix
         run: |
-          source .gitlab/scripts/before-script.sh &&
+          source .github/scripts/before-script.sh &&
           just nix-package
 
       - name: Build the image with nix
         run: |
-          source .gitlab/scripts/before-script.sh &&
+          source .github/scripts/before-script.sh &&
           just nix-package
 
   deploy:
@@ -142,20 +142,20 @@ jobs:
 
       - name: Create version tag (if release)
         run: |
-          source .gitlab/scripts/before-script.sh &&
+          source .github/scripts/before-script.sh &&
           ./tools/ci/assert-tag.sh "$GITHUB_REF"
 
       - name: Build container image (nix)
         run: |
-          source .gitlab/scripts/before-script.sh &&
+          source .github/scripts/before-script.sh &&
           just nix-image
 
       - name: Push image (if release)
         run: |
-          source .gitlab/scripts/before-script.sh &&
+          source .github/scripts/before-script.sh &&
           ./tools/ci/push-image.sh
 
       - name: Push tag (if release)
         run: |
-          source .gitlab/scripts/before-script.sh &&
+          source .github/scripts/before-script.sh &&
           ./tools/ci/assert-tag.sh --push "$GITHUB_REF"

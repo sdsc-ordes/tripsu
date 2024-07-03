@@ -8,7 +8,7 @@ set -euo pipefail
 ROOT_DIR=$(git rev-parse --show-toplevel)
 . "$ROOT_DIR/tools/general.sh"
 
-VERSION_FILE=$(ci_nix_image_version_file)
+VERSION_FILE=$("$ROOT_DIR/Cargo.toml")
 
 function clean_up() {
     if ! ci_is_running; then
@@ -29,12 +29,10 @@ function main() {
         version="0.0.0+$(git rev-parse --short=10 HEAD)"
 
         # Write the temporary version file (gets restored...)
-        temp=$(mktemp)
-        jq ".version |= \"$version\"" "$VERSION_FILE" >"$temp"
-        mv "$temp" "$VERSION_FILE"
+        dasel put -r toml -f "$VERSION_FILE" -t string -v "$version" .package.version
     else
         # When CI and in Release, the requested version must match.
-        version=$(jq ".version" "$VERSION_FILE")
+        version=$(dasel get -f "$VERSION_FILE" .package.version -w yaml)
 
         release_version=${GITHUB_REF##*prepare-v}
 

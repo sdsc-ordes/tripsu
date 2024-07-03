@@ -3,6 +3,7 @@
 set -e
 set -u
 
+DIR=$(cd -- "$(dirname -- "$0")" &>/dev/null && pwd)
 ROOT_DIR=$(git rev-parse --show-toplevel)
 . "$ROOT_DIR/tools/general.sh"
 
@@ -11,7 +12,8 @@ cd "$ROOT_DIR"
 function build_ci_image() {
     local image_type="$1"
     local repository="$2"
-    local tag="$image_type-$3"
+    local version="$3"
+    local tag="$image_type-$version"
 
     local image_name="$repository:$tag"
 
@@ -27,7 +29,7 @@ function build_ci_image() {
 
 repository="${1:-ghcr.io/sdsc-ordes/rdf-protect}"
 tag="${2:-1.0.0}"
-container_file=".gitlab/images/Containerfile"
+container_file="$DIR/../images/Containerfile"
 
 if [ "${CI:-}" = "true" ]; then
     ci_container_mgr_login "$DOCKER_REPOSITORY_READ_USERNAME" "$DOCKER_REPOSITORY_READ_TOKEN"

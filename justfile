@@ -83,5 +83,5 @@ nix-image *args:
 # Upload all images for CI.
 upload-ci-images:
     cd "{{root_dir}}" && \
-        .gitlab/scripts/upload-images.sh
+        .github/scripts/upload-images.sh
 ## ============================================================================

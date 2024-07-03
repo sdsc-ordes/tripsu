@@ -36,13 +36,11 @@
   };
 
   outputs = {
-    self,
     nixpkgs,
-    nixpkgsStable,
     flake-utils,
     rust-overlay,
     ...
-  } @ inputs: let
+  }: let
     rootDir = ./. + "../../..";
   in
     flake-utils.lib.eachDefaultSystem
@@ -101,12 +99,12 @@
           };
 
           packages = {
-            inherit rdf-protect;
+            rdf-protect = rdf-protect;
 
             images = {
               ci = (import ./images/ci.nix) {
                 inherit pkgs;
-                devShellDrv = devShells.ci;
+                devShellDrv = devShells.default;
               };
 
               rdf-protect = (import ./images/rdf-protect.nix) {
