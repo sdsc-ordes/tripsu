@@ -78,6 +78,7 @@
           just
 
           skopeo
+          dasel
         ];
 
         # Things needed at runtime.

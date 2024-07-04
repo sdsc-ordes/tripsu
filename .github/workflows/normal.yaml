@@ -153,7 +153,7 @@ jobs:
       - name: Push image (if release)
         run: |
           source .github/scripts/before-script.sh &&
-          ./tools/ci/push-image.sh
+          tools/ci/upload-image.sh
 
       - name: Push tag (if release)
         run: |

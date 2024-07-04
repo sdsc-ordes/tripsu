@@ -27,7 +27,9 @@ function main() {
 
         print_info "Uploading image: '$image_name' in '$image_path'."
 
-        print_info "Upload the build image from Nix to the registry"
+        print_info "Read the image from file '$image_path' and " \
+            "directly push to registry '$image_name'."
+
         skopeo \
             --insecure-policy \
             copy \

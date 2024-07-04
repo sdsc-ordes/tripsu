@@ -8,7 +8,7 @@ set -euo pipefail
 ROOT_DIR=$(git rev-parse --show-toplevel)
 . "$ROOT_DIR/tools/general.sh"
 
-VERSION_FILE=$("$ROOT_DIR/Cargo.toml")
+VERSION_FILE="$ROOT_DIR/Cargo.toml"
 
 function clean_up() {
     if ! ci_is_running; then
@@ -25,8 +25,10 @@ function main() {
     args=("$@")
 
     if ! ci_is_running || ! ci_is_release; then
+        print_info "Building image for development."
+
         # Define the image version from Git SHA
-        version="0.0.0+$(git rev-parse --short=10 HEAD)"
+        version="0.0.0-dev.$(git rev-parse --short=7 HEAD)"
 
         # Write the temporary version file (gets restored...)
         dasel put -r toml -f "$VERSION_FILE" -t string -v "$version" .package.version
@@ -47,7 +49,7 @@ function main() {
 
     image_name=$(nix eval --raw "./tools/nix#images.rdf-protect.imageName")
     image_tag=$(nix eval --raw "./tools/nix#images.rdf-protect.imageTag")
-    dir="build/image/$image_name|$image_tag.tar.gz"
+    dir="build/image/$image_name:$image_tag.tar.gz"
 
     cd "$ROOT_DIR"
 

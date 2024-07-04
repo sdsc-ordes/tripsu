@@ -22,10 +22,26 @@ nix-develop *args:
     nix develop ./tools/nix#default --command "${cmd[@]}"
 
 ## Standard stuff =============================================================
+# Format the code.
+format *args:
+    cd "{{root_dir}}" && \
+        "{{root_dir}}/tools/format-rust.sh" {{args}}
+
+# Lint all code.
+lint *args:
+    cd "{{root_dir}}" && \
+        "{{root_dir}}/tools/lint-rust.sh" {{args}}
+
 # Build the executable.
 build *args:
     cd "{{root_dir}}" && cargo build "${@:1}"
 
+# Run the tests.
+test:
+    cd "{{root_dir}}" && cargo test "${@:1}"
+
+
+## Development functionality ==================================================
 # Watch source and continuously build the executable.
 watch:
     cd "{{root_dir}}" && cargo watch -x 'build'
@@ -33,31 +49,6 @@ watch:
 # Run the executable.
 run:
     cd "{{root_dir}}" && cargo run "${@:1}"
-
-# Run the tests.
-test:
-    cd "{{root_dir}}" && cargo test "${@:1}"
-
-# Format the code.
-format *args:
-    cd "{{root_dir}}" && \
-        "{{root_dir}}/tools/format-rust.sh" {{args}}
-
-# Format all files.
-format-general *args:
-    # Not implemented yet.
-    # That should run all hooks which are configured by Githooks.
-    true
-
-# Lint all code.
-lint *args:
-    cd "{{root_dir}}" && \
-        "{{root_dir}}/tools/lint-rust.sh" {{args}}
-
-# Lint all code (undefined behavior).
-lint-ub *args:
-    cd "{{root_dir}}" && \
-        "{{root_dir}}/tools/lint-ub-rust.sh" {{args}}
 
 # Create a new release for version `version` by
 # updating the version file and
@@ -69,7 +60,6 @@ release version:
 
 
 ## CI stuff ===================================================================
-
 # Build the nix package into the folder `package` (first argument).
 nix-package *args:
     cd "{{root_dir}}" && \
@@ -80,8 +70,8 @@ nix-image *args:
     cd "{{root_dir}}" && \
        "./tools/build-image.sh" "$@"
 
-# Upload all images for CI.
+# Upload all images for CI (local machine)
 upload-ci-images:
     cd "{{root_dir}}" && \
-        .github/scripts/upload-images.sh
+        tools/ci/upload-ci-images.sh
 ## ============================================================================

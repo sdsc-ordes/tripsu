@@ -11,6 +11,9 @@ set -euo pipefail
 ROOT_DIR=$(git rev-parse --show-toplevel)
 . "$ROOT_DIR/tools/general.sh"
 
+RELEASE_BRANCH="${RELEASE_BRANCH:-main}"
+VERSION_FILE=$("$ROOT_DIR/Cargo.toml")
+
 function delete_prepare_tags() {
     readarray -t prepareTag < <(git tag --list "prepare-*")
 
@@ -25,17 +28,13 @@ function commit_version_file() {
     local version="$1"
     print_info "Writing new version file... (for Nix)"
 
-    temp=$(mktemp)
-    jq ".version |= \"$version\"" "$VERSION_FILE" >"$temp"
-    mv "$temp" "$VERSION_FILE"
+    dasel put -r toml -f "$VERSION_FILE" -t string -v "$version" .package.version
 
-    if ! git diff --quiet --exit-code; then
-        git add "$VERSION_FILE"
-        git commit -m "chore: update Nix package version to '$version'"
-    fi
+    git add "$VERSION_FILE"
+    git commit -m "chore: release '$version'"
 }
 
-function create_tag() {
+function create_prepare_tag() {
     tag="v$version"
     if git tag --list "v*" | grep -qE "^$tag$"; then
         print_info "Git tag '$tag' already exists."
@@ -55,6 +54,7 @@ function create_tag() {
 }
 
 function trigger_build() {
+    local branch="$1"
     printf "Do you want to trigger the build? [y|n]: "
     read -r answer
     if [ "$answer" != "y" ]; then
@@ -68,10 +68,12 @@ function trigger_build() {
 function main() {
     cd "$ROOT_DIR"
 
-    version="$1"
+    local version="$1"
+
+    local branch
     branch=$(git branch --show-current)
 
-    if [ "$branch" != "main" ]; then
+    if [ "$branch" != "$RELEASE_BRANCH" ]; then
         die "Can only tag on 'main'."
     fi
 
@@ -81,8 +83,8 @@ function main() {
 
     delete_prepare_tags
     commit_version_file "$version"
-    create_tag
-    trigger_build
+    create_prepare_tag
+    trigger_build "$branch"
 }
 
 main "$@"
