@@ -40,9 +40,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Git
+      - name: Setup Git & Cache Nix
         run: |
           ./tools/ci/setup-git.sh
+          just nix-develop git --version
 
       - name: Format
         run: |
@@ -58,9 +59,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Git
+      - name: Setup Git & Cache Nix
         run: |
           ./tools/ci/setup-git.sh
+          just nix-develop git --version
 
       - name: Lint
         run: |
@@ -85,9 +87,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Git
+      - name: Setup Git & Cache Nix
         run: |
           ./tools/ci/setup-git.sh
+          just nix-develop git --version
 
       - name: build
         run: |
@@ -106,9 +109,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Git
+      - name: Setup Git & Cache Nix
         run: |
           ./tools/ci/setup-git.sh
+          just nix-develop git --version
 
       - name: Test
         run: |
@@ -130,6 +134,7 @@ jobs:
       - name: Setup Git
         run: |
           ./tools/ci/setup-git.sh
+          just nix-develop git --version
 
       - name: Build derivation with nix
         run: |
@@ -149,9 +154,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Git
+      - name: Setup Git & Cache
         run: |
           ./tools/ci/setup-git.sh
+          just nix-develop git --version
 
       - name: Create version tag (if release)
         run: |
