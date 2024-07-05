@@ -138,10 +138,12 @@ jobs:
 
       - name: Build package (nix)
         run: |
+          ./tools/ci/setup-git.sh
           just nix-develop just nix-package
 
       - name: Build container image (nix)
         run: |
+          ./tools/ci/setup-git.sh
           just nix-develop just nix-image
 
   deploy:
