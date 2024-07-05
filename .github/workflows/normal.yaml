@@ -134,17 +134,15 @@ jobs:
       - name: Setup Git
         run: |
           ./tools/ci/setup-git.sh
-          just nix-develop git --version
+           just nix-develop git --version
 
       - name: Build package (nix)
         run: |
-          ./tools/ci/setup-git.sh
-          just nix-develop just nix-package
+          just nix-package
 
-      - name: Build container image (nix)
-        run: |
-          ./tools/ci/setup-git.sh
-          just nix-develop just nix-image
+      # - name: Build container image (nix)
+      #   run: |
+      #     just nix-develop just nix-image
 
   deploy:
     runs-on: ubuntu-latest
