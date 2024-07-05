@@ -1,7 +1,7 @@
 name: Main and PR Pipeline
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.ref }}
   cancel-in-progress: true
 
 defaults:
