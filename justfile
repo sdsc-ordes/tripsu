@@ -46,11 +46,15 @@ watch:
 run:
     cd "{{root_dir}}" && cargo run "${@:1}"
 
-# Create a new release for version `version` by
-# updating the version file and
-# triggering the release workflow.
+# Create a new release by version bumping.
+# Usage:
+# ```shell
+#    just release <sem-version>
+# ```
+# by updating the version file and triggering the release workflow.
 release version:
     cd "{{root_dir}}" && \
+        CONTAINER_MGR="{{container_mgr}}" \
         "{{root_dir}}/tools/release.sh" "{{version}}"
 ## ============================================================================
 
@@ -69,6 +73,6 @@ nix-image *args:
 # Upload all images for CI (local machine)
 upload-ci-images:
     cd "{{root_dir}}" && \
-        CONTAINER_MGR="$container_mgr" \
+        CONTAINER_MGR="{{container_mgr}}" \
         tools/ci/upload-ci-images.sh
 ## ============================================================================

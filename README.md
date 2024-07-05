@@ -56,7 +56,12 @@ The general command-line interface outlines the two main steps of the tool,
 indexing and pseudonymization:
 
 ```shell
-$ rdf-protect --help
+rdf-protect --help
+```
+
+which outputs
+
+```text
 A tool to pseudonymize URIs and values in RDF graphs.
 
 Usage: rdf-protect <COMMAND>
@@ -74,17 +79,16 @@ Options:
 Indexing only requires an RDF file as input:
 
 ```shell
-$ rdf-protect index input.nt > index.nt
+rdf-protect index input.nt > index.nt
 ```
 
 Pseudonomyzation requires an RDF file, index and config as input:
 
 ```shell
-$ rdf-protect pseudo --index index.nt --config rules.yaml input.nt > output.nt
+rdf-protect pseudo --index index.nt --config rules.yaml input.nt > output.nt
 ```
 
-> [!TIP]
-> For each subcommand, you can use `--help` to see all options. 
+> [!TIP] For each subcommand, you can use `--help` to see all options.
 
 In both subcommands, the input defaults to stdin and the output to stdout,
 allowing to pipe both up- and downstream `rdf-protect` (see next section).
@@ -113,12 +117,12 @@ There are three possible ways to pseudonymize RDF triples:
 2. Pseudonymize values for specific subject-predicate combinations.
 3. Pseudonymize any value for a given predicate.
 
-
 By using all three ways together, we're able to get an RDF file with sensitive
 information:
+
 <details>
     <summary><b>Click to show input</b></summary>
-    
+
 ```ntriples
 <http://example.org/Alice> <http://www.w3.org/2000/01/rdf-schema#type> <http://xmlns.com/foaf/0.1/Person> .
 <http://example.org/Alice> <http://xmlns.com/foaf/0.1/holdsAccount> <http://example.org/Alice-Bank-Account> .
@@ -137,7 +141,7 @@ secret information while keeping the rest as is:
 
 <details>
     <summary><b>Click to show output</b></summary>
-    
+
 ```
 <http://example.org/af321bbc> <http://www.w3.org/2000/01/rdf-schema#type> <http://xmlns.com/foaf/0.1/Person> .
 <http://example.org/af321bbc> <http://xmlns.com/foaf/0.1/holdsAccount> <http://example.org/bs2313bc> .
@@ -158,7 +162,7 @@ better understand how they operate.
 
 <details>
     <summary><b>Click to show</b></summary>
-    
+
 Given the following config:
 
 ```yaml
@@ -245,6 +249,7 @@ Would become:
 <http://example.org/Bank> <http://www.w3.org/2000/01/rdf-schema#type> <http://xmlns.com/foaf/0.1/Organization> .
 <http://example.org/Bank> <http://schema.org/name> "38a3dd71" .
 ```
+
 </details>
 
 ## Development
@@ -271,7 +276,7 @@ If you have the package manager
 enter a development setup easily with
 
 ```shell
-nix develop ./nix#default
+nix ./tools/nix#default
 ```
 
 or `just nix-develop` or automatically when [`direnv`](https://direnv.net) is
@@ -312,3 +317,42 @@ To run the tests do
 ```shell
 just test
 ```
+
+### Build the Package & Image
+
+To build the package with Nix run:
+
+```shell
+just nix-package
+```
+
+To build the image with Nix run:
+
+```shell
+just nix-image
+```
+
+### Upload CI Images
+
+CI is run with some container images which can be updated with:
+
+```shell
+just upload-ci-images [<version>] [<registry>]
+```
+
+where the `<version>` should be a semantic version. **Note: By default it will
+upload and overwrite the current version.**
+
+### Prepare a Release
+
+To prepare a release you can execute:
+
+```shell
+just release [patch|minor|major]
+```
+
+It will:
+
+- Update the `Cargo.toml` and make a commit on `main`.
+
+- Push a prepare tag `prepare-v<version>` where

@@ -27,8 +27,8 @@ function build_ci_image() {
     ci_container_mgr push "$image_name" || die "Could not upload image."
 }
 
-repository="${1:-ghcr.io/sdsc-ordes/rdf-protect}"
-tag="${2:-1.0.0}"
+tag="${1:-1.0.0}"
+repository="${2:-ghcr.io/sdsc-ordes/rdf-protect}"
 container_file="$DIR/../images/Containerfile"
 
 if [ "${CI:-}" = "true" ]; then
