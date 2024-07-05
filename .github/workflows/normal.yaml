@@ -33,7 +33,7 @@ jobs:
   format:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/sdsc-ordes/rdf-protect:ci-format-1.0.0
+      image: ghcr.io/sdsc-ordes/rdf-protect:ci-nix-1.0.0
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -49,7 +49,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/sdsc-ordes/rdf-protect:ci-lint-1.0.0
+      image: ghcr.io/sdsc-ordes/rdf-protect:ci-nix-1.0.0
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -74,7 +74,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/sdsc-ordes/rdf-protect:ci-build-1.0.0
+      image: ghcr.io/sdsc-ordes/rdf-protect:ci-nix-1.0.0
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -91,7 +91,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/sdsc-ordes/rdf-protect:ci-test-1.0.0
+      image: ghcr.io/sdsc-ordes/rdf-protect:ci-nix-1.0.0
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -106,7 +106,7 @@ jobs:
   package:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/sdsc-ordes/rdf-protect:ci-package-1.0.0
+      image: ghcr.io/sdsc-ordes/rdf-protect:ci-nix-1.0.0
 
     if: ${{ ! input.is_release }}
 
@@ -130,7 +130,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [format, lint, build, test]
     container:
-      image: ghcr.io/sdsc-ordes/rdf-protect:ci-deploy-1.0.0
+      image: ghcr.io/sdsc-ordes/rdf-protect:ci-nix-1.0.0
 
     if: ${{ input.is_release }}
 

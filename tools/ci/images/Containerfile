@@ -41,28 +41,3 @@ RUN [ "${CACHE_TOOLCHAIN}" = "false" ] || { cd /container-setup && \
     nix --accept-flake-config \
     build --no-link "./tools/nix#devShells.x86_64-linux.ci" && \
     nix store optimise; }
-
-
-# Format image.
-# ===============================================
-FROM ci-nix as ci-format
-
-# Lint image.
-# ===============================================
-FROM ci-nix as ci-lint
-
-# Build image.
-# ===============================================
-FROM ci-nix as ci-build
-
-# Test image.
-# ===============================================
-FROM ci-nix as ci-test
-
-# Package image.
-# ===============================================
-FROM ci-nix as ci-package
-
-# Deploy image.
-# ===============================================
-FROM ci-nix as ci-deploy
