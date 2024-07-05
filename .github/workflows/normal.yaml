@@ -40,10 +40,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup Git
+        run: |
+          just nix-develop ./tools/ci/setup-git.sh
+
       - name: Format
         run: |
-          source tools/ci/before-script.sh &&
-          cat justfile &&
           just nix-develop just format
 
   lint:
@@ -56,15 +58,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup Git
+        run: |
+          just nix-develop ./tools/ci/setup-git.sh
+
       - name: Lint
         run: |
-          source tools/ci/before-script.sh &&
           just nix-develop just lint
 
       - name: Lint Undefined-Behavior
         continue-on-error: true
         run: |
-          source tools/ci/before-script.sh &&
           just nix-develop just lint-ub
 
       - name: Allow to fail
@@ -78,14 +82,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Git
+        run: |
+          just nix-develop ./tools/ci/setup-git.sh
 
       - name: build
         run: |
-          source tools/ci/before-script.sh &&
           just nix-develop just build
       - name: tests
         run: |
-          source tools/ci/before-script.sh &&
           just nix-develop just test
 
   test:
@@ -98,9 +106,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup Git
+        run: |
+          just nix-develop ./tools/ci/setup-git.sh
+
       - name: Test
         run: |
-          source tools/ci/before-script.sh &&
           just nix-develop just test
 
   package:
@@ -116,15 +127,13 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup Git
+        run: |
+          just nix-develop ./tools/ci/setup-git.sh
+
       - name: Build derivation with nix
         run: |
-          source tools/ci/before-script.sh &&
-          just nix-package
-
-      - name: Build the image with nix
-        run: |
-          source tools/ci/before-script.sh &&
-          just nix-package
+          just nix-develop just nix-package
 
   deploy:
     runs-on: ubuntu-latest
@@ -140,22 +149,22 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup Git
+        run: |
+          just nix-develop ./tools/ci/setup-git.sh
+
       - name: Create version tag (if release)
         run: |
-          source tools/ci/before-script.sh &&
-          ./tools/ci/assert-tag.sh "$GITHUB_REF"
+          just nix-develop ./tools/ci/assert-tag.sh "$GITHUB_REF"
 
       - name: Build container image (nix)
         run: |
-          source tools/ci/before-script.sh &&
-          just nix-image
+          just nix-develop just nix-image
 
       - name: Push image (if release)
         run: |
-          source tools/ci/before-script.sh &&
-          tools/ci/upload-image.sh
+          just nix-develop tools/ci/upload-image.sh
 
       - name: Push tag (if release)
         run: |
-          source tools/ci/before-script.sh &&
-          ./tools/ci/assert-tag.sh --push "$GITHUB_REF"
+          just nix-develop ./tools/ci/assert-tag.sh --push "$GITHUB_REF"

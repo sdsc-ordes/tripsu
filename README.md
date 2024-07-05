@@ -360,3 +360,6 @@ It will:
 
 - Push a prepare tag `prepare-v<version>` which triggers the
   [`release.yaml`](.github/workflows/release.yaml) pipeline.
+
+**Note: If the release pipeline fails, you can just run this same command again.
+Also rerun it when you made a mistake, it will cancel the current release.**

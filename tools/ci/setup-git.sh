@@ -11,9 +11,4 @@ git config --global safe.directory "*" || {
 ROOT_DIR=$(git rev-parse --show-toplevel)
 . "$ROOT_DIR/tools/general.sh"
 
-print_info "Current dir: '$(pwd)'"
-print_info "Running as user: $(id)"
-
 ci_setup_git
-
-unset ROOT_DIR
