@@ -348,11 +348,15 @@ upload and overwrite the current version.**
 To prepare a release you can execute:
 
 ```shell
-just release [patch|minor|major]
+just release <sem-version>
 ```
 
 It will:
 
+- Check that the version is sem. version and the version does not exists (local
+  and remote) and it is newer then all remote version.
+
 - Update the `Cargo.toml` and make a commit on `main`.
 
-- Push a prepare tag `prepare-v<version>` where
+- Push a prepare tag `prepare-v<version>` which triggers the
+  [`release.yaml`](.github/workflows/release.yaml) pipeline.
