@@ -10,12 +10,12 @@
     rustc = rustToolchain;
   };
 
-  cargoFile = /. + rootDir + "/Cargo.toml";
-  lockFile = /. + rootDir + "/Cargo.lock";
+  cargoFile = ../../../Cargo.toml;
+  lockFile = ../../../Cargo.lock;
 in
   rustPlatform.buildRustPackage {
     name = "rdf-protect";
-    src = /. + rootDir;
+    src = ../../..;
 
     version = (lib.importTOML cargoFile).package.version;
 
