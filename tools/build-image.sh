@@ -54,7 +54,7 @@ function main() {
     cd "$ROOT_DIR"
 
     print_info "Building image '$dir'."
-    nix build "./tools/nix#images.rdf-protect" \
+    nix build -L "./tools/nix#images.rdf-protect" \
         --out-link "$dir" "${args[@]}"
 }
 

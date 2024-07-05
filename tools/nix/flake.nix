@@ -41,7 +41,8 @@
     rust-overlay,
     ...
   }: let
-    rootDir = ./. + "../../..";
+    # This is string (without toString it would be a `path` which is put into the store)
+    rootDir = toString ./. + "../../..";
   in
     flake-utils.lib.eachDefaultSystem
     # Creates an attribute map `{ devShells.<system>.default = ...}`

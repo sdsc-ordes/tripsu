@@ -136,12 +136,17 @@ jobs:
           ./tools/ci/setup-git.sh
           just nix-develop git --version
 
-      - name: Build derivation with nix
+      - name: Build package (nix)
         run: |
           just nix-develop just nix-package
 
+      - name: Build container image (nix)
+        run: |
+          just nix-develop just nix-image
+
   deploy:
     runs-on: ubuntu-latest
+    # TODO: uncomment this
     # needs: [format, lint, build, test]
     container:
       image: ghcr.io/sdsc-ordes/rdf-protect:ci-nix-1.0.0
@@ -154,7 +159,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Git & Cache
+      - name: Setup Git & Nix Cache
         run: |
           ./tools/ci/setup-git.sh
           just nix-develop git --version

@@ -13,6 +13,7 @@ cd "$ROOT_DIR"
 dir="build/package"
 
 print_info "Building the package."
-nix build "./tools/nix#rdf-protect" \
+nix --version
+nix build -L "./tools/nix#rdf-protect" \
     --out-link "$dir" \
     "$@"
