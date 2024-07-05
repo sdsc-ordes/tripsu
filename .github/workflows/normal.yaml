@@ -43,7 +43,7 @@ jobs:
       - name: Setup Git & Cache Nix
         run: |
           ./tools/ci/setup-git.sh
-          just nix-develop git --version
+          just nix-develop echo "Built cache."
 
       - name: Format
         run: |
@@ -62,7 +62,7 @@ jobs:
       - name: Setup Git & Cache Nix
         run: |
           ./tools/ci/setup-git.sh
-          just nix-develop git --version
+          just nix-develop echo "Built cache."
 
       - name: Lint
         run: |
@@ -90,7 +90,7 @@ jobs:
       - name: Setup Git & Cache Nix
         run: |
           ./tools/ci/setup-git.sh
-          just nix-develop git --version
+          just nix-develop echo "Built cache."
 
       - name: build
         run: |
@@ -134,7 +134,7 @@ jobs:
       - name: Setup Git
         run: |
           ./tools/ci/setup-git.sh
-           just nix-develop git --version
+           just nix-develop echo "Built cache."
 
       - name: Build package (nix)
         run: |
@@ -142,6 +142,8 @@ jobs:
 
       - name: Build container image (nix)
         run: |
+          # TODO: This seems to error out into
+          # rdf-protect-base.json> variable $src or $srcs should point to the source
           just nix-develop just nix-image
 
   deploy:
@@ -162,7 +164,7 @@ jobs:
       - name: Setup Git & Nix Cache
         run: |
           ./tools/ci/setup-git.sh
-          just nix-develop git --version
+           just nix-develop echo "Built cache."
 
       - name: Create version tag (if release)
         run: |
