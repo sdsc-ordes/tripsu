@@ -61,6 +61,11 @@ function ci_is_release() {
     return 1
 }
 
+function ci_setup_git() {
+    git config --global user.name "SDSC CI"
+    git config --global user.email "ci@sdsc.ethz.ch"
+}
+
 function ci_setup_nix() {
     local install_prefix="${1:-/usr/sbin}"
 

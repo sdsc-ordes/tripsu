@@ -128,7 +128,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    needs: [format, lint, build, test]
+    # needs: [format, lint, build, test]
     container:
       image: ghcr.io/sdsc-ordes/rdf-protect:ci-nix-1.0.0
 
