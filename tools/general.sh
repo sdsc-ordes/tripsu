@@ -78,10 +78,14 @@ function ci_setup_nix() {
 }
 
 # Run the container manager which is defined.
+# in env. variable `CONTAINER_MGR`
+# (by default `podman` if existing).
 function ci_container_mgr() {
-    if command -v podman &>/dev/null; then
-        echo -e "Running podman as:\n$(printf "'%s' " "podman" "$@")" >&2
-        podman "$@"
+    local mgr="${CONTAINER_MGR:-podman}"
+
+    if command -v "$mgr" &>/dev/null; then
+        echo -e "Running '$mgr' as:\n$(printf "'%s' " "podman" "$@")" >&2
+        "$mgr" "$@"
     else
         echo -e "Running docker as:\n$(printf "'%s' " "docker" "$@")"
         docker "$@"

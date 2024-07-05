@@ -6,10 +6,6 @@ root_dir := `git rev-parse --show-toplevel`
 # You can chose either "podman" or "docker".
 container_mgr := "podman"
 
-# Deterministic steps such as `lint`, `format`
-# will run
-use_container := ""
-
 # Default recipe to list all recipes.
 default:
   just --list
@@ -73,5 +69,6 @@ nix-image *args:
 # Upload all images for CI (local machine)
 upload-ci-images:
     cd "{{root_dir}}" && \
+        CONTAINER_MGR="$container_mgr" \
         tools/ci/upload-ci-images.sh
 ## ============================================================================

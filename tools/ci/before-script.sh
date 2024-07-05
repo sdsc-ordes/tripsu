@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1090,SC1091
-# This script is sourced.
+# This script is sourced in each step.
 set -u
 
 git config --global safe.directory "*" || {
@@ -13,8 +13,5 @@ ROOT_DIR=$(git rev-parse --show-toplevel)
 
 print_info "Current dir: '$(pwd)'"
 print_info "Running as user: $(id)"
-
-# ci_container_mgr_setup
-#
 
 unset ROOT_DIR

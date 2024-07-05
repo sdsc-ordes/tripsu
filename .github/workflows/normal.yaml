@@ -42,7 +42,7 @@ jobs:
 
       - name: Format
         run: |
-          source .github/scripts/before-script.sh &&
+          source tools/ci/before-script.sh &&
           cat justfile &&
           just nix-develop just format
 
@@ -58,13 +58,13 @@ jobs:
 
       - name: Lint
         run: |
-          source .github/scripts/before-script.sh &&
+          source tools/ci/before-script.sh &&
           just nix-develop just lint
 
       - name: Lint Undefined-Behavior
         continue-on-error: true
         run: |
-          source .github/scripts/before-script.sh &&
+          source tools/ci/before-script.sh &&
           just nix-develop just lint-ub
 
       - name: Allow to fail
@@ -81,11 +81,11 @@ jobs:
 
       - name: build
         run: |
-          source .github/scripts/before-script.sh &&
+          source tools/ci/before-script.sh &&
           just nix-develop just build
       - name: tests
         run: |
-          source .github/scripts/before-script.sh &&
+          source tools/ci/before-script.sh &&
           just nix-develop just test
 
   test:
@@ -100,7 +100,7 @@ jobs:
 
       - name: Test
         run: |
-          source .github/scripts/before-script.sh &&
+          source tools/ci/before-script.sh &&
           just nix-develop just test
 
   package:
@@ -108,7 +108,7 @@ jobs:
     container:
       image: ghcr.io/sdsc-ordes/rdf-protect:ci-nix-1.0.0
 
-    if: ${{ ! input.is_release }}
+    if: ${{ ! inputs.is_release }}
 
     steps:
       - name: Checkout
@@ -118,12 +118,12 @@ jobs:
 
       - name: Build derivation with nix
         run: |
-          source .github/scripts/before-script.sh &&
+          source tools/ci/before-script.sh &&
           just nix-package
 
       - name: Build the image with nix
         run: |
-          source .github/scripts/before-script.sh &&
+          source tools/ci/before-script.sh &&
           just nix-package
 
   deploy:
@@ -132,7 +132,7 @@ jobs:
     container:
       image: ghcr.io/sdsc-ordes/rdf-protect:ci-nix-1.0.0
 
-    if: ${{ input.is_release }}
+    if: ${{ inputs.is_release }}
 
     steps:
       - name: Checkout
@@ -142,20 +142,20 @@ jobs:
 
       - name: Create version tag (if release)
         run: |
-          source .github/scripts/before-script.sh &&
+          source tools/ci/before-script.sh &&
           ./tools/ci/assert-tag.sh "$GITHUB_REF"
 
       - name: Build container image (nix)
         run: |
-          source .github/scripts/before-script.sh &&
+          source tools/ci/before-script.sh &&
           just nix-image
 
       - name: Push image (if release)
         run: |
-          source .github/scripts/before-script.sh &&
+          source tools/ci/before-script.sh &&
           tools/ci/upload-image.sh
 
       - name: Push tag (if release)
         run: |
-          source .github/scripts/before-script.sh &&
+          source tools/ci/before-script.sh &&
           ./tools/ci/assert-tag.sh --push "$GITHUB_REF"

@@ -16,8 +16,6 @@ fi
 cargo --version
 cargo fmt --version
 
-git diff --name-status
-
 print_info "Run Rust format."
 cargo fmt "${fmt_args[@]}" "$@"
 
