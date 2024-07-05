@@ -140,9 +140,9 @@ jobs:
         run: |
           just nix-package
 
-      # - name: Build container image (nix)
-      #   run: |
-      #     just nix-develop just nix-image
+      - name: Build container image (nix)
+        run: |
+          just nix-develop just nix-image
 
   deploy:
     runs-on: ubuntu-latest
