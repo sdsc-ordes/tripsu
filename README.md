@@ -362,4 +362,5 @@ It will:
   [`release.yaml`](.github/workflows/release.yaml) pipeline.
 
 **Note: If the release pipeline fails, you can just run this same command again.
-Also rerun it when you made a mistake, it will cancel the current release.**
+Also rerun it when you made a mistake, it will cancel the current release (works
+also when `--amend`ing on the current commit)**

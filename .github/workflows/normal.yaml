@@ -42,7 +42,7 @@ jobs:
 
       - name: Setup Git
         run: |
-          just nix-develop ./tools/ci/setup-git.sh
+          ./tools/ci/setup-git.sh
 
       - name: Format
         run: |
@@ -60,7 +60,7 @@ jobs:
 
       - name: Setup Git
         run: |
-          just nix-develop ./tools/ci/setup-git.sh
+          ./tools/ci/setup-git.sh
 
       - name: Lint
         run: |
@@ -87,7 +87,7 @@ jobs:
 
       - name: Setup Git
         run: |
-          just nix-develop ./tools/ci/setup-git.sh
+          ./tools/ci/setup-git.sh
 
       - name: build
         run: |
@@ -108,7 +108,7 @@ jobs:
 
       - name: Setup Git
         run: |
-          just nix-develop ./tools/ci/setup-git.sh
+          ./tools/ci/setup-git.sh
 
       - name: Test
         run: |
@@ -129,7 +129,7 @@ jobs:
 
       - name: Setup Git
         run: |
-          just nix-develop ./tools/ci/setup-git.sh
+          ./tools/ci/setup-git.sh
 
       - name: Build derivation with nix
         run: |
@@ -151,7 +151,7 @@ jobs:
 
       - name: Setup Git
         run: |
-          just nix-develop ./tools/ci/setup-git.sh
+          ./tools/ci/setup-git.sh
 
       - name: Create version tag (if release)
         run: |
