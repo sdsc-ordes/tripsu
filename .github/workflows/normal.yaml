@@ -43,11 +43,11 @@ jobs:
       - name: Setup Git & Cache Nix
         run: |
           ./tools/ci/setup-git.sh
-          just nix-develop echo "Built cache."
+          just nix-develop-ci echo "Built cache."
 
       - name: Format
         run: |
-          just nix-develop just format
+          just nix-develop-ci just format
 
   lint:
     runs-on: ubuntu-latest
@@ -62,16 +62,16 @@ jobs:
       - name: Setup Git & Cache Nix
         run: |
           ./tools/ci/setup-git.sh
-          just nix-develop echo "Built cache."
+          just nix-develop-ci echo "Built cache."
 
       - name: Lint
         run: |
-          just nix-develop just lint
+          just nix-develop-ci just lint
 
       - name: Lint Undefined-Behavior
         continue-on-error: true
         run: |
-          just nix-develop just lint-ub
+          just nix-develop-ci just lint-ub
 
       - name: Allow to fail
         if: failure()
@@ -90,14 +90,14 @@ jobs:
       - name: Setup Git & Cache Nix
         run: |
           ./tools/ci/setup-git.sh
-          just nix-develop echo "Built cache."
+          just nix-develop-ci echo "Built cache."
 
       - name: build
         run: |
-          just nix-develop just build
+          just nix-develop-ci just build
       - name: tests
         run: |
-          just nix-develop just test
+          just nix-develop-ci just test
 
   test:
     runs-on: ubuntu-latest
@@ -112,11 +112,11 @@ jobs:
       - name: Setup Git & Cache Nix
         run: |
           ./tools/ci/setup-git.sh
-          just nix-develop git --version
+          just nix-develop-ci git --version
 
       - name: Test
         run: |
-          just nix-develop just test
+          just nix-develop-ci just test
 
   package:
     runs-on: ubuntu-latest
@@ -134,17 +134,15 @@ jobs:
       - name: Setup Git
         run: |
           ./tools/ci/setup-git.sh
-           just nix-develop echo "Built cache."
+           just nix-develop-ci echo "Built cache."
 
       - name: Build package (nix)
         run: |
-          just nix-package
+          just nix-develop-ci nix-package
 
       - name: Build container image (nix)
         run: |
-          # TODO: This seems to error out into
-          # rdf-protect-base.json> variable $src or $srcs should point to the source
-          just nix-develop just nix-image
+          just nix-develop-ci just nix-image
 
   deploy:
     runs-on: ubuntu-latest
@@ -164,20 +162,20 @@ jobs:
       - name: Setup Git & Nix Cache
         run: |
           ./tools/ci/setup-git.sh
-           just nix-develop echo "Built cache."
+           just nix-develop-ci echo "Built cache."
 
       - name: Create version tag (if release)
         run: |
-          just nix-develop ./tools/ci/assert-tag.sh "$GITHUB_REF"
+          just nix-develop-ci ./tools/ci/assert-tag.sh "$GITHUB_REF"
 
       - name: Build container image (nix)
         run: |
-          just nix-develop just nix-image
+          just nix-develop-ci just nix-image
 
       - name: Push image (if release)
         run: |
-          just nix-develop tools/ci/upload-image.sh
+          just nix-develop-ci tools/ci/upload-image.sh
 
       - name: Push tag (if release)
         run: |
-          just nix-develop ./tools/ci/assert-tag.sh --push "$GITHUB_REF"
+          just nix-develop-ci ./tools/ci/assert-tag.sh --push "$GITHUB_REF"

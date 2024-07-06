@@ -17,6 +17,12 @@ nix-develop *args:
     { [ -n "${cmd:-}" ] || cmd=("zsh"); } && \
     nix develop ./tools/nix#default --command "${cmd[@]}"
 
+nix-develop-ci *args:
+    cd "{{root_dir}}" && \
+    cmd=("$@") && \
+    { [ -n "${cmd:-}" ] || cmd=("zsh"); } && \
+    nix develop ./tools/nix#ci --command "${cmd[@]}"
+
 ## Standard stuff =============================================================
 # Format the code.
 format *args:
