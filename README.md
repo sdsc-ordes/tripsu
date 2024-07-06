@@ -254,6 +254,8 @@ Would become:
 
 ## Development
 
+Read first the [Contribution Guidelines](/CONTRIBUTING.md).
+
 ### Setup
 
 - Rust Toolchain: You need the `rust` toolchain corresponding to
@@ -353,8 +355,8 @@ just release <sem-version>
 
 It will:
 
-- Check that the version is sem. version and the version does not exists (local
-  and remote) and it is newer then all remote version.
+- Check that the version is semantic version and the version does not exists
+  (local and remote) and it is newer then all remote version.
 
 - Update the `Cargo.toml` and make a commit on `main`.
 

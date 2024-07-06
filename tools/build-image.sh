@@ -36,7 +36,7 @@ function main() {
         print_info "Building image for release."
 
         # When CI and in Release, the requested version must match.
-        version=$(dasel get -f "$VERSION_FILE" .package.version -w yaml)
+        version=$(dasel -r toml -f "$VERSION_FILE" .package.version -w yaml)
 
         release_version=${GITHUB_REF##*prepare-v}
 
