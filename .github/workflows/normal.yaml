@@ -153,6 +153,9 @@ jobs:
 
     if: ${{ inputs.is_release }}
 
+    env:
+      CI_IS_RELEASE: true
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4

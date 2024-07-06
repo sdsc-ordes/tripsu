@@ -33,6 +33,8 @@ function main() {
         # Write the temporary version file (gets restored...)
         dasel put -r toml -f "$VERSION_FILE" -t string -v "$version" .package.version
     else
+        print_info "Building image for release."
+
         # When CI and in Release, the requested version must match.
         version=$(dasel get -f "$VERSION_FILE" .package.version -w yaml)
 
