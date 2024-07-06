@@ -51,7 +51,11 @@ function main() {
 
     image_name=$(nix eval --raw "./tools/nix#images.rdf-protect.imageName")
     image_tag=$(nix eval --raw "./tools/nix#images.rdf-protect.imageTag")
-    dir="build/image/$image_name:$image_tag.tar.gz"
+
+    # We cannot use `:` before the tag, because `skopeo`
+    # is unable to read this path correctly, because it
+    # stupidly deals with it.
+    dir="build/image/$image_name|$image_tag.tar.gz"
 
     cd "$ROOT_DIR"
 
