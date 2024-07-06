@@ -11,6 +11,14 @@ ROOT_DIR=$(git rev-parse --show-toplevel)
 cd "$ROOT_DIR"
 
 function main() {
+
+    local username=${REGISTRY_USERNAME:-$USERNAME}
+    local password=${REGISTRY_PASSWORD:-$PASSWORD}
+
+    if [ -z "$username" ] || [ -z "$password" ]; then
+        die "'USERNAME' or 'PASSWORD' env. variables not set."
+    fi
+
     if ! ci_is_running; then
         die "This script should only be executed in CI"
     fi
@@ -33,6 +41,8 @@ function main() {
         skopeo \
             --insecure-policy \
             copy \
+            --dest-username <(echo "$username") \
+            --dest-password <(echo "$password") \
             --dest-authfile "$HOME/.docker/config.json" \
             "docker-archive://$image_path" \
             "docker://$image_name"
