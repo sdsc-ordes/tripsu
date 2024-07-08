@@ -1,4 +1,4 @@
-use super::model::Entity;
+use super::model::{Entity, TripleMask};
 use rio_api;
 use std::{fmt, fmt::Write, ops::Sub};
 
@@ -95,6 +95,12 @@ impl fmt::Display for Triple {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} {} {}", self.subject, self.predicate, self.object)
+    }
+}
+
+impl TripleMask {
+    pub fn new() -> Self {
+        return TripleMask::from_bits_truncate(0b0);
     }
 }
 

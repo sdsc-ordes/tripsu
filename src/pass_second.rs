@@ -1,7 +1,10 @@
 use rio_api::parser::TriplesParser;
 use rio_turtle::TurtleError;
 use std::{
-    collections::HashMap, fmt::{Debug, Display}, io::{BufRead, Write}, path::Path,
+    collections::HashMap,
+    fmt::{Debug, Display},
+    io::{BufRead, Write},
+    path::Path,
 };
 
 use crate::{
@@ -10,31 +13,17 @@ use crate::{
     log::Logger,
     model::TripleMask,
     rdf_types::*,
-    rules::Config,
+    rules::{eval_predicate_rule, eval_type_rule_object, eval_type_rule_subject, eval_subject_predicate_rule, Config},
 };
 
 fn mask_triple(triple: Triple, rules: &Config, type_map: &HashMap<String, String>) -> TripleMask {
     // Check each field of the triple against the rules
-    // rules.replace_uri_of_nodes_with_type has to to with OBJECT and SUBJECT
-    // rules.replace_value_of_predicate has to do with OBJECT
-    // rules.replace_value_of_object has to do with OBJECT
-    // We will start by checking the subject and then the object
-    match triple.subject {
-        Subject::NamedNode(n) => {
-            // First check if the iri is in any of the types
-            let type_check = type_map.contains_key(&n.iri);
-            // If the iri is in the type map, check if it is in the rules
-            if type_check {
-                let iri_type = type_map.get(&n.iri).unwrap();
-                let config_check = rules.replace_uri_of_nodes_with_type.contains(iri_type);
-                if config_check {
-                    return TripleMask::SUBJECT;
-                }
-            }
-        }
-        Subject::BlankNode(_) => {}
-    }
-    return TripleMask::from_bits_truncate(0b0)
+    let mut mask = TripleMask::new();
+    mask = eval_type_rule_subject(&triple.subject, mask, type_map, rules);
+    mask = eval_type_rule_object(&triple.object, mask, type_map, rules);
+    mask = eval_predicate_rule(&triple.predicate, mask, rules);
+    mask = eval_subject_predicate_rule(&triple.subject, &triple.predicate, mask, type_map, rules);
+    return mask;
 }
 
 // mask and encode input triple
@@ -46,7 +35,6 @@ fn process_triple(
     out: &mut impl Write,
 ) -> Result<(), TurtleError> {
     let mask = mask_triple(triple.clone(), &rules_config, &node_to_type);
-    println!("Mask: {:?}", mask.bits());
     let hasher = DefaultHasher::new();
     let _ =
         out.write(&format!("{} .\n", hasher.pseudo_triple(&triple, mask).to_string()).into_bytes());
@@ -61,7 +49,10 @@ fn load_type_map(input: impl BufRead) -> HashMap<String, String> {
 
     while !triples.is_end() {
         let _: Result<(), TurtleError> = triples.parse_step(&mut |t| {
-            node_to_type.insert(t.subject.to_string().replace(&['<','>'][..], ""), t.object.to_string().replace(&['<','>'][..], ""));
+            node_to_type.insert(
+                t.subject.to_string().replace(&['<', '>'][..], ""),
+                t.object.to_string().replace(&['<', '>'][..], ""),
+            );
             Ok(())
         });
     }

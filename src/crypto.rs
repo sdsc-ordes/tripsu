@@ -57,7 +57,7 @@ impl DefaultHasher {
 impl Pseudonymize for DefaultHasher {
     fn pseudo_named_node(&self, t: &NamedNode) -> NamedNode {
         // We check for the last backslash in the IRI and add 1 to include the backslash
-        let prefix = &t.iri[0..t.iri.rfind('/').unwrap()+1];
+        let prefix = &t.iri[0..t.iri.rfind('/').unwrap() + 1];
         let hash = blake3::hash(t.iri.as_bytes()).to_string();
         return NamedNode {
             iri: format!("{prefix}{hash}"),
