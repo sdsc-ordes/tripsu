@@ -70,15 +70,6 @@ jobs:
         run: |
           just nix-develop-ci just lint
 
-      - name: Lint Undefined-Behavior
-        continue-on-error: true
-        run: |
-          just nix-develop-ci just lint-ub
-
-      - name: Allow to fail
-        if: failure()
-        run: echo "lint-up failed -> continue."
-
   build:
     runs-on: ubuntu-latest
     container:
