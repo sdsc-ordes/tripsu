@@ -74,7 +74,7 @@ function check_new_version() {
     fi
 
     if git tag --list "v*" | grep -qE "^v$new_version$"; then
-        die "Git tag '$tag' already exists locally."
+        die "Git tag 'v$new_version' already exists locally."
     fi
 
     # Get all remote versions.
