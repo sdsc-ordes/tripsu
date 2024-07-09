@@ -17,6 +17,7 @@ RELEASE_BRANCH="main"
 function main() {
     local type="$1"
     local prepare_tag="$2"
+
     local release_tag=${prepare_tag##*prepare-}
 
     if [ "$type" = "push" ]; then
