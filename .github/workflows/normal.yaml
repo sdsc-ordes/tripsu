@@ -156,6 +156,7 @@ jobs:
     if: ${{ inputs.is_release }}
 
     permissions:
+      contents: write
       packages: write
 
     env:
