@@ -190,3 +190,5 @@ jobs:
       - name: Push tag (if release)
         run: |
           just nix-develop-ci ./tools/ci/assert-tag.sh --push "$GITHUB_REF"
+
+    # TODO: on fail delete prepare tag
