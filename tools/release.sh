@@ -25,13 +25,13 @@ function delete_prepare_tags() {
 }
 
 function create_prepare_tag() {
-    local tag="v$1"
+    local tag="$1"
 
     print_info "Tagging with '$tag'."
-    git tag -a -m "Version $tag" "prepare-$tag" || die "Could not create tag."
+    git tag -a -m "Version $version" "$tag" || die "Could not create tag."
 
     print_info "Tag contains:"
-    git cat-file -p "prepare-$tag" || die "Could not show tag content."
+    git cat-file -p "$tag" || die "Could not show tag content."
 }
 
 function commit_version_file() {
@@ -49,18 +49,20 @@ function commit_version_file() {
 
 function trigger_build() {
     local branch="$1"
+    local tag="$2"
+
     printf "Do you want to trigger the build? [y|n]: "
     read -r answer
     if [ "$answer" != "y" ]; then
         die "Do not trigger build -> abort."
     fi
 
-    print_info "Pushing tag 'prepare-$tag'."
-    git push -f origin --no-follow-tags "$branch" "prepare-$tag"
+    print_info "Pushing tag '$tag'."
+    git push -f origin --no-follow-tags "$branch" "$tag"
 }
 
 function check_new_version() {
-    local new_version="$1" # Reference to parent scoped variable.
+    local new_version="$1"
 
     # Check that is a version.
     if [ "$(ci_container_mgr run --rm alpine/semver semver "$new_version" | tail -1)" != "$new_version" ]; then
@@ -114,11 +116,13 @@ function main() {
 
     delete_prepare_tags
 
+    local prepare_tag="prepare-v$version"
+
     check_new_version "$version"
     commit_version_file "$version"
-    create_prepare_tag "$version"
 
-    trigger_build "$branch"
+    create_prepare_tag "$prepare_tag"
+    trigger_build "$branch" "$prepare_tag"
 }
 
 main "$@"

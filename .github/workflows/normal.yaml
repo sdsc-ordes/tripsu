@@ -174,7 +174,8 @@ jobs:
 
       - name: Create version tag (if release)
         run: |
-          just nix-develop-ci ./tools/ci/assert-tag.sh create-and-check "$GITHUB_REF"
+          just nix-develop-ci ./tools/ci/assert-tag.sh \
+            create-and-check "$GITHUB_REF"
 
       - name: Build container image (nix)
         run: |
@@ -195,4 +196,3 @@ jobs:
         if: always()
         run: |
           just nix-develop-ci tools/ci/assert-tag cleanup
-    # TODO: on fail delete prepare tag
