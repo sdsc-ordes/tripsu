@@ -32,6 +32,8 @@ function create_prepare_tag() {
 
     print_info "Tag contains:"
     git cat-file -p "$tag" || die "Could not show tag content."
+
+    print_info "Successfully created prepate tag '$tag'."
 }
 
 function commit_version_file() {
@@ -59,6 +61,8 @@ function trigger_build() {
 
     print_info "Pushing tag '$tag'."
     git push -f origin --no-follow-tags "$branch" "$tag"
+
+    print_info "Successfully triggered build."
 }
 
 function check_new_version() {
