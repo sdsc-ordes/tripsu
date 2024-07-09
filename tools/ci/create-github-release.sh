@@ -11,7 +11,7 @@ function main() {
     local prepare_tag="$1"
     local repo="$2"
 
-    local tag=${prepare_tag#prepare-}
+    local tag=${prepare_tag#*prepare-}
     local version=${tag#v}
 
     print_info "Creating Github release ... "
