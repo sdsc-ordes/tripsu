@@ -41,8 +41,8 @@ function main() {
         skopeo \
             --insecure-policy \
             copy \
-            --dest-username <(echo "$username") \
-            --dest-password <(echo "$password") \
+            --dest-username "$(cat <(echo "$username"))" \
+            --dest-password "$(cat <(echo "$password"))" \
             "docker-archive://$image_path" \
             "docker://$image_name"
 
