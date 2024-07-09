@@ -43,7 +43,6 @@ function main() {
             copy \
             --dest-username <(echo "$username") \
             --dest-password <(echo "$password") \
-            --dest-authfile "$HOME/.docker/config.json" \
             "docker-archive://$image_path" \
             "docker://$image_name"
 
