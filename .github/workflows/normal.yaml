@@ -183,7 +183,7 @@ jobs:
       - name: Push image (if release)
         env:
           REGISTRY_USERNAME: ${{ github.actor }}
-          REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY_PASSWORD: ${{ secrets.PAT }}
         run: |
           just nix-develop-ci tools/ci/upload-image.sh
 
