@@ -138,13 +138,13 @@ jobs:
           just nix-develop-ci just nix-image
 
   deploy:
-    runs-on: ubuntu-latest
+    if: ${{ inputs.is_release }}
     # TODO: uncomment this
     # needs: [format, lint, build, test]
+
+    runs-on: ubuntu-latest
     container:
       image: ghcr.io/sdsc-ordes/rdf-protect:ci-nix-1.0.0
-
-    if: ${{ inputs.is_release }}
 
     permissions:
       contents: write
@@ -190,8 +190,10 @@ jobs:
           just nix-develop-ci tools/ci/assert-tag.sh cleanup "$GITHUB_REF"
 
   release:
-    runs-on: ubuntu-latest
     if: ${{ inputs.is_release }}
+    needs: ["deploy"]
+
+    runs-on: ubuntu-latest
 
     permissions:
       contents: write

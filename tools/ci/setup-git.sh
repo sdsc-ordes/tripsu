@@ -2,6 +2,7 @@
 # shellcheck disable=SC1090,SC1091
 # This script is sourced in each step.
 set -u
+set -e
 
 git config --global safe.directory "*" || {
     echo "Could not overwrite safe.directory in Git config." >&2
