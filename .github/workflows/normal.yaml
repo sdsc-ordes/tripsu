@@ -85,10 +85,10 @@ jobs:
           ./tools/ci/setup-git.sh
           just nix-develop-ci echo "Built cache."
 
-      - name: build
+      - name: Build
         run: |
           just nix-develop-ci just build
-      - name: tests
+      - name: Tests
         run: |
           just nix-develop-ci just test
 
@@ -129,11 +129,11 @@ jobs:
           ./tools/ci/setup-git.sh
            just nix-develop-ci echo "Built cache."
 
-      - name: Build package (nix)
+      - name: Build Package (nix)
         run: |
           just nix-develop-ci just nix-package
 
-      - name: Build container image (nix)
+      - name: Build Container Image (nix)
         run: |
           just nix-develop-ci just nix-image
 
@@ -164,23 +164,23 @@ jobs:
           ./tools/ci/setup-git.sh
            just nix-develop-ci echo "Built cache."
 
-      - name: Create version tag (if release)
+      - name: Create Version Tag
         run: |
           just nix-develop-ci ./tools/ci/assert-tag.sh \
             create-and-check "$GITHUB_REF"
 
-      - name: Build container image (nix)
+      - name: Build Container Image (nix)
         run: |
           just nix-develop-ci just nix-image
 
-      - name: Push image (if release)
+      - name: Push Image
         env:
           REGISTRY_USERNAME: ${{ github.actor }}
           REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         run: |
           just nix-develop-ci tools/ci/upload-image.sh
 
-      - name: Push tag (if release)
+      - name: Push Tag
         run: |
           just nix-develop-ci ./tools/ci/assert-tag.sh push "$GITHUB_REF"
 
@@ -188,3 +188,19 @@ jobs:
         if: always()
         run: |
           just nix-develop-ci tools/ci/assert-tag.sh cleanup "$GITHUB_REF"
+
+  release:
+    runs-on: ubuntu-latest
+    if: ${{ inputs.is_release }}
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Create Github Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./tools/ci/create-github-release.sh \
+              "$GITHUB_REF" \
+              "$GITHUB_REPOSITORY"
