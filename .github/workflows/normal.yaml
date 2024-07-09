@@ -208,5 +208,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ./tools/ci/create-github-release.sh \
-              "$GITHUB_REF" \
+              "${GITHUB_REF#refs/tags/}" \
               "$GITHUB_REPOSITORY"
