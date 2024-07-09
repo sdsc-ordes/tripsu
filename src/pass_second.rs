@@ -13,16 +13,20 @@ use crate::{
     log::Logger,
     model::TripleMask,
     rdf_types::*,
-    rules::{eval_predicate_rule, eval_type_rule_object, eval_type_rule_subject, eval_subject_predicate_rule, Config},
+    rules::{
+        match_predicate_rule, match_subject_predicate_rule, match_type_rule_object,
+        match_type_rule_subject, Config,
+    },
 };
 
 fn mask_triple(triple: Triple, rules: &Config, type_map: &HashMap<String, String>) -> TripleMask {
     // Check each field of the triple against the rules
-    let mut mask = TripleMask::new();
-    mask = eval_type_rule_subject(&triple.subject, mask, type_map, rules);
-    mask = eval_type_rule_object(&triple.object, mask, type_map, rules);
-    mask = eval_predicate_rule(&triple.predicate, mask, rules);
-    mask = eval_subject_predicate_rule(&triple.subject, &triple.predicate, mask, type_map, rules);
+    let mut mask = TripleMask::default();
+    mask = match_type_rule_subject(&triple.subject, mask, type_map, rules);
+    mask = match_type_rule_object(&triple.object, mask, type_map, rules);
+    mask = match_predicate_rule(&triple.predicate, mask, rules);
+    mask = match_subject_predicate_rule(&triple.subject, &triple.predicate, mask, type_map, rules);
+
     return mask;
 }
 
@@ -64,10 +68,12 @@ pub fn pseudonymize_graph(log: &Logger, input: &Path, config: &Path, output: &Pa
     let buf_input = io::get_reader(input);
     let buf_index = io::get_reader(index);
     let mut buf_output = io::get_writer(output);
-    let rules_config = io::parse_config(config);
 
+    let rules_config = io::parse_config(config);
     let node_to_type: HashMap<String, String> = load_type_map(buf_index);
+
     let mut triples = io::parse_ntriples(buf_input);
+
     while !triples.is_end() {
         triples
             .parse_step(&mut |t| {
@@ -86,12 +92,14 @@ mod tests {
     #[test]
     // Test the parsing of a triple.
     fn encrypt_nt_file() {
+        let logger = log::create_logger(true);
+
         let dir = tempdir().unwrap();
         let input_path = Path::new("tests/data/test.nt");
         let config_path = Path::new("tests/data/config.yaml");
         let output_path = dir.path().join("output.nt");
         let type_map_path = Path::new("tests/data/type_map.nt");
-        let logger = log::create_logger(true);
+
         pseudonymize_graph(
             &logger,
             &input_path,

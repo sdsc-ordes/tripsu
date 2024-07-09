@@ -6,6 +6,26 @@ use std::{fmt, fmt::Write, ops::Sub};
 // Rename rio types as XXXView to distinguish them from our types
 // Use rio types for parsing and serializing
 // Define mappers between the two types
+//
+type NamedNodeView<'a> = rio_api::model::NamedNode<'a>;
+type LiteralView<'a> = rio_api::model::Literal<'a>;
+type TermView<'a> = rio_api::model::Term<'a>;
+type TripleView<'a> = rio_api::model::Triple<'a>;
+type BlankNodeView<'a> = rio_api::model::BlankNode<'a>;
+type SubjectView<'a> = rio_api::model::Subject<'a>;
+
+#[derive(Eq, PartialEq, Debug, Clone, Hash)]
+pub struct Triple {
+    pub subject: Subject,
+    pub predicate: NamedNode,
+    pub object: Term,
+}
+
+#[derive(Eq, PartialEq, Debug, Clone, Hash)]
+pub enum Subject {
+    NamedNode(NamedNode),
+    BlankNode(BlankNode),
+}
 
 #[derive(Eq, PartialEq, Ord, PartialOrd, Debug, Clone, Hash)]
 pub struct NamedNode {
@@ -13,14 +33,18 @@ pub struct NamedNode {
     pub iri: String,
 }
 
-impl fmt::Display for NamedNode {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "<{}>", self.iri)
-    }
+#[derive(Eq, PartialEq, Debug, Clone, Hash)]
+pub enum Term {
+    NamedNode(NamedNode),
+    BlankNode(BlankNode),
+    Literal(Literal),
 }
 
-type NamedNodeView<'a> = rio_api::model::NamedNode<'a>;
+#[derive(Eq, PartialEq, Debug, Clone, Hash)]
+pub struct BlankNode {
+    /// The [blank node identifier](https://www.w3.org/TR/rdf11-concepts/#dfn-blank-node-identifier).
+    pub id: String,
+}
 
 #[derive(Eq, PartialEq, Debug, Clone, Hash)]
 pub enum Literal {
@@ -45,6 +69,13 @@ pub enum Literal {
     },
 }
 
+impl fmt::Display for NamedNode {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "<{}>", self.iri)
+    }
+}
+
 impl fmt::Display for Literal {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -62,15 +93,6 @@ impl fmt::Display for Literal {
     }
 }
 
-type LiteralView<'a> = rio_api::model::Literal<'a>;
-
-#[derive(Eq, PartialEq, Debug, Clone, Hash)]
-pub enum Term {
-    NamedNode(NamedNode),
-    BlankNode(BlankNode),
-    Literal(Literal),
-}
-
 impl fmt::Display for Term {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -82,15 +104,6 @@ impl fmt::Display for Term {
     }
 }
 
-type TermView<'a> = rio_api::model::Term<'a>;
-
-#[derive(Eq, PartialEq, Debug, Clone, Hash)]
-pub struct Triple {
-    pub subject: Subject,
-    pub predicate: NamedNode,
-    pub object: Term,
-}
-
 impl fmt::Display for Triple {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -98,9 +111,20 @@ impl fmt::Display for Triple {
     }
 }
 
-impl TripleMask {
-    pub fn new() -> Self {
-        return TripleMask::from_bits_truncate(0b0);
+impl fmt::Display for Subject {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Subject::NamedNode(node) => node.fmt(f),
+            Subject::BlankNode(node) => node.fmt(f),
+        }
+    }
+}
+
+impl fmt::Display for BlankNode {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "_:{}", self.id)
     }
 }
 
@@ -116,24 +140,6 @@ impl<'a> From<TripleView<'a>> for Triple {
                 predicate: predicate.into(),
                 object: object.into(),
             },
-        }
-    }
-}
-
-type TripleView<'a> = rio_api::model::Triple<'a>;
-
-#[derive(Eq, PartialEq, Debug, Clone, Hash)]
-pub enum Subject {
-    NamedNode(NamedNode),
-    BlankNode(BlankNode),
-}
-
-impl fmt::Display for Subject {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Subject::NamedNode(node) => node.fmt(f),
-            Subject::BlankNode(node) => node.fmt(f),
         }
     }
 }
@@ -178,23 +184,6 @@ impl<'a> From<BlankNodeView<'a>> for BlankNode {
         }
     }
 }
-
-type SubjectView<'a> = rio_api::model::Subject<'a>;
-
-#[derive(Eq, PartialEq, Debug, Clone, Hash)]
-pub struct BlankNode {
-    /// The [blank node identifier](https://www.w3.org/TR/rdf11-concepts/#dfn-blank-node-identifier).
-    pub id: String,
-}
-
-impl fmt::Display for BlankNode {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "_:{}", self.id)
-    }
-}
-
-type BlankNodeView<'a> = rio_api::model::BlankNode<'a>;
 
 impl<'a> From<LiteralView<'a>> for Literal {
     fn from(l: LiteralView<'a>) -> Self {

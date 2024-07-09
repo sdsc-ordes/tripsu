@@ -12,7 +12,7 @@ pub enum Entity {
 
 // Used to select any combination of fields in a triple
 bitflags::bitflags! {
-    #[derive(Debug, Copy, Clone)]
+    #[derive(Debug, Copy, Clone, Default)]
     pub struct TripleMask: u8 {
         const SUBJECT = 1 << 2 ;
         const PREDICATE = 1 << 1;
@@ -30,6 +30,13 @@ impl TripleMask {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    // Test for default constructor.
+    fn test_default() {
+        let mask = TripleMask::default();
+        assert!(mask.is_empty());
+    }
 
     #[test]
     // Test the parsing of a triple.
