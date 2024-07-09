@@ -21,11 +21,12 @@ function main() {
 
     if [ "$type" = "push" ]; then
         print_info "Pushing tag '$release_tag'."
+
         git push origin "$release_tag" ||
             die "Could not push tag."
 
-        exit 0
     elif [ "$type" = "create-and-check" ]; then
+
         print_info "Create tag '$release_tag' and check."
 
         # Gets the message on the annotated commit:
@@ -49,8 +50,16 @@ function main() {
             "$release_tag^..origin/$RELEASE_BRANCH")" ]; then
             die "Tag is not reachable from '$RELEASE_BRANCH' (--first-parent) !"
         fi
-    fi
 
+    elif [ "$type" = "cleanup" ]; then
+
+        print_info "Cleanup the prepare tag."
+        git tag -d "$prepare_tag" || true
+        git push origin :"$prepare_tag" || true
+
+    else
+        die "Type '$type' is not known."
+    fi
 }
 
 main "$@"

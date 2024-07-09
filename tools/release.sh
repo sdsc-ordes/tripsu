@@ -20,8 +20,18 @@ function delete_prepare_tags() {
     for tag in "${prepareTag[@]}"; do
         print_info "Deleting prepare tag '$tag'."
         git push -f origin ":${tag}" || true
-        git tag -d "$tag"
+        git tag -d "$tag" || die
     done
+}
+
+function create_prepare_tag() {
+    local tag="v$1"
+
+    print_info "Tagging with '$tag'."
+    git tag -a -m "Version $tag" "prepare-$tag" || die "Could not create tag."
+
+    print_info "Tag contains:"
+    git cat-file -p "prepare-$tag" || die "Could not show tag content."
 }
 
 function commit_version_file() {
@@ -35,16 +45,6 @@ function commit_version_file() {
         git add "$VERSION_FILE"
         git commit -m "chore: release '$version'"
     fi
-}
-
-function create_prepare_tag() {
-    tag="v$version"
-
-    print_info "Tagging..."
-    git tag -a -m "Version $tag" "prepare-$tag"
-
-    print_info "Tag contains:"
-    git cat-file -p "prepare-$tag"
 }
 
 function trigger_build() {
@@ -115,9 +115,8 @@ function main() {
     delete_prepare_tags
 
     check_new_version "$version"
-
     commit_version_file "$version"
-    create_prepare_tag
+    create_prepare_tag "$version"
 
     trigger_build "$branch"
 }
