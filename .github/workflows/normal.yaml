@@ -33,6 +33,7 @@ on:
 
 jobs:
   format:
+    if: ${{ ! inputs.is_release }}
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/sdsc-ordes/rdf-protect:ci-nix-1.0.0
@@ -52,6 +53,7 @@ jobs:
           just nix-develop-ci just format
 
   lint:
+    if: ${{ ! inputs.is_release }}
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/sdsc-ordes/rdf-protect:ci-nix-1.0.0
@@ -71,6 +73,7 @@ jobs:
           just nix-develop-ci just lint
 
   build:
+    if: ${{ ! inputs.is_release }}
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/sdsc-ordes/rdf-protect:ci-nix-1.0.0
@@ -88,9 +91,6 @@ jobs:
       - name: Build
         run: |
           just nix-develop-ci just build
-      - name: Tests
-        run: |
-          just nix-develop-ci just test
 
   test:
     runs-on: ubuntu-latest
@@ -139,8 +139,7 @@ jobs:
 
   deploy:
     if: ${{ inputs.is_release }}
-    # TODO: uncomment this
-    # needs: [format, lint, build, test]
+    needs: [test]
 
     runs-on: ubuntu-latest
     container:
