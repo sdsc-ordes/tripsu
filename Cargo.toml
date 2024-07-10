@@ -1,23 +1,24 @@
-[dependencies]
-  bitflags = '2.5.0'
-  io-enum = '1.1.3'
-  rio_api = '0.8.4'
-  rio_turtle = '0.8.4'
-  serde_yml = '0.0.10'
-  slog = '2.7.0'
-  slog-async = '2.8.0'
-  slog-term = '2.9.0'
-  tempfile = '3.10.1'
-
-  [dependencies.clap]
-    features = ['derive']
-    version = '4.5.7'
-
-  [dependencies.serde]
-    features = ['derive']
-    version = '1.0'
-
 [package]
-  edition = '2021'
-  name = 'rdf-protect'
-  version = '0.0.1'
+name = "rdf-protect"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# Good logging library.
+slog = "2.7.0"
+slog-term = "2.9.0"
+slog-async = "2.8.0"
+
+# Popular serialization library.
+serde = { version = "1.0", features = ['derive']}
+clap = { version = "4.5.7", features = ["derive"] }
+rio_turtle = "0.8.4"
+rio_api = "0.8.4"
+bitflags = "2.5.0"
+io-enum = "1.1.3"
+serde_yml = "0.0.10"
+tempfile = "3.10.1"
+blake3 = "1.5.1"
+rstest = "0.21.0"
