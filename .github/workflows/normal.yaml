@@ -1,0 +1,212 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+#
+# This a demonstration pipeline which uses Nix in a container to drive the toolchain.
+#
+# - The Nix container (with cached toolchain) are quite big (~ 2Gb) and with no caching makes the
+#   pull up to 2min at the start.
+# - Without caching they result in ~500mb which is better but the toolchain needs to be installed
+#   during the `nix develop` call.
+#
+# Remedies: Either to use own runners with proper image caching or do some Github trickery
+# (not sure if they work), use the action/cache to cache docker layers and in the next step use
+# a step with `uses: docker://...` but then `run:` does not work, how stupid ...
+# (need to write an own action in the repo, 💩)
+#
+name: Normal Pipeline
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions: read-all
+
+defaults:
+  run:
+    shell: bash
+
+on:
+  workflow_call:
+    inputs:
+      is_release:
+        required: true
+        type: boolean
+
+jobs:
+  format:
+    if: ${{ ! inputs.is_release }}
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/sdsc-ordes/rdf-protect:ci-nix-1.0.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Git & Cache Nix
+        run: |
+          ./tools/ci/setup-git.sh
+          just nix-develop-ci echo "Built cache."
+
+      - name: Format
+        run: |
+          just nix-develop-ci just format
+
+  lint:
+    if: ${{ ! inputs.is_release }}
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/sdsc-ordes/rdf-protect:ci-nix-1.0.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Git & Cache Nix
+        run: |
+          ./tools/ci/setup-git.sh
+          just nix-develop-ci echo "Built cache."
+
+      - name: Lint
+        run: |
+          just nix-develop-ci just lint
+
+  build:
+    if: ${{ ! inputs.is_release }}
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/sdsc-ordes/rdf-protect:ci-nix-1.0.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Git & Cache Nix
+        run: |
+          ./tools/ci/setup-git.sh
+          just nix-develop-ci echo "Built cache."
+
+      - name: Build
+        run: |
+          just nix-develop-ci just build
+
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/sdsc-ordes/rdf-protect:ci-nix-1.0.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Git & Cache Nix
+        run: |
+          ./tools/ci/setup-git.sh
+          just nix-develop-ci git --version
+
+      - name: Test
+        run: |
+          just nix-develop-ci just test
+
+  package:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/sdsc-ordes/rdf-protect:ci-nix-1.0.0
+
+    if: ${{ ! inputs.is_release }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Git
+        run: |
+          ./tools/ci/setup-git.sh
+           just nix-develop-ci echo "Built cache."
+
+      - name: Build Package (nix)
+        run: |
+          just nix-develop-ci just nix-package
+
+      - name: Build Container Image (nix)
+        run: |
+          just nix-develop-ci just nix-image
+
+  deploy:
+    if: ${{ inputs.is_release }}
+    needs: [test]
+
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/sdsc-ordes/rdf-protect:ci-nix-1.0.0
+
+    permissions:
+      contents: write
+      packages: write
+
+    env:
+      CI_IS_RELEASE: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Git & Nix Cache
+        run: |
+          ./tools/ci/setup-git.sh
+           just nix-develop-ci echo "Built cache."
+
+      - name: Create Version Tag
+        run: |
+          just nix-develop-ci ./tools/ci/assert-tag.sh \
+            create-and-check "$GITHUB_REF"
+
+      - name: Build Container Image (nix)
+        run: |
+          just nix-develop-ci just nix-image
+
+      - name: Push Image
+        env:
+          REGISTRY_USERNAME: ${{ github.actor }}
+          REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          just nix-develop-ci tools/ci/upload-image.sh
+
+      - name: Push Tag
+        run: |
+          just nix-develop-ci ./tools/ci/assert-tag.sh push "$GITHUB_REF"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          just nix-develop-ci tools/ci/assert-tag.sh cleanup "$GITHUB_REF"
+
+  release:
+    if: ${{ inputs.is_release }}
+    needs: ["deploy"]
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Create Github Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./tools/ci/create-github-release.sh \
+              "${GITHUB_REF#refs/tags/}" \
+              "$GITHUB_REPOSITORY"

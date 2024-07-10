@@ -31,19 +31,19 @@
       url = "github:oxalica/rust-overlay";
       inputs = {
         nixpkgs.follows = "nixpkgs";
-        flake-utils.follows = "flake-utils";
       };
     };
   };
 
   outputs = {
-    self,
     nixpkgs,
-    nixpkgsStable,
     flake-utils,
     rust-overlay,
     ...
-  } @ inputs:
+  }: let
+    # This is string (without toString it would be a `path` which is put into the store)
+    rootDir = toString ./. + "../../..";
+  in
     flake-utils.lib.eachDefaultSystem
     # Creates an attribute map `{ devShells.<system>.default = ...}`
     # by calling this function:
@@ -52,30 +52,47 @@
         overlays = [(import rust-overlay)];
 
         # Import nixpkgs and load it into pkgs.
+        # Overlay the rust toolchain
+        lib = nixpkgs.lib;
         pkgs = import nixpkgs {
           inherit system overlays;
         };
 
         # Set the rust toolchain from the `rust-toolchain.toml`.
-        rustToolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile ../rust-toolchain.toml;
+        rustToolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile ../../rust-toolchain.toml;
 
         # Things needed only at compile-time.
         nativeBuildInputsBasic = with pkgs; [
-          rustToolchain
-          cargo-watch
-
-          just
-          parallel
-          podman
+          findutils
+          coreutils
+          bash
+          zsh
+          curl
+          git
+          jq
         ];
 
         # Things needed only at compile-time.
-        nativeBuildInputsDev = [];
+        nativeBuildInputsDev = with pkgs; [
+          rustToolchain
+          cargo-watch
+          just
+
+          skopeo
+          dasel
+        ];
 
         # Things needed at runtime.
         buildInputs = [];
+
+        # The package of this CLI tool.
+        # The global version for rdf-protect.
+        # This is gonna get tooled later.
+        rdf-protect = (import ./pkgs/rdf-protect.nix) {
+          inherit rootDir rustToolchain pkgs lib;
+        };
       in
-        with pkgs; {
+        with pkgs; rec {
           devShells = {
             default = mkShell {
               inherit buildInputs;
@@ -84,7 +101,29 @@
 
             ci = mkShell {
               inherit buildInputs;
-              nativeBuildInputs = nativeBuildInputsBasic;
+              nativeBuildInputs = nativeBuildInputsBasic ++ nativeBuildInputsDev;
+
+              # Due to some weird handling of TMPDIR inside containers:
+              # https://github.com/NixOS/nix/issues/8355
+              # We have to reset the TMPDIR to make `nix build` work inside
+              # a development shell.
+              # Without `nix develop` it works.
+              shellHook = "unset TMPDIR";
+            };
+          };
+
+          packages = {
+            rdf-protect = rdf-protect;
+
+            images = {
+              ci = (import ./images/ci.nix) {
+                inherit pkgs;
+                devShellDrv = devShells.default;
+              };
+
+              rdf-protect = (import ./images/rdf-protect.nix) {
+                inherit pkgs rdf-protect;
+              };
             };
           };
         }

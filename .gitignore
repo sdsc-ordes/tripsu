@@ -1,2 +1,9 @@
-/target
+# Tooling
 .direnv
+
+# Rust
+/target
+
+# Nix
+result
+build
