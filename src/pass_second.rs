@@ -15,13 +15,14 @@ use crate::{
     rdf_types::*,
     rules::{
         match_predicate_rule, match_subject_predicate_rule, match_type_rule_object,
-        match_type_rule_subject, Config,
+        match_type_rule_subject, Rules,
     },
 };
 
-fn mask_triple(triple: Triple, rules: &Config, type_map: &HashMap<String, String>) -> TripleMask {
+fn match_rules(triple: Triple, rules: &Rules, type_map: &HashMap<String, String>) -> TripleMask {
     // Check each field of the triple against the rules
     let mut mask = TripleMask::default();
+
     mask = match_type_rule_subject(&triple.subject, mask, type_map, rules);
     mask = match_type_rule_object(&triple.object, mask, type_map, rules);
     mask = match_predicate_rule(&triple.predicate, mask, rules);
@@ -34,11 +35,11 @@ fn mask_triple(triple: Triple, rules: &Config, type_map: &HashMap<String, String
 // NOTE: This will need the type-map to perform masking
 fn process_triple(
     triple: Triple,
-    rules_config: &Config,
+    rules_config: &Rules,
     node_to_type: &HashMap<String, String>,
     out: &mut impl Write,
 ) -> Result<(), TurtleError> {
-    let mask = mask_triple(triple.clone(), &rules_config, &node_to_type);
+    let mask = match_rules(triple.clone(), &rules_config, &node_to_type);
     let hasher = DefaultHasher::new();
     let _ =
         out.write(&format!("{} .\n", hasher.pseudo_triple(&triple, mask).to_string()).into_bytes());
@@ -74,6 +75,9 @@ pub fn pseudonymize_graph(log: &Logger, input: &Path, config: &Path, output: &Pa
 
     let mut triples = io::parse_ntriples(buf_input);
 
+    // TODO: Try to make this into an iterator loop to leverage rayons parallelization feature over
+    // iterators.
+
     while !triples.is_end() {
         triples
             .parse_step(&mut |t| {
@@ -82,6 +86,7 @@ pub fn pseudonymize_graph(log: &Logger, input: &Path, config: &Path, output: &Pa
             .unwrap();
     }
 }
+
 #[cfg(test)]
 mod tests {
     use super::pseudonymize_graph;

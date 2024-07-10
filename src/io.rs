@@ -1,4 +1,4 @@
-use crate::rules::Config;
+use crate::rules::Rules;
 use rio_turtle::NTriplesParser;
 use serde_yml;
 use std::{
@@ -45,7 +45,7 @@ pub fn parse_ntriples(reader: impl BufRead) -> NTriplesParser<impl BufRead> {
 }
 
 // Parse yaml configuration file.
-pub fn parse_config(path: &Path) -> Config {
+pub fn parse_config(path: &Path) -> Rules {
     return match File::open(&path) {
         Ok(file) => serde_yml::from_reader(file).expect("Error parsing config file."),
         Err(e) => panic!("Cannot open file '{:?}': '{}'.", path, e),
