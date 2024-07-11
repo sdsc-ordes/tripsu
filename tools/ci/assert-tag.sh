@@ -49,6 +49,7 @@ function main() {
         if [ -n "$(git rev-list --first-parent \
             --ancestry-path \
             "$release_tag^..origin/$RELEASE_BRANCH")" ]; then
+            git log --oneline --graph "$RELEASE_BRANCH" "$release_tag" || true
             die "Tag is not reachable from '$RELEASE_BRANCH' (--first-parent) !"
         fi
 
