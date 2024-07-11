@@ -49,8 +49,8 @@ function main() {
         fi
     fi
 
-    image_name=$(nix eval --raw "./tools/nix#images.rdf-protect.imageName")
-    image_tag=$(nix eval --raw "./tools/nix#images.rdf-protect.imageTag")
+    image_name=$(nix eval --raw "./tools/nix#images.tripsu.imageName")
+    image_tag=$(nix eval --raw "./tools/nix#images.tripsu.imageTag")
 
     # We cannot use `:` before the tag, because `skopeo`
     # is unable to read this path correctly, because it
@@ -61,7 +61,7 @@ function main() {
 
     print_info "Building image '$dir'."
     nix --version
-    nix build -L "./tools/nix#images.rdf-protect" \
+    nix build -L "./tools/nix#images.tripsu" \
         --out-link "$dir" "${args[@]}"
 }
 

@@ -4,7 +4,7 @@
   ...
 }: let
   version = "1.0.0"; # The version of these CI images.
-  image_name = "ghcr.io/sdsc-order/rdf-protect";
+  image_name = "ghcr.io/sdsc-order/tripsu";
 
   buildImage = type:
     pkgs.dockerTools.buildNixShellImage {

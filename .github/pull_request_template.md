@@ -24,7 +24,7 @@ help! This is simply a reminder of what we are going to look for before merging
 your code._
 
 - [ ] I have read the
-      [CONTRIBUTING](https://github.com/sdsc-order/rdf-protect/blob/master/CONTRIBUTING.md)
+      [CONTRIBUTING](https://github.com/sdsc-ordes/tripsu/blob/master/CONTRIBUTING.md)
       guidelines.
 - [ ] I have added tests that prove my fix is effective or that my feature
       works.

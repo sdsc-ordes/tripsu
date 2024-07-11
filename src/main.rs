@@ -19,7 +19,7 @@ use clap::{Args, Parser, Subcommand};
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(name = "rdf-protect")]
+#[command(name = "tripsu")]
 #[command(version = "0.0.1")]
 #[command(about ="A tool to pseudonymize URIs and values in RDF graphs.", long_about = None)]
 struct Cli {

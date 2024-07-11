@@ -524,25 +524,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rdf-protect"
-version = "0.1.0"
-dependencies = [
- "bitflags",
- "blake3",
- "clap",
- "io-enum",
- "rio_api",
- "rio_turtle",
- "rstest",
- "serde",
- "serde_yml",
- "slog",
- "slog-async",
- "slog-term",
- "tempfile",
-]
-
-[[package]]
 name = "redox_users"
 version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -885,6 +866,25 @@ dependencies = [
  "indexmap",
  "toml_datetime",
  "winnow",
+]
+
+[[package]]
+name = "tripsu"
+version = "0.1.0"
+dependencies = [
+ "bitflags",
+ "blake3",
+ "clap",
+ "io-enum",
+ "rio_api",
+ "rio_turtle",
+ "rstest",
+ "serde",
+ "serde_yml",
+ "slog",
+ "slog-async",
+ "slog-term",
+ "tempfile",
 ]
 
 [[package]]

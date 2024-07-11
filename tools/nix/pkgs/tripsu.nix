@@ -14,7 +14,7 @@
   lockFile = /. + rootDir + "/Cargo.lock";
 in
   rustPlatform.buildRustPackage {
-    name = "rdf-protect";
+    name = "tripsu";
     src = /. + rootDir;
 
     version = (lib.importTOML cargoFile).package.version;
@@ -25,7 +25,7 @@ in
 
     meta = {
       description = "A simple Rust CLI tool to protect sensitive values in RDF triples through pseudonymization";
-      homepage = "https://github.com/sdsc-ordes/rdf-protect";
+      homepage = "https://github.com/sdsc-ordes/tripsu";
       license = lib.licenses.asl20;
       maintainers = ["gabyx" "cmdoret"];
     };
