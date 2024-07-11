@@ -29,7 +29,7 @@ function build_ci_image() {
 
 tag="${1:-1.0.0}"
 repository="${2:-ghcr.io/sdsc-ordes/tripsu}"
-container_file="$DIR/../images/Containerfile"
+container_file="$DIR/images/Containerfile"
 
 if [ "${CI:-}" = "true" ]; then
     ci_container_mgr_login "$DOCKER_REPOSITORY_READ_USERNAME" "$DOCKER_REPOSITORY_READ_TOKEN"
