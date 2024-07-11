@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/logo.png" alt="tripsu logo" width="250">
+  <img src="./docs/assets/logo.png" alt="tripsu logo" width="250">
 </p>
 
 <h1 align="center">
@@ -16,11 +16,11 @@
     <img src="https://img.shields.io/badge/LICENSE-Apache2.0-ff69b4.svg?style=for-the-badge" alt="License label" /></a>
 </p>
 
-tripsu (/tɹˈɪpsˈuː/, **trip**le **pseu**donymizer) is a tool to protect sensitive values in
-[RDF triples](https://en.wikipedia.org/wiki/Semantic_triple) through
-[pseudonymization](https://en.wikipedia.org/wiki/Pseudonymization). The goal is
-to offer a fast, secure and memory-efficient pseudonymization solution to any
-RDF graph.
+tripsu (/tɹˈɪpsˈuː/, **trip**le **pseu**donymizer) is a tool to protect
+sensitive values in [RDF triples](https://en.wikipedia.org/wiki/Semantic_triple)
+through [pseudonymization](https://en.wikipedia.org/wiki/Pseudonymization). The
+goal is to offer a fast, secure and memory-efficient pseudonymization solution
+to any RDF graph.
 
 Note: code is still in development and we support only
 [NTriples format](https://en.wikipedia.org/wiki/N-Triples) as input.
@@ -111,10 +111,10 @@ allowing to pipe both up- and downstream `tripsu` (see next section).
 
 ### Use Case
 
-The main idea behind `tripsu` is to integrate smoothly into other CLI tools
-up- and downstream via piping. Let us assume that we're running a SPARQL query
-on a large graph and we would like to pseudonymize some of the triples. This is
-how the flow should look like:
+The main idea behind `tripsu` is to integrate smoothly into other CLI tools up-
+and downstream via piping. Let us assume that we're running a SPARQL query on a
+large graph and we would like to pseudonymize some of the triples. This is how
+the flow should look like:
 
 ```shell
 curl <sparql-query> | tripsu pseudo -i index.nt -c config.yaml > pseudo.nt
