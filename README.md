@@ -1,6 +1,25 @@
-# RDF Protect
+<p align="center">
+  <img src="./assets/logo.png" alt="tripsu logo" width="250">
+</p>
 
-A simple Rust CLI tool to protect sensitive values in
+<h1 align="center">
+  tripsu
+</h1>
+
+<p align="center">
+</p>
+
+
+<p align="center">
+  <a href="https://github.com/sdsc-ordes/tripsu/releases/latest">
+    <img src="https://img.shields.io/github/release/sdsc-ordes/tripsu.svg?style=for-the-badge" alt="Current Release label" /></a>
+  <a href="https://github.com/flyteorg/flyte/actions/workflows/tests.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/sdsc-ordes/tripsu/normal.yaml?label=tests&style=for-the-badge" alt="Test Status label" /></a>
+  <a href="http://www.apache.org/licenses/LICENSE-2.0.html">
+    <img src="https://img.shields.io/badge/LICENSE-Apache2.0-ff69b4.svg?style=for-the-badge" alt="License label" /></a>
+</p>
+
+tripsu (/tɹˈɪpsˈuː/, **trip**le **pseu**donymizer) is a tool to protect sensitive values in
 [RDF triples](https://en.wikipedia.org/wiki/Semantic_triple) through
 [pseudonymization](https://en.wikipedia.org/wiki/Pseudonymization). The goal is
 to offer a fast, secure and memory-efficient pseudonymization solution to any
@@ -23,7 +42,7 @@ The tool works in two steps:
 
 <!--toc:start-->
 
-- [RDF Protect](#rdf-protect)
+- [tripsu](#tripsu)
   - [Installation & Usage](#installation-usage)
     - [Usage](#usage)
     - [Use Case](#use-case)
@@ -44,10 +63,10 @@ The package must be compiled from source using
 [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html):
 
 ```shell
-git clone https://github.com/sdsc-ordes/rdf-protect
-cd rdf-protect
+git clone https://github.com/sdsc-ordes/tripsu
+cd tripsu
 cargo build --release
-# executable binary located in ./target/release/rdf-protect
+# executable binary located in ./target/release/tripsu
 ```
 
 ### Usage
@@ -56,7 +75,7 @@ The general command-line interface outlines the two main steps of the tool,
 indexing and pseudonymization:
 
 ```shell
-rdf-protect --help
+tripsu --help
 ```
 
 which outputs
@@ -64,7 +83,7 @@ which outputs
 ```text
 A tool to pseudonymize URIs and values in RDF graphs.
 
-Usage: rdf-protect <COMMAND>
+Usage: tripsu <COMMAND>
 
 Commands:
   index   1. Pass: Create a node-to-type index from input triples
@@ -79,29 +98,29 @@ Options:
 Indexing only requires an RDF file as input:
 
 ```shell
-rdf-protect index input.nt > index.nt
+tripsu index input.nt > index.nt
 ```
 
 Pseudonomyzation requires an RDF file, index and config as input:
 
 ```shell
-rdf-protect pseudo --index index.nt --config rules.yaml input.nt > output.nt
+tripsu pseudo --index index.nt --config rules.yaml input.nt > output.nt
 ```
 
 > [!TIP] For each subcommand, you can use `--help` to see all options.
 
 In both subcommands, the input defaults to stdin and the output to stdout,
-allowing to pipe both up- and downstream `rdf-protect` (see next section).
+allowing to pipe both up- and downstream `tripsu` (see next section).
 
 ### Use Case
 
-The main idea behind `rdf-protect` is to integrate smoothly into other CLI tools
+The main idea behind `tripsu` is to integrate smoothly into other CLI tools
 up- and downstream via piping. Let us assume that we're running a SPARQL query
 on a large graph and we would like to pseudonymize some of the triples. This is
 how the flow should look like:
 
 ```shell
-curl <sparql-query> | rdf-protect -i index -c config.yaml | pseudo.nt
+curl <sparql-query> | tripsu pseudo -i index.nt -c config.yaml > pseudo.nt
 ```
 
 For this flow to stream data instead of loading everything into memory, we had
