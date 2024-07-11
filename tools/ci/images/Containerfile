@@ -4,8 +4,8 @@
 # do other non-docker related stuff.
 
 FROM alpine:latest as base-podman
-LABEL org.opencontainers.image.source https://github.com/sdsc-ordes/rdf-protect
-LABEL org.opencontainers.image.description "CI container image for rdf-protect"
+LABEL org.opencontainers.image.source https://github.com/sdsc-ordes/tripsu
+LABEL org.opencontainers.image.description "CI container image for tripsu"
 LABEL org.opencontainers.image.license "Apache"
 
 RUN apk add findutils coreutils git jq curl bash just parallel podman

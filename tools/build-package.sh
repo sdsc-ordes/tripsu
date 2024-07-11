@@ -14,6 +14,6 @@ dir="build/package"
 
 print_info "Building the package."
 nix --version
-nix build -L "./tools/nix#rdf-protect" \
+nix build -L "./tools/nix#tripsu" \
     --out-link "$dir" \
     "$@"

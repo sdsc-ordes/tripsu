@@ -1,19 +1,19 @@
 {
   pkgs,
-  rdf-protect,
+  tripsu,
 }:
 pkgs.dockerTools.buildLayeredImage {
-  name = "ghcr.io/sdsc-ordes/rdf-protect";
-  tag = rdf-protect.version;
+  name = "ghcr.io/sdsc-ordes/tripsu";
+  tag = tripsu.version;
 
-  contents = [rdf-protect];
+  contents = [tripsu];
 
   config = {
-    Entrypoint = ["rdf-protect"];
+    Entrypoint = ["tripsu"];
     WorkingDir = "/";
     Labels = {
-      "org.opencontainers.image.source" = "https://github.com/sdsc-ordes/rdf-protect";
-      "org.opencontainers.image.description" = rdf-protect.meta.description;
+      "org.opencontainers.image.source" = "https://github.com/sdsc-ordes/tripsu";
+      "org.opencontainers.image.description" = tripsu.meta.description;
       "org.opencontainers.image.license" = "Apache-2.0";
     };
   };

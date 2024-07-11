@@ -1,5 +1,5 @@
 {
-  description = "rdf-protect";
+  description = "tripsu";
 
   nixConfig = {
     substituters = [
@@ -86,9 +86,9 @@
         buildInputs = [];
 
         # The package of this CLI tool.
-        # The global version for rdf-protect.
+        # The global version for tripsu.
         # This is gonna get tooled later.
-        rdf-protect = (import ./pkgs/rdf-protect.nix) {
+        tripsu = (import ./pkgs/tripsu.nix) {
           inherit rootDir rustToolchain pkgs lib;
         };
       in
@@ -113,7 +113,7 @@
           };
 
           packages = {
-            rdf-protect = rdf-protect;
+            tripsu = tripsu;
 
             images = {
               ci = (import ./images/ci.nix) {
@@ -121,8 +121,8 @@
                 devShellDrv = devShells.default;
               };
 
-              rdf-protect = (import ./images/rdf-protect.nix) {
-                inherit pkgs rdf-protect;
+              tripsu = (import ./images/tripsu.nix) {
+                inherit pkgs tripsu;
               };
             };
           };
