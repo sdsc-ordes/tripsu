@@ -10,7 +10,7 @@
 <p align="center">
   <a href="https://github.com/sdsc-ordes/tripsu/releases/latest">
     <img src="https://img.shields.io/github/release/sdsc-ordes/tripsu.svg?style=for-the-badge" alt="Current Release label" /></a>
-  <a href="https://github.com/flyteorg/flyte/actions/workflows/tests.yml">
+  <a href="https://github.com/sdsc-ordes/tripsu/actions/workflows/normal.yaml">
     <img src="https://img.shields.io/github/actions/workflow/status/sdsc-ordes/tripsu/normal.yaml?label=tests&style=for-the-badge" alt="Test Status label" /></a>
   <a href="http://www.apache.org/licenses/LICENSE-2.0.html">
     <img src="https://img.shields.io/badge/LICENSE-Apache2.0-ff69b4.svg?style=for-the-badge" alt="License label" /></a>
