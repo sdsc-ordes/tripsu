@@ -46,7 +46,7 @@ function main() {
         git fetch --depth 50 origin "$RELEASE_BRANCH"
 
         # Check if its reachable.
-        if [ -n "$(git rev-list --first-parent \
+        if [ -z "$(git rev-list --first-parent \
             --ancestry-path \
             "$release_tag^..origin/$RELEASE_BRANCH")" ]; then
             git log --oneline --graph "$RELEASE_BRANCH" "$release_tag" || true
