@@ -31,7 +31,7 @@ By contributing, you agree that your contributions will be licensed under this
 
 ## Important Links
 
-- [Open Issues](https://github.com/sdsc-ordes/rdf-protect/issues)
-- [Open Pull Requests](https://github.com/sdsc-ordes/rdf-protect/pulls)
-- [Development Section in the README](https://github.com/sdsc-ordes/rdf-protect#development)
-- [LICENSE](https://github.com/sdsc-ordes/rdf-protect/blob/main/LICENSE)
+- [Open Issues](https://github.com/sdsc-ordes/tripsu/issues)
+- [Open Pull Requests](https://github.com/sdsc-ordes/tripsu/pulls)
+- [Development Section in the README](https://github.com/sdsc-ordes/tripsu#development)
+- [LICENSE](https://github.com/sdsc-ordes/tripsu/blob/main/LICENSE)
