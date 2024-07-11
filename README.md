@@ -5,11 +5,8 @@
 <h1 align="center">
   tripsu
 </h1>
-
 <p align="center">
 </p>
-
-
 <p align="center">
   <a href="https://github.com/sdsc-ordes/tripsu/releases/latest">
     <img src="https://img.shields.io/github/release/sdsc-ordes/tripsu.svg?style=for-the-badge" alt="Current Release label" /></a>
