@@ -71,8 +71,8 @@ cargo build --release
 ./target/release/tripsu --help
 ```
 
-> [!TIP] Check the [development section](#development) for other setups (Nix
-> etc.).
+> [!TIP]
+> Check the [development section](#development) for other setups (Nix etc.).
 
 ## Usage
 
@@ -112,7 +112,8 @@ Pseudonomyzation requires an RDF file, index and config as input:
 tripsu pseudo --index index.nt --config rules.yaml input.nt > output.nt
 ```
 
-> [!TIP] For each subcommand, you can use `--help` to see all options.
+> [!TIP]
+> For each subcommand, you can use `--help` to see all options.
 
 In both subcommands, the input defaults to stdin and the output to stdout,
 allowing to pipe both up- and downstream `tripsu` (see next section).
