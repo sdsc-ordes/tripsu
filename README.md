@@ -16,7 +16,7 @@
     <img src="https://img.shields.io/badge/LICENSE-Apache2.0-ff69b4.svg?style=for-the-badge" alt="License label" /></a>
 </p>
 
-tripsu (/tɹˈɪpsˈuː/, **trip**le **pseu**donymizer) is a tool to protect
+`tripsu` (/tɹˈɪpsˈuː/, **trip**le **pseu**donymizer) is a tool to protect
 sensitive values in [RDF triples](https://en.wikipedia.org/wiki/Semantic_triple)
 through [pseudonymization](https://en.wikipedia.org/wiki/Pseudonymization). The
 goal is to offer a fast, secure and memory-efficient pseudonymization solution
@@ -40,24 +40,39 @@ The tool works in two steps:
 <!--toc:start-->
 
 - [Installation](#installation)
+  - [Container](#container)
+  - [Source Build](#source-build)
 - [Usage](#usage)
 - [Development](#development)
-
 <!--toc:end-->
 
 </details>
 
 ## Installation
 
-The package must be compiled from source using
+### Container
+
+Run the container image directly with `docker` or `podman`:
+
+```shell
+docker run -it ghcr.io/sdsc-ordes/tripsu:0.0.1 --help
+```
+
+### Source Build
+
+The package can be compiled from source using
 [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html):
 
 ```shell
 git clone https://github.com/sdsc-ordes/tripsu
 cd tripsu
 cargo build --release
-# executable binary located in ./target/release/tripsu
+
+./target/release/tripsu --help
 ```
+
+> [!TIP] Check the [development section](#development) for other setups (Nix
+> etc.).
 
 ## Usage
 
