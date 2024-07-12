@@ -39,18 +39,11 @@ The tool works in two steps:
 
 <!--toc:start-->
 
-- [tripsu](#tripsu)
-  - [Installation & Usage](#installation-usage)
-    - [Usage](#usage)
-    - [Use Case](#use-case)
-    - [Example](#example)
-      - [1. Pseudonymize the URI of nodes with `rdf:type`](#1-pseudonymize-the-uri-of-nodes-with-rdftype)
-      - [2. Pseudonymize values for specific subject-predicate combinations](#2-pseudonymize-values-for-specific-subject-predicate-combinations)
-      - [3. Pseudonymize any value for a given predicate](#3-pseudonymize-any-value-for-a-given-predicate)
-  - [Development](#development) - [Setup](#setup) -
-  [Development Shell with `nix`](#development-shell-with-nix) -
-  [Formatting](#formatting) - [Building](#building) - [Testing](#testing)
-  <!--toc:end-->
+- [Installation](#installation)
+- [Usage](#usage)
+- [Development](#development)
+
+<!--toc:end-->
 
 </details>
 
@@ -104,16 +97,17 @@ Pseudonomyzation requires an RDF file, index and config as input:
 tripsu pseudo --index index.nt --config rules.yaml input.nt > output.nt
 ```
 
-> [!TIP]
-> For each subcommand, you can use `--help` to see all options.
+> [!TIP] For each subcommand, you can use `--help` to see all options.
 
 In both subcommands, the input defaults to stdin and the output to stdout,
 allowing to pipe both up- and downstream `tripsu` (see next section).
 
-For more information about use-cases and configuration, see the [tutorial](docs/tutorial.md).
+For more information about use-cases and configuration, see the
+[tutorial](docs/tutorial.md).
 
 ## Development
 
 Read first the [Contribution Guidelines](/CONTRIBUTING.md).
 
-For technical documentation on setup and development, see the [Development Guide](docs/development_guide.md)
+For technical documentation on setup and development, see the
+[Development Guide](docs/development-guide.md)
