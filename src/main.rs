@@ -16,6 +16,7 @@ use crate::{
 };
 
 use clap::{Args, Parser, Subcommand};
+use log::Logger;
 use std::path::PathBuf;
 
 #[derive(Parser)]
@@ -25,6 +26,12 @@ use std::path::PathBuf;
 struct Cli {
     #[command(subcommand)]
     command: Subcommands,
+
+    /// Parallelize the convertion loops.
+    /// Specifies the number of threads to use.
+    /// A number of `0` will use all threads.
+    #[arg(short, long)]
+    parallel: Option<usize>,
 }
 
 #[derive(Args, Debug)]
@@ -35,7 +42,7 @@ struct IndexArgs {
 
     /// File descriptor to read triples from.
     /// Defaults to `stdin`.
-    #[arg(default_value = "-")]
+    #[arg(short, long, default_value = "-")]
     input: PathBuf,
 }
 
@@ -75,9 +82,31 @@ enum Subcommands {
     Pseudo(PseudoArgs),
 }
 
+fn install_thread_pool(log: &Logger, threads: usize) {
+    let num_threads = if threads == 0 {
+        std::thread::available_parallelism()
+            .expect("Could not get available num. threads.")
+            .get()
+    } else {
+        threads
+    };
+
+    info!(log, "Installing thread pool with '{num_threads}' threads.");
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(num_threads)
+        .build_global()
+        .expect("Could not setup thread pool.");
+}
+
 fn main() {
     let log = create_logger(false);
     let cli = Cli::parse();
+
+    let mut parallelize = false;
+    if let Some(num_threads) = cli.parallel {
+        parallelize = true;
+        install_thread_pool(&log, num_threads);
+    }
 
     match cli.command {
         Subcommands::Index(args) => {
@@ -86,7 +115,14 @@ fn main() {
         }
         Subcommands::Pseudo(args) => {
             info!(log, "Args: {:?}", args);
-            pseudonymize_graph(&log, &args.input, &args.config, &args.output, &args.index)
+            pseudonymize_graph(
+                &log,
+                &args.input,
+                &args.config,
+                &args.output,
+                &args.index,
+                parallelize,
+            )
         }
     }
 }

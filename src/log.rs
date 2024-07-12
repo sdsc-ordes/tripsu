@@ -1,5 +1,4 @@
 use slog::{self, o, Drain};
-use slog_async;
 use std::{io, sync::Arc};
 
 pub type Logger = slog::Logger;

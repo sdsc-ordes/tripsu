@@ -12,9 +12,8 @@ cargo --version
 cargo clippy --version
 
 print_info "Run Rust Clippy linter."
-print_warning "Currently warnings are not errors!"
 
-cargo clippy --no-deps -- -A clippy::needless_return "$@" ||
+cargo clippy --no-deps -- -D warnings -A clippy::needless_return "$@" ||
     {
         git diff --name-status || true
         die "Rust clippy failed."
