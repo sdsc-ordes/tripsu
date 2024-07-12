@@ -127,3 +127,12 @@ Read first the [Contribution Guidelines](/CONTRIBUTING.md).
 
 For technical documentation on setup and development, see the
 [Development Guide](docs/development-guide.md)
+
+## Copyright
+
+Copyright © 2023-2024 Swiss Data Science Center (SDSC), [www.datascience.ch](http://www.datascience.ch/). 
+All rights reserved. The SDSC is jointly established and legally represented 
+by the École Polytechnique Fédérale de Lausanne (EPFL) and the Eidgenössische 
+Technische Hochschule Zürich (ETH Zürich). This copyright encompasses all 
+materials, software, documentation, and other content created and developed 
+by the SDSC.
