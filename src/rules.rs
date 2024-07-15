@@ -50,7 +50,7 @@ pub fn match_type_rule_subject(
 ) -> TripleMask {
     match subject {
         Subject::NamedNode(n) => {
-            return mask | match_type_rule_named_node(true, &n, mask, rules, type_map);
+            return mask | match_type_rule_named_node(true, n, mask, rules, type_map);
         }
         Subject::BlankNode(_) => return mask,
     }
@@ -64,21 +64,19 @@ pub fn match_type_rule_object(
 ) -> TripleMask {
     match object {
         Term::NamedNode(n) => {
-            return mask | match_type_rule_named_node(false, &n, mask, rules, type_map);
+            return mask | match_type_rule_named_node(false, n, mask, rules, type_map);
         }
         _ => return mask,
     }
 }
 
 pub fn match_predicate_rule(predicate: &NamedNode, mask: TripleMask, rules: &Rules) -> TripleMask {
-    match predicate {
-        NamedNode { iri: n } => {
-            if rules.replace_value_of_predicate.contains(n) {
-                return mask | TripleMask::OBJECT;
-            } else {
-                return mask;
-            }
-        }
+    let NamedNode { iri: i } = predicate;
+
+    if rules.replace_value_of_predicate.contains(i) {
+        return mask | TripleMask::OBJECT;
+    } else {
+        return mask;
     }
 }
 

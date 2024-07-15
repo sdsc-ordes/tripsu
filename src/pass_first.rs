@@ -1,30 +1,38 @@
-use rio_api::{model::Triple, parser::TriplesParser};
+use rio_api::parser::TriplesParser;
 use rio_turtle::TurtleError;
-use std::{
-    io::{stdin, BufRead, BufReader, Write},
-    path::Path,
+use std::{io::Write, path::Path};
+
+use crate::{
+    io,
+    rdf_types::{Triple, TripleView},
 };
 
-use crate::io;
+fn index_triple(t: Triple, out: &mut impl Write) {
+    if t.predicate.iri.as_str() == "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" {
+        let r = || -> std::io::Result<()> {
+            out.write_all(t.to_string().as_bytes())?;
+            out.write_all(b" .\n")
+        }();
 
-fn index_triple(t: Triple, out: &mut impl Write) -> Result<(), TurtleError> {
-    match t.predicate.iri {
-        "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" => {
-            let _ = out.write(&format!("{} .\n", &t.to_string()).into_bytes());
+        if let Err(e) = r {
+            panic!("Error writting to out buffer: {e}");
         }
-        _ => {}
     }
-
-    Ok(())
 }
 
 pub fn create_type_map(input: &Path, output: &Path) {
     let buf_in = io::get_reader(input);
     let mut buf_out = io::get_writer(output);
     let mut triples = io::parse_ntriples(buf_in);
+
     while !triples.is_end() {
-        triples
-            .parse_step(&mut |t| index_triple(t, &mut buf_out))
-            .unwrap();
+        let _ = triples
+            .parse_step(&mut |t: TripleView| {
+                index_triple(t.into(), &mut buf_out);
+                Result::<(), TurtleError>::Ok(())
+            })
+            .inspect_err(|e| {
+                panic!("Parsing error occured: {e}");
+            });
     }
 }
