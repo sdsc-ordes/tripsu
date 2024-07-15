@@ -1,6 +1,5 @@
 use super::model::Entity;
 use crate::{model::TripleMask, rdf_types::*};
-use blake3;
 
 pub trait Pseudonymize {
     // Pseudonymize parts of a triple set by its mask
@@ -26,9 +25,9 @@ pub trait Pseudonymize {
 
     fn pseudo_entity(&self, e: &Entity) -> Entity {
         match e {
-            Entity::Literal(l) => Entity::Literal(self.pseudo_literal(&l)),
-            Entity::NamedNode(n) => Entity::NamedNode(self.pseudo_named_node(&n)),
-            Entity::BlankNode(b) => Entity::BlankNode(self.pseudo_blank_node(&b)),
+            Entity::Literal(l) => Entity::Literal(self.pseudo_literal(l)),
+            Entity::NamedNode(n) => Entity::NamedNode(self.pseudo_named_node(n)),
+            Entity::BlankNode(b) => Entity::BlankNode(self.pseudo_blank_node(b)),
         }
     }
     // private methods? Blanket implementations
@@ -42,17 +41,8 @@ pub trait Pseudonymize {
     // return u.clone()
 }
 
-pub struct DefaultHasher {
-    hasher: blake3::Hasher,
-}
-
-impl DefaultHasher {
-    pub fn new() -> Self {
-        return DefaultHasher {
-            hasher: blake3::Hasher::new(),
-        };
-    }
-}
+#[derive(Default)]
+pub struct DefaultHasher {}
 
 impl Pseudonymize for DefaultHasher {
     fn pseudo_named_node(&self, t: &NamedNode) -> NamedNode {

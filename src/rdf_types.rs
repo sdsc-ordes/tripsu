@@ -1,18 +1,17 @@
-use super::model::{Entity, TripleMask};
-use rio_api;
-use std::{fmt, fmt::Write, ops::Sub};
+use super::model::Entity;
+use std::{fmt, fmt::Write};
 
 // Rewrite all the rio types to be able to instanciate triples
 // Rename rio types as XXXView to distinguish them from our types
 // Use rio types for parsing and serializing
 // Define mappers between the two types
 //
-type NamedNodeView<'a> = rio_api::model::NamedNode<'a>;
-type LiteralView<'a> = rio_api::model::Literal<'a>;
-type TermView<'a> = rio_api::model::Term<'a>;
-type TripleView<'a> = rio_api::model::Triple<'a>;
-type BlankNodeView<'a> = rio_api::model::BlankNode<'a>;
-type SubjectView<'a> = rio_api::model::Subject<'a>;
+pub type NamedNodeView<'a> = rio_api::model::NamedNode<'a>;
+pub type LiteralView<'a> = rio_api::model::Literal<'a>;
+pub type TermView<'a> = rio_api::model::Term<'a>;
+pub type TripleView<'a> = rio_api::model::Triple<'a>;
+pub type BlankNodeView<'a> = rio_api::model::BlankNode<'a>;
+pub type SubjectView<'a> = rio_api::model::Subject<'a>;
 
 #[derive(Eq, PartialEq, Debug, Clone, Hash)]
 pub struct Triple {
@@ -130,16 +129,10 @@ impl fmt::Display for BlankNode {
 
 impl<'a> From<TripleView<'a>> for Triple {
     fn from(t: TripleView<'a>) -> Self {
-        match t {
-            TripleView {
-                subject,
-                predicate,
-                object,
-            } => Triple {
-                subject: subject.into(),
-                predicate: predicate.into(),
-                object: object.into(),
-            },
+        Triple {
+            subject: t.subject.into(),
+            predicate: t.predicate.into(),
+            object: t.object.into(),
         }
     }
 }
@@ -247,7 +240,7 @@ impl From<Entity> for Term {
 }
 
 #[inline]
-fn fmt_quoted_str(string: &String, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+fn fmt_quoted_str(string: &str, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     f.write_char('"')?;
     for c in string.chars() {
         match c {
