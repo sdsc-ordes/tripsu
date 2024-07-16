@@ -35,7 +35,7 @@ struct IndexArgs {
 
     /// File descriptor to read triples from.
     /// Defaults to `stdin`.
-    #[arg(short, long, default_value = "-")]
+    #[arg(default_value = "-")]
     input: PathBuf,
 }
 
@@ -43,7 +43,7 @@ struct IndexArgs {
 struct PseudoArgs {
     /// Index file produced by prepare-index.
     /// Required for pseudonymization.
-    #[arg(short, long)]
+    #[arg(short = 'x', long)]
     index: PathBuf,
 
     /// File descriptor to read input triples from.
