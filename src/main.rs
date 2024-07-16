@@ -35,7 +35,7 @@ struct IndexArgs {
 
     /// File descriptor to read triples from.
     /// Defaults to `stdin`.
-    #[arg(short, long, default_value = "-")]
+    #[arg(default_value = "-")]
     input: PathBuf,
 }
 
