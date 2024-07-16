@@ -43,7 +43,7 @@ struct IndexArgs {
 struct PseudoArgs {
     /// Index file produced by prepare-index.
     /// Required for pseudonymization.
-    #[arg(short, long)]
+    #[arg(short = 'x', long)]
     index: PathBuf,
 
     /// File descriptor to read input triples from.
