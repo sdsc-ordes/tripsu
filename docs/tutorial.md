@@ -8,7 +8,7 @@ large graph and we would like to pseudonymize some of the triples. This is how
 the flow should look like:
 
 ```shell
-curl <sparql-query> | tripsu pseudo -i index.nt -c config.yaml > pseudo.nt
+curl <sparql-query> | tripsu pseudo -x index.nt -c config.yaml > pseudo.nt
 ```
 
 For this flow to stream data instead of loading everything into memory, note that 
@@ -30,13 +30,13 @@ information:
     <summary><b>Click to show input</b></summary>
 
 ```ntriples
-<http://example.org/Alice> <http://www.w3.org/2000/01/rdf-schema#type> <http://xmlns.com/foaf/0.1/Person> .
+<http://example.org/Alice> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
 <http://example.org/Alice> <http://xmlns.com/foaf/0.1/holdsAccount> <http://example.org/Alice-Bank-Account> .
-<http://example.org/Alice-Bank-Account> <http://www.w3.org/2000/01/rdf-schema#type> <http://xmlns.com/foaf/OnlineAccount> .
+<http://example.org/Alice-Bank-Account> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/OnlineAccount> .
 <http://example.org/Alice-Bank-Account> <http://schema.org/name> "my_account32" .
 <http://example.org/Alice-Bank-Account> <http://schema.org/accessCode> "secret-123" .
 <http://example.org/Alice> <http://schema.org/name> "Alice" .
-<http://example.org/Bank> <http://www.w3.org/2000/01/rdf-schema#type> <http://xmlns.com/foaf/0.1/Organization> .
+<http://example.org/Bank> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Organization> .
 <http://example.org/Bank> <http://schema.org/name> "Bank" .
 ```
 
@@ -49,13 +49,13 @@ secret information while keeping the rest as is:
     <summary><b>Click to show output</b></summary>
 
 ```
-<http://example.org/af321bbc> <http://www.w3.org/2000/01/rdf-schema#type> <http://xmlns.com/foaf/0.1/Person> .
+<http://example.org/af321bbc> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
 <http://example.org/af321bbc> <http://xmlns.com/foaf/0.1/holdsAccount> <http://example.org/bs2313bc> .
-<http://example.org/bs2313bc> <http://www.w3.org/2000/01/rdf-schema#type> <http://xmlns.com/foaf/OnlineAccount> .
+<http://example.org/bs2313bc> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/OnlineAccount> .
 <http://example.org/bs2313bc> <http://schema.org/name> "pp54r32" .
 <http://example.org/bs2313bc> <http://schema.org/accessCode> "asfnd223" .
 <http://example.org/af321bbc> <http://schema.org/name> "af321bbc" .
-<http://example.org/Bank> <http://www.w3.org/2000/01/rdf-schema#type> <http://xmlns.com/foaf/0.1/Organization> .
+<http://example.org/Bank> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Organization> .
 <http://example.org/Bank> <http://schema.org/name> "Bank" .
 ```
 
@@ -80,13 +80,13 @@ The goal is to pseudonymize all instaces of `rdf:type` Person. The following
 input file:
 
 ```
-<http://example.org/Alice> <http://www.w3.org/2000/01/rdf-schema#type> <http://xmlns.com/foaf/0.1/Person> .
+<http://example.org/Alice> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
 ```
 
 Would become:
 
 ```
-<http://example.org/af321bbc> <http://www.w3.org/2000/01/rdf-schema#type> <http://xmlns.com/foaf/0.1/Person> .
+<http://example.org/af321bbc> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
 ```
 
 </details>
@@ -108,18 +108,18 @@ The goal is to pseudonymize only the instances of names when they're associated
 to Person. The following input file:
 
 ```
-<http://example.org/Alice> <http://www.w3.org/2000/01/rdf-schema#type> <http://xmlns.com/foaf/0.1/Person> .
+<http://example.org/Alice> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
 <http://example.org/Alice> <http://schema.org/name> "Alice" .
-<http://example.org/Bank> <http://www.w3.org/2000/01/rdf-schema#type> <http://xmlns.com/foaf/0.1/Organization> .
+<http://example.org/Bank> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Organization> .
 <http://example.org/Bank> <http://schema.org/name> "Bank" .
 ```
 
 Would become:
 
 ```
-<http://example.org/Alice> <http://www.w3.org/2000/01/rdf-schema#type> <http://xmlns.com/foaf/0.1/Person> .
+<http://example.org/Alice> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
 <http://example.org/Alice> <http://schema.org/name> "af321bbc" .
-<http://example.org/Bank> <http://www.w3.org/2000/01/rdf-schema#type> <http://xmlns.com/foaf/0.1/Organization> .
+<http://example.org/Bank> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Organization> .
 <http://example.org/Bank> <http://schema.org/name> "Bank" .
 ```
 
@@ -141,18 +141,18 @@ The goal is to pseudonymize any values associated to name. The following input
 file:
 
 ```
-<http://example.org/Alice> <http://www.w3.org/2000/01/rdf-schema#type> <http://xmlns.com/foaf/0.1/Person> .
+<http://example.org/Alice> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
 <http://example.org/Alice> <http://schema.org/name> "Alice" .
-<http://example.org/Bank> <http://www.w3.org/2000/01/rdf-schema#type> <http://xmlns.com/foaf/0.1/Organization> .
+<http://example.org/Bank> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Organization> .
 <http://example.org/Bank> <http://schema.org/name> "Bank" .
 ```
 
 Would become:
 
 ```
-<http://example.org/Alice> <http://www.w3.org/2000/01/rdf-schema#type> <http://xmlns.com/foaf/0.1/Person> .
+<http://example.org/Alice> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
 <http://example.org/Alice> <http://schema.org/name> "af321bbc" .
-<http://example.org/Bank> <http://www.w3.org/2000/01/rdf-schema#type> <http://xmlns.com/foaf/0.1/Organization> .
+<http://example.org/Bank> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Organization> .
 <http://example.org/Bank> <http://schema.org/name> "38a3dd71" .
 ```
 

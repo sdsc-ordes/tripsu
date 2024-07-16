@@ -16,7 +16,7 @@
     <img src="https://img.shields.io/badge/LICENSE-Apache2.0-ff69b4.svg?style=for-the-badge" alt="License label" /></a>
 </p>
 
-tripsu (/tɹˈɪpsˈuː/, **trip**le **pseu**donymizer) is a tool to protect
+`tripsu` (/tɹˈɪpsˈuː/, **trip**le **pseu**donymizer) is a tool to protect
 sensitive values in [RDF triples](https://en.wikipedia.org/wiki/Semantic_triple)
 through [pseudonymization](https://en.wikipedia.org/wiki/Pseudonymization). The
 goal is to offer a fast, secure and memory-efficient pseudonymization solution
@@ -39,32 +39,40 @@ The tool works in two steps:
 
 <!--toc:start-->
 
-- [tripsu](#tripsu)
-  - [Installation & Usage](#installation-usage)
-    - [Usage](#usage)
-    - [Use Case](#use-case)
-    - [Example](#example)
-      - [1. Pseudonymize the URI of nodes with `rdf:type`](#1-pseudonymize-the-uri-of-nodes-with-rdftype)
-      - [2. Pseudonymize values for specific subject-predicate combinations](#2-pseudonymize-values-for-specific-subject-predicate-combinations)
-      - [3. Pseudonymize any value for a given predicate](#3-pseudonymize-any-value-for-a-given-predicate)
-  - [Development](#development) - [Setup](#setup) -
-  [Development Shell with `nix`](#development-shell-with-nix) -
-  [Formatting](#formatting) - [Building](#building) - [Testing](#testing)
-  <!--toc:end-->
+- [Installation](#installation)
+  - [Container](#container)
+  - [Source Build](#source-build)
+- [Usage](#usage)
+- [Development](#development)
+<!--toc:end-->
 
 </details>
 
 ## Installation
 
-The package must be compiled from source using
+### Container
+
+Run the container image directly with `docker` or `podman`:
+
+```shell
+docker run -it ghcr.io/sdsc-ordes/tripsu:0.0.1 --help
+```
+
+### Source Build
+
+The package can be compiled from source using
 [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html):
 
 ```shell
 git clone https://github.com/sdsc-ordes/tripsu
 cd tripsu
 cargo build --release
-# executable binary located in ./target/release/tripsu
+
+./target/release/tripsu --help
 ```
+
+> [!TIP]
+> Check the [development section](#development) for other setups (Nix etc.).
 
 ## Usage
 
@@ -110,10 +118,21 @@ tripsu pseudo --index index.nt --config rules.yaml input.nt > output.nt
 In both subcommands, the input defaults to stdin and the output to stdout,
 allowing to pipe both up- and downstream `tripsu` (see next section).
 
-For more information about use-cases and configuration, see the [tutorial](docs/tutorial.md).
+For more information about use-cases and configuration, see the
+[tutorial](docs/tutorial.md).
 
 ## Development
 
 Read first the [Contribution Guidelines](/CONTRIBUTING.md).
 
-For technical documentation on setup and development, see the [Development Guide](docs/development_guide.md)
+For technical documentation on setup and development, see the
+[Development Guide](docs/development-guide.md)
+
+## Copyright
+
+Copyright © 2023-2024 Swiss Data Science Center (SDSC), [www.datascience.ch](http://www.datascience.ch/). 
+All rights reserved. The SDSC is jointly established and legally represented 
+by the École Polytechnique Fédérale de Lausanne (EPFL) and the Eidgenössische 
+Technische Hochschule Zürich (ETH Zürich). This copyright encompasses all 
+materials, software, documentation, and other content created and developed 
+by the SDSC.
