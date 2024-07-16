@@ -2,7 +2,6 @@ use rio_api::parser::TriplesParser;
 use rio_turtle::TurtleError;
 use std::{
     collections::HashMap,
-    fmt::{Debug, Display},
     io::{BufRead, Write},
     path::Path,
 };
@@ -38,13 +37,18 @@ fn process_triple(
     rules_config: &Rules,
     node_to_type: &HashMap<String, String>,
     out: &mut impl Write,
-) -> Result<(), TurtleError> {
-    let mask = match_rules(triple.clone(), &rules_config, &node_to_type);
-    let hasher = DefaultHasher::new();
-    let _ =
-        out.write(&format!("{} .\n", hasher.pseudo_triple(&triple, mask).to_string()).into_bytes());
+) {
+    let mask = match_rules(triple.clone(), rules_config, node_to_type);
+    let hasher = DefaultHasher::default();
 
-    Ok(())
+    let r = || -> std::io::Result<()> {
+        out.write_all(hasher.pseudo_triple(&triple, mask).to_string().as_bytes())?;
+        out.write_all(b" .\n")
+    }();
+
+    if let Err(e) = r {
+        panic!("Error writting to out buffer: {e}");
+    }
 }
 
 // Create a index mapping node -> type from an input ntriples buffer
@@ -55,8 +59,8 @@ fn load_type_map(input: impl BufRead) -> HashMap<String, String> {
     while !triples.is_end() {
         let _: Result<(), TurtleError> = triples.parse_step(&mut |t| {
             node_to_type.insert(
-                t.subject.to_string().replace(&['<', '>'], ""),
-                t.object.to_string().replace(&['<', '>'], ""),
+                t.subject.to_string().replace(['<', '>'], ""),
+                t.object.to_string().replace(['<', '>'], ""),
             );
             Ok(())
         });
@@ -65,7 +69,7 @@ fn load_type_map(input: impl BufRead) -> HashMap<String, String> {
     return node_to_type;
 }
 
-pub fn pseudonymize_graph(log: &Logger, input: &Path, config: &Path, output: &Path, index: &Path) {
+pub fn pseudonymize_graph(_: &Logger, input: &Path, config: &Path, output: &Path, index: &Path) {
     let buf_input = io::get_reader(input);
     let buf_index = io::get_reader(index);
     let mut buf_output = io::get_writer(output);
@@ -75,13 +79,15 @@ pub fn pseudonymize_graph(log: &Logger, input: &Path, config: &Path, output: &Pa
 
     let mut triples = io::parse_ntriples(buf_input);
 
-    // TODO: Try to make this into an iterator loop to leverage rayons parallelization feature over
-    // iterators.
-
+    // Run the loop single-threaded.
     while !triples.is_end() {
         triples
-            .parse_step(&mut |t| {
-                process_triple(t.into(), &rules_config, &node_to_type, &mut buf_output)
+            .parse_step(&mut |t: TripleView| {
+                process_triple(t.into(), &rules_config, &node_to_type, &mut buf_output);
+                Result::<(), TurtleError>::Ok(())
+            })
+            .inspect_err(|e| {
+                panic!("Parsing error occured: {e}");
             })
             .unwrap();
     }
