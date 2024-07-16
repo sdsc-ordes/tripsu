@@ -4,7 +4,7 @@
   io-enum = '1.1.3'
   rio_api = '0.8.4'
   rio_turtle = '0.8.4'
-  rstest = '0.21.0'
+  rstest = "0.21.0"
   serde_yml = '0.0.10'
   slog = '2.7.0'
   slog-async = '2.8.0'
