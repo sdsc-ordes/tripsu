@@ -3,7 +3,6 @@ use ::std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 
 use crate::model::TripleMask;
-use rstest::rstest;
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Rules {
@@ -112,6 +111,7 @@ pub fn match_subject_predicate_rule(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rstest::rstest;
 
     fn set_type_rule(t: &str) -> Rules {
         let mut rules = Rules::default();
