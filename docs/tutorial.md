@@ -8,7 +8,7 @@ large graph and we would like to pseudonymize some of the triples. This is how
 the flow should look like:
 
 ```shell
-curl <sparql-query> | tripsu pseudo -i index.nt -c config.yaml > pseudo.nt
+curl <sparql-query> | tripsu pseudo -x index.nt -c config.yaml > pseudo.nt
 ```
 
 For this flow to stream data instead of loading everything into memory, note that 
