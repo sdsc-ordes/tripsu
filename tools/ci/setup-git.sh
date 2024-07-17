@@ -20,7 +20,9 @@ if [ "$HOME" = "/github/home" ]; then
         "workaround some Github stupidity."
 
     ls -al "/github" || true
-    mkdir -p /github
+    ls -al "/github/home" || true
+
+    rm -rf /github/home || true
     ln -s /root "$HOME"
     ls -al "/github"
 fi
