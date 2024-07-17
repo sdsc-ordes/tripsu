@@ -93,7 +93,8 @@ function ci_setup_cachix {
         die "Cachix token is empty."
 
     cachix authtoken --stdin < <(echo "$token")
-    cachix use "$name" || die "Could not setup cachix cache '$name'."
+    cachix use --mode user-nixconf "$name" ||
+        die "Could not setup cachix cache '$name'."
 
     print_info "Cachix binary cache set up."
 }
