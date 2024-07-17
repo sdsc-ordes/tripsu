@@ -111,6 +111,8 @@ function ci_setup_cachix {
     cachix use --mode user-nixconf "$name" ||
         die "Could not setup cachix cache '$name'."
 
+    echo "extra-trusted-substituters = https://$CACHIX_CACHE_NAME.cachix.org" >>~/.config/nix/nix.conf
+
     print_info "Cachix binary cache set up."
 }
 
