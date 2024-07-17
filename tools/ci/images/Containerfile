@@ -3,7 +3,9 @@
 # or use `nix develop` to start a sandboxed environment to
 # do other non-docker related stuff.
 
-FROM docker.nix-community.org/nixpkgs/cachix-flakes as base
+FROM docker.io/nixos/nix as base
+# This is an alpine container
+# https://hub.docker.com/r/nixos/nix/dockerfile
 
 LABEL org.opencontainers.image.source https://github.com/sdsc-ordes/tripsu
 LABEL org.opencontainers.image.description "CI container image for tripsu"
@@ -18,6 +20,19 @@ COPY ./tools /container-setup/tools
 
 # Install Nix.
 RUN bash -c ". /container-setup/tools/general.sh && ci_setup_nix"
+
+# Create user (does not work because action/checkout uses `root` in its own container ... 💩)
+# Leave this code here for a reference:
+# ARG USER_NAME=ci
+# ARG USER_UID=1000
+# ARG USER_GID=1000
+# RUN mkdir -p "$USER_HOME" && \
+#     adduser "$USER_NAME" -s /bin/zsh -D -u "$USER_UID" -g "$USER_GID" -h "$USER_HOME/$USER_NAME" && \
+#     mkdir -p /etc/sudoers.d && \
+#     echo "$USER_NAME ALL=(root) NOPASSWD:ALL" > "/etc/sudoers.d/$USER_NAME" && \
+#     chmod 0440 "/etc/sudoers.d/$USER_NAME" && \
+#     chown -R "$USER_NAME:$USER_NAME" /home /container-setup
+# USER "$USER_NAME"
 
 # Bootstrap the Nix store with some basic utilities.
 RUN cd /container-setup && \
