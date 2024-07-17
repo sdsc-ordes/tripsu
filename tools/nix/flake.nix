@@ -63,6 +63,7 @@
 
         # Basic Packages.
         nativeBuildInputsBasic = with pkgs; [
+          procps
           findutils
           coreutils
           gnugrep
