@@ -25,8 +25,9 @@ RUN cd /container-setup && \
     git init && git add . && \
     nix profile install --profile /nix/var/nix/profiles/ci \
     --accept-flake-config "./tools/nix#ci.bootstrap" --impure && \
-    nix store optimise
+    nix store gc && nix store optimise
 ENV PATH="/nix/var/nix/profiles/ci/bin:$PATH"
 
 RUN bash -eu -o pipefail -c \
-    ". /container-setup/tools/general.sh && ci_setup_github_workarounds"
+    ". /container-setup/tools/general.sh && ci_setup_github_workarounds" && \
+    nix store gc && nix store optimise
