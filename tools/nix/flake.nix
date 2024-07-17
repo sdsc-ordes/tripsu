@@ -61,7 +61,7 @@
         # Set the rust toolchain from the `rust-toolchain.toml`.
         rustToolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile ../../rust-toolchain.toml;
 
-        # Things needed only at compile-time.
+        # Basic Packages.
         nativeBuildInputsBasic = with pkgs; [
           findutils
           coreutils
@@ -69,17 +69,17 @@
           curl
           git
           jq
+          just
 
           # Nix binary cache.
           cachix
         ];
 
-        # Things needed only at compile-time.
+        # Packges for development.
         nativeBuildInputsDev = with pkgs; [
           # General build tooling.
           rustToolchain
           cargo-watch
-          just
 
           # Uploading images.
           skopeo
@@ -92,8 +92,6 @@
         buildInputs = [];
 
         # The package of this CLI tool.
-        # The global version for tripsu.
-        # This is gonna get tooled later.
         tripsu = (import ./pkgs/tripsu.nix) {
           inherit rootDir rustToolchain pkgs lib;
         };
@@ -121,7 +119,7 @@
           };
 
           packages = {
-            # The package of this repo.
+            # Package of this repo.
             tripsu = tripsu;
 
             # Packages for CI.
