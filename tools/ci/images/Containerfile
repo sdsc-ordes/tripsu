@@ -20,6 +20,7 @@ COPY ./tools /container-setup/tools
 # Install Nix.
 RUN bash -c ". /container-setup/tools/general.sh && ci_setup_nix"
 ENV PATH="/root/.nix-profile/bin:$PATH"
+ENV USER=root
 
 # Create user (does not work because action/checkout uses `root` in its own container ... 💩)
 # Leave this code here for a reference:

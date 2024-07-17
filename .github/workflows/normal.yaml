@@ -46,6 +46,7 @@ jobs:
       - name: Setup Git & Cache Nix
         run: |
           ./tools/ci/setup-git.sh
+          ./tools/ci/setup-nix-cache.sh
           just cachix-watch \
               just nix-develop-ci echo "Built cache."
 
@@ -71,6 +72,7 @@ jobs:
       - name: Setup Git & Cache Nix
         run: |
           ./tools/ci/setup-git.sh
+          ./tools/ci/setup-nix-cache.sh
           just cachix-watch \
               just nix-develop-ci echo "Built cache."
 
@@ -96,6 +98,7 @@ jobs:
       - name: Setup Git & Cache Nix
         run: |
           ./tools/ci/setup-git.sh
+          ./tools/ci/setup-nix-cache.sh
           just cachix-watch \
               just nix-develop-ci echo "Built cache."
 
@@ -120,6 +123,7 @@ jobs:
       - name: Setup Git & Cache Nix
         run: |
           ./tools/ci/setup-git.sh
+          ./tools/ci/setup-nix-cache.sh
           just cachix-watch \
               just nix-develop-ci echo "Built cache."
 
@@ -147,6 +151,7 @@ jobs:
       - name: Setup Git
         run: |
           ./tools/ci/setup-git.sh
+          ./tools/ci/setup-nix-cache.sh
           just cachix-watch \
               just nix-develop-ci echo "Built cache."
 
@@ -183,6 +188,7 @@ jobs:
       - name: Setup Git & Nix Cache
         run: |
           ./tools/ci/setup-git.sh
+          ./tools/ci/setup-nix-cache.sh
            just cachix-watch \
               just nix-develop-ci echo "Built cache."
 
