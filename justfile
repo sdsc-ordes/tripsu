@@ -21,11 +21,12 @@ nix-develop-ci *args:
     #!/usr/bin/env bash
     set -eu
     cd "{{root_dir}}"
-    cachix watch-exec "${CACHIX_CACHE_NAME}" -- \
+    cachix watch-exec "$CACHIX_CACHE_NAME" -- \
         nix develop ./tools/nix#ci --command "$@"
 
-# export CACHIX_CACHE_NAME=tripsu
-# export CACHIX_AUTH_TOKEN=eyJhbGciOiJIUzI1NiJ9.eyJqdGkiOiJmZWVmN2E0NC03MjA2LTRkZmUtYmM3Zi0xY2NmNGQwNDNkOTUiLCJzY29wZXMiOiJjYWNoZSJ9.D8RYa9n96OxZBDm0ZufATi_X932-m5EfHfKT-2Pk_Oc
+    # The above cachix watch-exec apparently does not work.
+    # qzqafi1jk15qnsxgy1j8frkjpggwdj5g
+    nix path-info --all | cachix push "$CACHIX_CACHE_NAME"
 
 ## Standard stuff =============================================================
 # Format the code.
