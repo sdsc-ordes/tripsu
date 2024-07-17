@@ -38,6 +38,8 @@ jobs:
       CACHIX_CACHE_NAME: ${{ secrets.CACHIX_CACHE_NAME }}
       CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
     steps:
+      - name: Define Proper 'HOME' Path
+        run: echo "HOME=/root" >> $GITHUB_ENV
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -64,6 +66,8 @@ jobs:
       CACHIX_CACHE_NAME: ${{ secrets.CACHIX_CACHE_NAME }}
       CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
     steps:
+      - name: Define Proper 'HOME' Path
+        run: echo "HOME=/root" >> $GITHUB_ENV
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -90,6 +94,8 @@ jobs:
       CACHIX_CACHE_NAME: ${{ secrets.CACHIX_CACHE_NAME }}
       CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
     steps:
+      - name: Define Proper 'HOME' Path
+        run: echo "HOME=/root" >> $GITHUB_ENV
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -115,6 +121,8 @@ jobs:
       CACHIX_CACHE_NAME: ${{ secrets.CACHIX_CACHE_NAME }}
       CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
     steps:
+      - name: Define Proper 'HOME' Path
+        run: echo "HOME=/root" >> $GITHUB_ENV
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -143,6 +151,8 @@ jobs:
     if: ${{ ! inputs.is_release }}
 
     steps:
+      - name: Define Proper 'HOME' Path
+        run: echo "HOME=/root" >> $GITHUB_ENV
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -180,6 +190,8 @@ jobs:
       packages: write
 
     steps:
+      - name: Define Proper 'HOME' Path
+        run: echo "HOME=/root" >> $GITHUB_ENV
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -227,6 +239,8 @@ jobs:
       contents: write
 
     steps:
+      - name: Define Proper 'HOME' Path
+        run: echo "HOME=/root" >> $GITHUB_ENV
       - name: Checkout
         uses: actions/checkout@v4
         with:
