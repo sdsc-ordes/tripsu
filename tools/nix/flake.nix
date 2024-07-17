@@ -65,6 +65,7 @@
         nativeBuildInputsBasic = with pkgs; [
           findutils
           coreutils
+          gnugrep
           bash
           curl
           git

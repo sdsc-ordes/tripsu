@@ -70,7 +70,7 @@ function ci_setup_nix() {
     # local install_prefix="${1:-/usr/sbin}"
 
     # print_info "Install Nix."
-
+    #
     # apk add curl git bash xz shadow sudo -t deps
     # sh <(curl -L https://nixos.org/nix/install) --no-daemon --yes || die "Could not install Nix."
     # cp /root/.nix-profile/bin/* "$install_prefix/"
@@ -82,6 +82,18 @@ function ci_setup_nix() {
         echo "experimental-features = nix-command flakes"
         echo "accept-flake-config = true"
     } >~/.config/nix/nix.conf
+
+}
+
+function ci_setup_github_workarounds() {
+    # Hacks to get the mounted nodejs by github actions work as its dynamically linked
+    # https://github.com/actions/checkout/issues/334#issuecomment-716068696
+    nix build --no-link 'nixpkgs#stdenv.cc.cc.lib' 'nixpkgs#glibc'
+    local ld_path link
+    ld_path="$(nix path-info 'nixpkgs#stdenv.cc.cc.lib')/lib"
+    echo "LD_LIBRARY_PATH=$ld_path" >"/container-setup/.ld-library-path"
+    link="$(nix path-info 'nixpkgs#glibc' --recursive | grep glibc | grep -v bin)/lib64" || die "Could not get link."
+    ln -s "$link" /lib64
 }
 
 function ci_setup_cachix {
