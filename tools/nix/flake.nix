@@ -66,7 +66,6 @@
           findutils
           coreutils
           bash
-          zsh
           curl
           git
           jq
@@ -107,11 +106,6 @@
               nativeBuildInputs = nativeBuildInputsBasic ++ nativeBuildInputsDev;
             };
 
-            # CI bootstrapping environment: add some basic utils to the Nix store for CI.
-            ci-bootstrap = mkShell {
-              nativeBuildInputs = nativeBuildInputsBasic;
-            };
-
             # CI environment.
             ci = mkShell {
               inherit buildInputs;
@@ -127,8 +121,20 @@
           };
 
           packages = {
+            # The package of this repo.
             tripsu = tripsu;
 
+            # Packages for CI.
+            ci = {
+              # CI bootstrapping packages:
+              # add some basic utils to the Nix store for CI.
+              bootstrap = pkgs.buildEnv {
+                name = "ci-bootstrap";
+                paths = nativeBuildInputsBasic;
+              };
+            };
+
+            # Container Images.
             images = {
               ci = (import ./images/ci.nix) {
                 inherit pkgs;

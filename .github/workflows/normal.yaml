@@ -33,7 +33,7 @@ jobs:
     if: ${{ ! inputs.is_release }}
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.0.0
+      image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.1.0
     env:
       CACHIX_CACHE_NAME: ${{ secrets.CACHIX_CACHE_NAME }}
       CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
@@ -58,7 +58,7 @@ jobs:
     if: ${{ ! inputs.is_release }}
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.0.0
+      image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.1.0
     env:
       CACHIX_CACHE_NAME: ${{ secrets.CACHIX_CACHE_NAME }}
       CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
@@ -83,7 +83,7 @@ jobs:
     if: ${{ ! inputs.is_release }}
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.0.0
+      image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.1.0
     env:
       CACHIX_CACHE_NAME: ${{ secrets.CACHIX_CACHE_NAME }}
       CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
@@ -107,7 +107,7 @@ jobs:
     environment: ci
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.0.0
+      image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.1.0
     env:
       CACHIX_CACHE_NAME: ${{ secrets.CACHIX_CACHE_NAME }}
       CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
@@ -131,7 +131,7 @@ jobs:
     environment: ci
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.0.0
+      image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.1.0
     env:
       CACHIX_CACHE_NAME: ${{ secrets.CACHIX_CACHE_NAME }}
       CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
@@ -164,7 +164,7 @@ jobs:
     needs: [test]
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.0.0
+      image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.1.0
     env:
       CI_IS_RELEASE: true
       CACHIX_CACHE_NAME: ${{ secrets.CACHIX_CACHE_NAME }}
