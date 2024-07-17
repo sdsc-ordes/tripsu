@@ -85,6 +85,8 @@ function ci_setup_cachix {
     local name="$1"
     local token="$2"
 
+    print_info "Setup cachix binary cache."
+
     [ -n "$name" ] ||
         die "Cachix cache name is empty."
     [ -n "$token" ] ||
@@ -92,6 +94,8 @@ function ci_setup_cachix {
 
     cachix authtoken --stdin < <(echo "$token")
     cachix use "$name" || die "Could not setup cachix cache '$name'."
+
+    print_info "Cachix binary cache set up."
 }
 
 # Run the container manager which is defined.
@@ -101,10 +105,10 @@ function ci_container_mgr() {
     local mgr="${CONTAINER_MGR:-podman}"
 
     if command -v "$mgr" &>/dev/null; then
-        echo -e "Running '$mgr' as:\n$(printf "'%s' " "podman" "$@")" >&2
+        print_info "Running '$mgr' as:\n$(printf "'%s' " "podman" "$@")" >&2
         "$mgr" "$@"
     else
-        echo -e "Running docker as:\n$(printf "'%s' " "docker" "$@")"
+        print_info "Running docker as:\n$(printf "'%s' " "docker" "$@")"
         docker "$@"
     fi
 }
