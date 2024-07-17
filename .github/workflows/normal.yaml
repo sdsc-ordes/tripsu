@@ -29,10 +29,14 @@ on:
 
 jobs:
   format:
+    environment: ci
     if: ${{ ! inputs.is_release }}
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.0.0
+    env:
+      CACHIX_CACHE_NAME: ${{ secrets.CACHIX_CACHE_NAME }}
+      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -50,10 +54,14 @@ jobs:
           just nix-develop-ci just format
 
   lint:
+    environment: ci
     if: ${{ ! inputs.is_release }}
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.0.0
+    env:
+      CACHIX_CACHE_NAME: ${{ secrets.CACHIX_CACHE_NAME }}
+      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -71,10 +79,14 @@ jobs:
           just nix-develop-ci just lint
 
   build:
+    environment: ci
     if: ${{ ! inputs.is_release }}
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.0.0
+    env:
+      CACHIX_CACHE_NAME: ${{ secrets.CACHIX_CACHE_NAME }}
+      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -92,9 +104,13 @@ jobs:
           just nix-develop-ci just build
 
   test:
+    environment: ci
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.0.0
+    env:
+      CACHIX_CACHE_NAME: ${{ secrets.CACHIX_CACHE_NAME }}
+      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -112,9 +128,13 @@ jobs:
           just nix-develop-ci just test
 
   package:
+    environment: ci
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.0.0
+    env:
+      CACHIX_CACHE_NAME: ${{ secrets.CACHIX_CACHE_NAME }}
+      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
     if: ${{ ! inputs.is_release }}
 
@@ -139,19 +159,20 @@ jobs:
           just nix-develop-ci just nix-image
 
   deploy:
+    environment: ci
     if: ${{ inputs.is_release }}
     needs: [test]
-
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.0.0
+    env:
+      CI_IS_RELEASE: true
+      CACHIX_CACHE_NAME: ${{ secrets.CACHIX_CACHE_NAME }}
+      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
     permissions:
       contents: write
       packages: write
-
-    env:
-      CI_IS_RELEASE: true
 
     steps:
       - name: Checkout
