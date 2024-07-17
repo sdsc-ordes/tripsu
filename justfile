@@ -21,8 +21,8 @@ nix-develop-ci *args:
     #!/usr/bin/env bash
     set -eu
     cd "{{root_dir}}"
-    cachix watch-exec "$CACHIX_CACHE_NAME" -- \
-        nix develop ./tools/nix#ci --command "$@"
+    cachix watch-store "$CACHIX_CACHE_NAME" &
+    nix develop ./tools/nix#ci --command "$@"
 
 ## Standard stuff =============================================================
 # Format the code.
