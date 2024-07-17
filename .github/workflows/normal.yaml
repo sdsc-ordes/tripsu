@@ -28,6 +28,27 @@ on:
         type: boolean
 
 jobs:
+  cache:
+    environment: ci
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.1.0
+    env:
+      CACHIX_CACHE_NAME: ${{ secrets.CACHIX_CACHE_NAME }}
+      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+    steps:
+      - name: Define Proper 'HOME' Path
+        run: echo "HOME=/root" >> $GITHUB_ENV
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Cache Nix Shell
+        run: |
+          ./tools/ci/setup-git.sh
+          ./tools/ci/setup-nix-cache.sh
+          just cachix-upload-shell
+
   format:
     environment: ci
     if: ${{ ! inputs.is_release }}
@@ -104,7 +125,6 @@ jobs:
           ./tools/ci/setup-git.sh
           ./tools/ci/setup-nix-cache.sh
           just nix-develop-ci echo "Built cache."
-          nix path-info --all | cachix push tripsu
 
       - name: Build
         run: |
@@ -130,7 +150,6 @@ jobs:
         run: |
           ./tools/ci/setup-git.sh
           ./tools/ci/setup-nix-cache.sh
-          just nix-develop-ci echo "Built cache."
 
       - name: Test
         run: |

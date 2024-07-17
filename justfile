@@ -83,6 +83,13 @@ cachix-watch *args:
     set -eu
     cachix watch-exec "${CACHIX_CACHE_NAME}" -- "$@"
 
+cachix-upload-shell:
+    #!/usr/bin/env bash
+    set -eu
+    cd "{{root_dir}}"
+    nix develop --profile "dev-profile" -c true ./tools/nix#ci
+    cachix push ${CACHIX_CACHE_NAME}" dev-profile
+
 # Upload all images for CI (local machine)
 upload-ci-images:
     cd "{{root_dir}}" && \
