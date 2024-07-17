@@ -67,11 +67,14 @@ function ci_setup_git() {
 }
 
 function ci_setup_nix() {
-    print_info "Install Nix."
+    # local install_prefix="${1:-/usr/sbin}"
 
-    apk add curl git bash xz shadow -t deps
-    sh <(curl -L https://nixos.org/nix/install) --daemon --yes
-    apk del deps
+    # print_info "Install Nix."
+
+    # apk add curl git bash xz shadow sudo -t deps
+    # sh <(curl -L https://nixos.org/nix/install) --no-daemon --yes || die "Could not install Nix."
+    # cp /root/.nix-profile/bin/* "$install_prefix/"
+    # apk del deps
 
     print_info "Enable Features for Nix."
     mkdir -p ~/.config/nix

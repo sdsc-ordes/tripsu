@@ -68,6 +68,7 @@
           bash
           curl
           git
+          git-lfs
           jq
           just
 
