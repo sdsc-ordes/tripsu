@@ -111,6 +111,8 @@ function ci_setup_cachix {
     cachix use --mode user-nixconf "$name" ||
         die "Could not setup cachix cache '$name'."
 
+    pkill nix-daemon
+
     print_info "Cachix binary cache set up."
 }
 
