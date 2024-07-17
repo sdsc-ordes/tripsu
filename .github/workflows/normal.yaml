@@ -39,7 +39,6 @@ jobs:
     steps:
       - name: Define Proper 'HOME' Path
         run: echo "HOME=/root" >> $GITHUB_ENV
-
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -115,6 +114,13 @@ jobs:
       - name: Define Proper 'HOME' Path
         run: echo "HOME=/root" >> $GITHUB_ENV
 
+      - name: Apply Workaround for Dynamically Linked NodeJS
+        run: |
+          # Hacks to get the mounted nodejs by github actions work as its dynamically linked
+          # https://github.com/actions/checkout/issues/334#issuecomment-716068696
+          nix build --no-link --max-jobs 2 --cores 0 'nixpkgs#stdenv.cc.cc.lib' 'nixpkgs#glibc'
+          echo "LD_LIBRARY_PATH=$(nix path-info 'nixpkgs#stdenv.cc.cc.lib')/lib" >> "$GITHUB_ENV"
+          ln -s "$(nix path-info 'nixpkgs#glibc' --recursive | grep glibc | grep -v bin)/lib64" /lib64
       - name: Checkout
         uses: actions/checkout@v4
         with:
