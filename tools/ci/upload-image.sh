@@ -38,11 +38,26 @@ function main() {
         print_info "Read the image from file '$image_path' and " \
             "directly push to registry '$image_name'."
 
+        # Write a auth file for skopeo.
+        local host="${image_name%%/*}"
+        local auth auth_file
+        auth=$(echo "$username:$password" | base64)
+        auth_file=$(
+            cat <<EOF
+        {
+            "auths": [
+                "$host" : {
+                "auth": "$auth"
+                }
+            ]
+        }
+EOF
+        )
+
         skopeo \
             --insecure-policy \
             copy \
-            --dest-username "$(cat <(echo "$username"))" \
-            --dest-password "$(cat <(echo "$password"))" \
+            --dest-authfile <(echo "$auth_file") \
             "docker-archive://$image_path" \
             "docker://$image_name"
 

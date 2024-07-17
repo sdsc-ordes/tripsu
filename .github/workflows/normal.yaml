@@ -42,7 +42,8 @@ jobs:
       - name: Setup Git & Cache Nix
         run: |
           ./tools/ci/setup-git.sh
-          just nix-develop-ci echo "Built cache."
+          just cachix-watch \
+              just nix-develop-ci echo "Built cache."
 
       - name: Format
         run: |
@@ -62,7 +63,8 @@ jobs:
       - name: Setup Git & Cache Nix
         run: |
           ./tools/ci/setup-git.sh
-          just nix-develop-ci echo "Built cache."
+          just cachix-watch \
+              just nix-develop-ci echo "Built cache."
 
       - name: Lint
         run: |
@@ -82,7 +84,8 @@ jobs:
       - name: Setup Git & Cache Nix
         run: |
           ./tools/ci/setup-git.sh
-          just nix-develop-ci echo "Built cache."
+          just cachix-watch \
+              just nix-develop-ci echo "Built cache."
 
       - name: Build
         run: |
@@ -101,7 +104,8 @@ jobs:
       - name: Setup Git & Cache Nix
         run: |
           ./tools/ci/setup-git.sh
-          just nix-develop-ci git --version
+          just cachix-watch \
+              just nix-develop-ci echo "Built cache."
 
       - name: Test
         run: |
@@ -123,7 +127,8 @@ jobs:
       - name: Setup Git
         run: |
           ./tools/ci/setup-git.sh
-           just nix-develop-ci echo "Built cache."
+          just cachix-watch \
+              just nix-develop-ci echo "Built cache."
 
       - name: Build Package (nix)
         run: |
@@ -157,7 +162,8 @@ jobs:
       - name: Setup Git & Nix Cache
         run: |
           ./tools/ci/setup-git.sh
-           just nix-develop-ci echo "Built cache."
+           just cachix-watch \
+              just nix-develop-ci echo "Built cache."
 
       - name: Create Version Tag
         run: |

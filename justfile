@@ -76,6 +76,13 @@ nix-image *args:
     cd "{{root_dir}}" && \
        "./tools/build-image.sh" "$@"
 
+# Run a command over cachix which watches the Nix store.
+[no-cd]
+cachix-watch *args:
+    #!/usr/bin/env bash
+    set -eu
+    cachix watch-exec "${CACHIX_CACHE_NAME}" -- "$@"
+
 # Upload all images for CI (local machine)
 upload-ci-images:
     cd "{{root_dir}}" && \

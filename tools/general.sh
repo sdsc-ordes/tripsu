@@ -82,6 +82,19 @@ function ci_setup_nix() {
     } >~/.config/nix/nix.conf
 }
 
+function ci_setup_cachix {
+    local name="$1"
+    local token="$2"
+
+    [ -n "$name" ] ||
+        die "Cachix cache name is empty."
+    [ -n "$token" ] ||
+        die "Cachix token is empty."
+
+    cachix authtoken --stdin < <(echo "$token")
+    cachix use "$name" || die "Could not setup cachix cache '$name'."
+}
+
 # Run the container manager which is defined.
 # in env. variable `CONTAINER_MGR`
 # (by default `podman` if existing).

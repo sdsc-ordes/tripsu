@@ -70,15 +70,22 @@
           curl
           git
           jq
+
+          # Nix binary cache.
+          cachix
         ];
 
         # Things needed only at compile-time.
         nativeBuildInputsDev = with pkgs; [
+          # General build tooling.
           rustToolchain
           cargo-watch
           just
 
+          # Uploading images.
           skopeo
+
+          # Modifying toml files.
           dasel
         ];
 
@@ -94,11 +101,18 @@
       in
         with pkgs; rec {
           devShells = {
+            # Local development environment.
             default = mkShell {
               inherit buildInputs;
               nativeBuildInputs = nativeBuildInputsBasic ++ nativeBuildInputsDev;
             };
 
+            # CI bootstrapping environment: add some basic utils to the Nix store for CI.
+            ci-bootstrap = mkShell {
+              nativeBuildInputs = nativeBuildInputsBasic;
+            };
+
+            # CI environment.
             ci = mkShell {
               inherit buildInputs;
               nativeBuildInputs = nativeBuildInputsBasic ++ nativeBuildInputsDev;
