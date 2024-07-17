@@ -18,10 +18,11 @@ nix-develop *args:
     nix develop ./tools/nix#default --command "${cmd[@]}"
 
 nix-develop-ci *args:
-    cd "{{root_dir}}" && \
-    cmd=("$@") && \
-    { [ -n "${cmd:-}" ] || cmd=("zsh"); } && \
-    nix develop ./tools/nix#ci --command "${cmd[@]}"
+    #!/usr/bin/env bash
+    set -eu
+    cd "{{root_dir}}"
+    cachix watch-exec "$CACHIX_CACHE_NAME" -- \
+        nix develop ./tools/nix#ci --command "$@"
 
 ## Standard stuff =============================================================
 # Format the code.
@@ -76,19 +77,26 @@ nix-image *args:
     cd "{{root_dir}}" && \
        "./tools/build-image.sh" "$@"
 
-# Run a command over cachix which watches the Nix store.
-[no-cd]
-cachix-watch *args:
-    #!/usr/bin/env bash
-    set -eu
-    cachix watch-exec "${CACHIX_CACHE_NAME}" -- "$@"
 
-cachix-upload-shell:
+# Upload the dev shell to the Nix cache.
+nix-cache-upload-shell:
     #!/usr/bin/env bash
     set -eu
     cd "{{root_dir}}"
-    nix develop --profile "dev-profile" -c true ./tools/nix#ci
-    cachix push ${CACHIX_CACHE_NAME}" dev-profile
+
+    profile=./dev-profile
+    mkdir -p "$profile"
+
+    # Cache development shell.
+    nix develop --profile "$profile/dev" ./tools/nix#ci --command true
+    cachix push "$CACHIX_CACHE_NAME" "$profile/dev"
+    rm -rf "$profile"
+
+    # Cache flake inputs.
+    nix flake archive ./tools/nix --json \
+      | jq -r '.path,(.inputs|to_entries[].value.path)' \
+      | cachix push "$CACHIX_CACHE_NAME"
+
 
 # Upload all images for CI (local machine)
 upload-ci-images:
