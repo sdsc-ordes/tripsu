@@ -24,10 +24,6 @@ nix-develop-ci *args:
     cachix watch-exec "$CACHIX_CACHE_NAME" -- \
         nix develop ./tools/nix#ci --command "$@"
 
-    # The above cachix watch-exec apparently does not work.
-    # qzqafi1jk15qnsxgy1j8frkjpggwdj5g
-    nix path-info --all | cachix push "$CACHIX_CACHE_NAME"
-
 ## Standard stuff =============================================================
 # Format the code.
 format *args:
