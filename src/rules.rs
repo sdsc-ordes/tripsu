@@ -189,11 +189,7 @@ mod tests {
     #[case("hasName", "hasName", true)]
     // Predicate is not in the rules
     #[case("hasName", "hasAge", false)]
-    fn predicate_rule(
-        #[case] node_iri: &str,
-        #[case] rule_type: &str,
-        #[case] expected_o: bool,
-    ) {
+    fn predicate_rule(#[case] node_iri: &str, #[case] rule_type: &str, #[case] expected_o: bool) {
         let predicate = NamedNode {
             iri: node_iri.to_string(),
         };
@@ -208,13 +204,9 @@ mod tests {
 
     #[rstest]
     // Subject predicate in config
-    #[case(
-        "Alice", "hasName", "Person", "hasName", "Alice", "Person", true
-    )]
+    #[case("Alice", "hasName", "Person", "hasName", "Alice", "Person", true)]
     // Subject in config, predicate not
-    #[case(
-        "Alice", "hasName", "Person", "hasAge", "Alice", "Person", false
-    )]
+    #[case("Alice", "hasName", "Person", "hasAge", "Alice", "Person", false)]
     // Subject predicate not in config
     #[case("Alice", "hasName", "Bob", "hasAge", "Alice", "Person", false)]
     // Subject not in type index
