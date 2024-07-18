@@ -3,7 +3,7 @@ use rio_turtle::TurtleError;
 use std::{
     collections::HashMap,
     io::{BufRead, Write},
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 use crate::{
@@ -37,9 +37,11 @@ fn process_triple(
     rules_config: &Rules,
     node_to_type: &HashMap<String, String>,
     out: &mut impl Write,
+    key: &Vec<u8>,
 ) {
     let mask = match_rules(triple.clone(), rules_config, node_to_type);
-    let hasher = DefaultHasher::default();
+    let mut hasher = DefaultHasher::default();
+    hasher.key = key.clone();
 
     let r = || -> std::io::Result<()> {
         out.write_all(hasher.pseudo_triple(&triple, mask).to_string().as_bytes())?;
@@ -69,13 +71,14 @@ fn load_type_map(input: impl BufRead) -> HashMap<String, String> {
     return node_to_type;
 }
 
-pub fn pseudonymize_graph(_: &Logger, input: &Path, config: &Path, output: &Path, index: &Path) {
+pub fn pseudonymize_graph(_: &Logger, input: &Path, config: &Path, output: &Path, index: &Path, key: &Option<PathBuf>) {
     let buf_input = io::get_reader(input);
     let buf_index = io::get_reader(index);
     let mut buf_output = io::get_writer(output);
 
     let rules_config = io::parse_config(config);
     let node_to_type: HashMap<String, String> = load_type_map(buf_index);
+    let hash_key = io::get_key(key);
 
     let mut triples = io::parse_ntriples(buf_input);
 
@@ -83,7 +86,7 @@ pub fn pseudonymize_graph(_: &Logger, input: &Path, config: &Path, output: &Path
     while !triples.is_end() {
         triples
             .parse_step(&mut |t: TripleView| {
-                process_triple(t.into(), &rules_config, &node_to_type, &mut buf_output);
+                process_triple(t.into(), &rules_config, &node_to_type, &mut buf_output, &hash_key);
                 Result::<(), TurtleError>::Ok(())
             })
             .inspect_err(|e| {
@@ -110,6 +113,7 @@ mod tests {
         let config_path = Path::new("tests/data/config.yaml");
         let output_path = dir.path().join("output.nt");
         let type_map_path = Path::new("tests/data/type_map.nt");
+        let key = None;
 
         pseudonymize_graph(
             &logger,
@@ -117,6 +121,7 @@ mod tests {
             &config_path,
             &output_path,
             &type_map_path,
+            &key,
         );
     }
 }
