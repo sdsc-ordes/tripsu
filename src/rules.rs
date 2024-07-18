@@ -186,13 +186,12 @@ mod tests {
 
     #[rstest]
     // Predicate is in the rules
-    #[case("hasName", "hasName", false, true)]
+    #[case("hasName", "hasName", true)]
     // Predicate is not in the rules
-    #[case("hasName", "hasAge", false, false)]
+    #[case("hasName", "hasAge", false)]
     fn predicate_rule(
         #[case] node_iri: &str,
         #[case] rule_type: &str,
-        #[case] expected_s: bool,
         #[case] expected_o: bool,
     ) {
         let predicate = NamedNode {
@@ -203,23 +202,23 @@ mod tests {
 
         mask = match_predicate_rule(&predicate, mask, &rules);
 
-        assert_eq!(mask.is_set(&TripleMask::SUBJECT), expected_s);
+        assert!(!mask.is_set(&TripleMask::SUBJECT));
         assert_eq!(mask.is_set(&TripleMask::OBJECT), expected_o);
     }
 
     #[rstest]
     // Subject predicate in config
     #[case(
-        "Alice", "hasName", "Person", "hasName", "Alice", "Person", false, true
+        "Alice", "hasName", "Person", "hasName", "Alice", "Person", true
     )]
     // Subject in config, predicate not
     #[case(
-        "Alice", "hasName", "Person", "hasAge", "Alice", "Person", false, false
+        "Alice", "hasName", "Person", "hasAge", "Alice", "Person", false
     )]
     // Subject predicate not in config
-    #[case("Alice", "hasName", "Bob", "hasAge", "Alice", "Person", false, false)]
+    #[case("Alice", "hasName", "Bob", "hasAge", "Alice", "Person", false)]
     // Subject not in type index
-    #[case("Alice", "hasName", "Bob", "hasAge", "Bob", "Person", false, false)]
+    #[case("Alice", "hasName", "Bob", "hasAge", "Bob", "Person", false)]
     fn subject_predicate_rule(
         #[case] subject_iri: &str,
         #[case] predicate_iri: &str,
@@ -227,7 +226,6 @@ mod tests {
         #[case] rule_predicate: &str,
         #[case] index_subject: &str,
         #[case] index_object: &str,
-        #[case] expected_s: bool,
         #[case] expected_o: bool,
     ) {
         let subject = Subject::NamedNode(NamedNode {
@@ -245,7 +243,7 @@ mod tests {
 
         mask = match_subject_predicate_rule(&subject, &predicate, mask, &type_map, &rules);
 
-        assert_eq!(mask.is_set(&TripleMask::SUBJECT), expected_s);
+        assert!(!mask.is_set(&TripleMask::SUBJECT));
         assert_eq!(mask.is_set(&TripleMask::OBJECT), expected_o);
     }
 }
