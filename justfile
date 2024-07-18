@@ -15,14 +15,14 @@ nix-develop *args:
     cd "{{root_dir}}" && \
     cmd=("$@") && \
     { [ -n "${cmd:-}" ] || cmd=("zsh"); } && \
-    nix develop ./tools/nix#default --command "${cmd[@]}"
+    nix develop ./tools/nix#default --accept-flake-config --command "${cmd[@]}"
 
 nix-develop-ci *args:
     #!/usr/bin/env bash
     set -eu
     cd "{{root_dir}}"
     cachix watch-exec "$CACHIX_CACHE_NAME" -- \
-        nix develop ./tools/nix#ci --command "$@"
+        nix develop ./tools/nix#ci --accept-flake-config --command "$@"
 
 ## Standard stuff =============================================================
 # Format the code.
