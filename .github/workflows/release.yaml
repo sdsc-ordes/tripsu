@@ -18,5 +18,6 @@ on:
 jobs:
   release:
     uses: ./.github/workflows/normal.yaml
+    secrets: inherit
     with:
       is_release: true

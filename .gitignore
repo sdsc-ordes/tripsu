@@ -7,3 +7,5 @@
 # Nix
 result
 build
+
+.env

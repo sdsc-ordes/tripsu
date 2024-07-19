@@ -28,102 +28,170 @@ on:
         type: boolean
 
 jobs:
-  format:
-    if: ${{ ! inputs.is_release }}
+  cache:
+    environment: ci
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.0.0
+      image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.1.0
+    env:
+      CACHIX_CACHE_NAME: ${{ secrets.CACHIX_CACHE_NAME }}
+      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
     steps:
+      - name: Github Actions Workarounds
+        run: |
+          echo "HOME=/root" >> $GITHUB_ENV
+          cat /container-setup/.ld-library-path >> "$GITHUB_ENV"
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Setup Git & Cache Nix
+      - name: Cache Nix Shell
         run: |
           ./tools/ci/setup-git.sh
-          just nix-develop-ci echo "Built cache."
+          ./tools/ci/setup-nix-cache.sh
+          just nix-cache-upload-shell
 
+  format:
+    environment: ci
+    if: ${{ ! inputs.is_release }}
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.1.0
+    env:
+      CACHIX_CACHE_NAME: ${{ secrets.CACHIX_CACHE_NAME }}
+      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+    steps:
+      - name: Github Actions Workarounds
+        run: |
+          echo "HOME=/root" >> $GITHUB_ENV
+          cat /container-setup/.ld-library-path >> "$GITHUB_ENV"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Setup
+        run: |
+          ./tools/ci/setup-git.sh
+          ./tools/ci/setup-nix-cache.sh
       - name: Format
         run: |
           just nix-develop-ci just format
 
   lint:
+    environment: ci
     if: ${{ ! inputs.is_release }}
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.0.0
+      image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.1.0
+    env:
+      CACHIX_CACHE_NAME: ${{ secrets.CACHIX_CACHE_NAME }}
+      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
     steps:
+      - name: Github Actions Workarounds
+        run: |
+          echo "HOME=/root" >> $GITHUB_ENV
+          cat /container-setup/.ld-library-path >> "$GITHUB_ENV"
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Setup Git & Cache Nix
+      - name: Setup
         run: |
           ./tools/ci/setup-git.sh
-          just nix-develop-ci echo "Built cache."
+          ./tools/ci/setup-nix-cache.sh
 
       - name: Lint
         run: |
           just nix-develop-ci just lint
 
   build:
+    environment: ci
     if: ${{ ! inputs.is_release }}
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.0.0
+      image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.1.0
+    env:
+      CACHIX_CACHE_NAME: ${{ secrets.CACHIX_CACHE_NAME }}
+      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
     steps:
+      - name: Github Actions Workarounds
+        run: |
+          echo "HOME=/root" >> $GITHUB_ENV
+          cat /container-setup/.ld-library-path >> "$GITHUB_ENV"
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Setup Git & Cache Nix
+      - name: Setup
         run: |
           ./tools/ci/setup-git.sh
-          just nix-develop-ci echo "Built cache."
+          ./tools/ci/setup-nix-cache.sh
 
       - name: Build
         run: |
           just nix-develop-ci just build
 
   test:
+    environment: ci
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.0.0
+      image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.1.0
+    env:
+      CACHIX_CACHE_NAME: ${{ secrets.CACHIX_CACHE_NAME }}
+      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
     steps:
+      - name: Github Actions Workarounds
+        run: |
+          echo "HOME=/root" >> $GITHUB_ENV
+          cat /container-setup/.ld-library-path >> "$GITHUB_ENV"
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Setup Git & Cache Nix
+      - name: Setup
         run: |
           ./tools/ci/setup-git.sh
-          just nix-develop-ci git --version
+          ./tools/ci/setup-nix-cache.sh
 
       - name: Test
         run: |
           just nix-develop-ci just test
 
   package:
+    environment: ci
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.0.0
+      image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.1.0
+    env:
+      CACHIX_CACHE_NAME: ${{ secrets.CACHIX_CACHE_NAME }}
+      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
     if: ${{ ! inputs.is_release }}
 
     steps:
+      - name: Github Actions Workarounds
+        run: |
+          echo "HOME=/root" >> $GITHUB_ENV
+          cat /container-setup/.ld-library-path >> "$GITHUB_ENV"
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Setup Git
+      - name: Setup
         run: |
           ./tools/ci/setup-git.sh
-           just nix-develop-ci echo "Built cache."
+          ./tools/ci/setup-nix-cache.sh
 
       - name: Build Package (nix)
         run: |
@@ -134,30 +202,36 @@ jobs:
           just nix-develop-ci just nix-image
 
   deploy:
+    environment: ci
     if: ${{ inputs.is_release }}
     needs: [test]
-
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.0.0
+      image: ghcr.io/sdsc-ordes/tripsu:ci-nix-1.1.0
+    env:
+      CI_IS_RELEASE: true
+      CACHIX_CACHE_NAME: ${{ secrets.CACHIX_CACHE_NAME }}
+      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
     permissions:
       contents: write
       packages: write
 
-    env:
-      CI_IS_RELEASE: true
-
     steps:
+      - name: Github Actions Workarounds
+        run: |
+          echo "HOME=/root" >> $GITHUB_ENV
+          cat /container-setup/.ld-library-path >> "$GITHUB_ENV"
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Setup Git & Nix Cache
+      - name: Cache Dev Shell
         run: |
           ./tools/ci/setup-git.sh
-           just nix-develop-ci echo "Built cache."
+          ./tools/ci/setup-nix-cache.sh
 
       - name: Create Version Tag
         run: |
@@ -194,6 +268,9 @@ jobs:
       contents: write
 
     steps:
+      - name: Define Proper 'HOME' Path
+        run: echo "HOME=/root" >> $GITHUB_ENV
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
