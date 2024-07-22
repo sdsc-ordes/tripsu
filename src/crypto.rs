@@ -43,7 +43,7 @@ pub trait Pseudonymize {
     // private methods? Blanket implementations
     fn pseudo_named_node(&self, t: &NamedNode) -> NamedNode {
         // We check for the last fragment or path separator in the IRI
-        let prefix_end = t.iri.rfind(|c: char| (c == '/') || (c == '#')).unwrap();
+        let prefix_end = t.iri.rfind(['#', '/']).unwrap();
         let prefix = &t.iri[0..=prefix_end];
         let crypted = self.pseudo(t.iri.as_bytes()).to_string();
         return NamedNode {
@@ -124,6 +124,6 @@ impl Blake3Hasher {
 
 impl Pseudonymize for Blake3Hasher {
     fn pseudo(&self, data: &[u8]) -> String {
-        return blake3::keyed_hash(&self.key, &data).to_string();
+        return blake3::keyed_hash(&self.key, data).to_string();
     }
 }
