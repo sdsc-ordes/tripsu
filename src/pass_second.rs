@@ -37,11 +37,9 @@ fn process_triple(
     rules_config: &Rules,
     node_to_type: &HashMap<String, String>,
     out: &mut impl Write,
-    key: &Vec<u8>,
+    hasher: &dyn Pseudonymize,
 ) {
     let mask = match_rules(triple.clone(), rules_config, node_to_type);
-    let mut hasher = DefaultHasher::default();
-    hasher.key = key.clone();
 
     let r = || -> std::io::Result<()> {
         out.write_all(hasher.pseudo_triple(&triple, mask).to_string().as_bytes())?;
