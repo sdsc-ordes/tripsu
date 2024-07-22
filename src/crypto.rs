@@ -1,5 +1,12 @@
 use super::model::Entity;
 use crate::{model::TripleMask, rdf_types::*};
+use rand::Rng;
+
+// generate a cryptographic key of predetermined length
+pub(crate) fn generate_key(size: usize) -> Vec<u8> {
+    let mut rng = rand::thread_rng();
+    return (0..size).map(|_| rng.gen::<u8>()).collect();
+}
 
 pub trait Pseudonymize {
     // Pseudonymize parts of a triple set by its mask
