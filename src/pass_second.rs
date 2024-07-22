@@ -7,7 +7,7 @@ use std::{
 };
 
 use crate::{
-    crypto::{DefaultHasher, Pseudonymize},
+    crypto::{Algorithm, Hasher, Pseudonymize},
     io,
     log::Logger,
     model::TripleMask,
@@ -69,14 +69,21 @@ fn load_type_map(input: impl BufRead) -> HashMap<String, String> {
     return node_to_type;
 }
 
-pub fn pseudonymize_graph(_: &Logger, input: &Path, config: &Path, output: &Path, index: &Path, key: &Option<PathBuf>) {
+pub fn pseudonymize_graph(_: &Logger, input: &Path, config: &Path, output: &Path, index: &Path, secret: &Option<PathBuf>) {
     let buf_input = io::get_reader(input);
     let buf_index = io::get_reader(index);
     let mut buf_output = io::get_writer(output);
 
     let rules_config = io::parse_config(config);
     let node_to_type: HashMap<String, String> = load_type_map(buf_index);
-    let hash_key = io::get_key(key);
+
+    let hasher = if let Some(secret) = secret {
+        let key = io::get_key(secret);
+        Hasher::new(Algorithm::Blake3, Some(key))
+    } else {
+        Hasher::default()
+    };
+    let pseudonymizer = hasher.get_pseudonymizer();
 
     let mut triples = io::parse_ntriples(buf_input);
 
@@ -84,7 +91,7 @@ pub fn pseudonymize_graph(_: &Logger, input: &Path, config: &Path, output: &Path
     while !triples.is_end() {
         triples
             .parse_step(&mut |t: TripleView| {
-                process_triple(t.into(), &rules_config, &node_to_type, &mut buf_output, &hash_key);
+                process_triple(t.into(), &rules_config, &node_to_type, &mut buf_output, pseudonymizer);
                 Result::<(), TurtleError>::Ok(())
             })
             .inspect_err(|e| {
