@@ -7,7 +7,7 @@ use std::{
 };
 
 use crate::{
-    crypto::{Algorithm, Hasher, Pseudonymize},
+    crypto::{get_pseudonymizer, Pseudonymize},
     io,
     log::Logger,
     model::TripleMask,
@@ -75,7 +75,7 @@ pub fn pseudonymize_graph(
     config: &Path,
     output: &Path,
     index: &Path,
-    secret: &Option<PathBuf>,
+    key_path: &Option<PathBuf>,
 ) {
     let buf_input = io::get_reader(input);
     let buf_index = io::get_reader(index);
@@ -84,13 +84,8 @@ pub fn pseudonymize_graph(
     let rules_config = io::parse_config(config);
     let node_to_type: HashMap<String, String> = load_type_map(buf_index);
 
-    let hasher = if let Some(secret) = secret {
-        let key = io::get_key(secret);
-        Hasher::new(Algorithm::Blake3, Some(key))
-    } else {
-        Hasher::default()
-    };
-    let pseudonymizer = hasher.get_pseudonymizer();
+    let key = key_path.as_ref().map(io::get_key);
+    let pseudonymizer = get_pseudonymizer(None, key);
 
     let mut triples = io::parse_ntriples(buf_input);
 
@@ -103,7 +98,7 @@ pub fn pseudonymize_graph(
                     &rules_config,
                     &node_to_type,
                     &mut buf_output,
-                    pseudonymizer,
+                    &pseudonymizer,
                 );
                 Result::<(), TurtleError>::Ok(())
             })

@@ -78,29 +78,14 @@ impl Default for Algorithm {
     }
 }
 
-pub enum Hasher {
-    Blake3(Blake3Hasher),
-}
+pub fn get_pseudonymizer(algo: Option<Algorithm>, key: Option<Vec<u8>>) -> impl Pseudonymize {
+    let secret = key.unwrap_or(generate_key(32));
 
-impl Hasher {
-    pub fn new(algo: Algorithm, key: Option<Vec<u8>>) -> Self {
-        let salt = key.unwrap_or(generate_key(32));
-        match algo {
-            Algorithm::Blake3 => Hasher::Blake3(Blake3Hasher::new(salt)),
-        }
-    }
+    let pseudonymizer = match algo.unwrap_or_default() {
+        Algorithm::Blake3 => Blake3Hasher::new(secret),
+    };
 
-    pub fn get_pseudonymizer(&self) -> &dyn Pseudonymize {
-        match self {
-            Hasher::Blake3(h) => h,
-        }
-    }
-}
-
-impl Default for Hasher {
-    fn default() -> Self {
-        Hasher::new(Algorithm::Blake3, None)
-    }
+    return pseudonymizer
 }
 
 // BLAKE3 hasher
