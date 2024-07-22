@@ -2,7 +2,7 @@ use crate::rules::Rules;
 use rio_turtle::NTriplesParser;
 use std::{
     fs::File,
-    io::{self, Read, stdin, stdout, BufRead, BufReader, BufWriter},
+    io::{self, stdin, stdout, BufRead, BufReader, BufWriter, Read},
     path::{Path, PathBuf},
 };
 
@@ -52,15 +52,14 @@ pub fn parse_config(path: &Path) -> Rules {
 
 // Read cryptographic key from input file.
 pub fn get_key(path: &PathBuf) -> Vec<u8> {
-        let mut key_file = File::open(path).expect("Error opening key file.");
-        let mut key = Vec::new();
-        key_file
-            .read_to_end(&mut key)
-            .expect("Error reading key file.");
+    let mut key_file = File::open(path).expect("Error opening key file.");
+    let mut key = Vec::new();
+    key_file
+        .read_to_end(&mut key)
+        .expect("Error reading key file.");
 
-        return key
+    return key;
 }
-    
 
 #[cfg(test)]
 mod tests {

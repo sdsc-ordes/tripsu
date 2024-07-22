@@ -91,7 +91,14 @@ fn main() {
         }
         Subcommands::Pseudo(args) => {
             info!(log, "Args: {:?}", args);
-            pseudonymize_graph(&log, &args.input, &args.config, &args.output, &args.index, &args.secret)
+            pseudonymize_graph(
+                &log,
+                &args.input,
+                &args.config,
+                &args.output,
+                &args.index,
+                &args.secret,
+            )
         }
     }
 }

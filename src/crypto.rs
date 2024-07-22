@@ -9,9 +9,8 @@ pub(crate) fn generate_key(size: usize) -> Vec<u8> {
 }
 
 pub trait Pseudonymize {
-    
     // implementers need to define raw bytes pseudonymization
-    fn pseudo(&self, input: &[u8]) -> String; 
+    fn pseudo(&self, input: &[u8]) -> String;
 
     // Pseudonymize parts of a triple set by its mask
     fn pseudo_triple(&self, triple: &Triple, mask: TripleMask) -> Triple {
@@ -31,7 +30,7 @@ pub trait Pseudonymize {
             subject: Subject::from(pseudo_subject.clone()),
             predicate: triple.predicate.clone(),
             object: Term::from(pseudo_object.clone()),
-        }
+        };
     }
 
     fn pseudo_entity(&self, e: &Entity) -> Entity {
@@ -44,12 +43,12 @@ pub trait Pseudonymize {
     // private methods? Blanket implementations
     fn pseudo_named_node(&self, t: &NamedNode) -> NamedNode {
         // We check for the last fragment or path separator in the IRI
-        let prefix_end= t.iri.rfind(|c: char| (c == '/') || (c == '#')).unwrap();
+        let prefix_end = t.iri.rfind(|c: char| (c == '/') || (c == '#')).unwrap();
         let prefix = &t.iri[0..=prefix_end];
         let crypted = self.pseudo(t.iri.as_bytes()).to_string();
         return NamedNode {
             iri: format!("{prefix}{crypted}"),
-        }
+        };
     }
 
     fn pseudo_literal(&self, l: &Literal) -> Literal {
@@ -59,9 +58,7 @@ pub trait Pseudonymize {
             Literal::Simple { value } => value,
         };
         let crypted = self.pseudo(value.as_bytes());
-        return Literal::Simple {
-            value: crypted,
-        };
+        return Literal::Simple { value: crypted };
     }
 
     fn pseudo_blank_node(&self, u: &BlankNode) -> BlankNode {
@@ -77,7 +74,7 @@ pub enum Algorithm {
 
 impl Default for Algorithm {
     fn default() -> Self {
-        return Algorithm::Blake3
+        return Algorithm::Blake3;
     }
 }
 
@@ -85,10 +82,9 @@ pub enum Hasher {
     Blake3(Blake3Hasher),
 }
 
-
 impl Hasher {
     pub fn new(algo: Algorithm, key: Option<Vec<u8>>) -> Self {
-        let salt= key.unwrap_or(generate_key(32));
+        let salt = key.unwrap_or(generate_key(32));
         match algo {
             Algorithm::Blake3 => Hasher::Blake3(Blake3Hasher::new(salt)),
         }
@@ -107,8 +103,6 @@ impl Default for Hasher {
     }
 }
 
-
-
 // BLAKE3 hasher
 
 pub struct Blake3Hasher {
@@ -117,7 +111,6 @@ pub struct Blake3Hasher {
 
 impl Blake3Hasher {
     pub fn new(key: Vec<u8>) -> Self {
-
         let mut new_key = [0u8; 32];
         if key.len() == 32 {
             new_key.copy_from_slice(&key[..32]);
@@ -127,12 +120,10 @@ impl Blake3Hasher {
 
         return Self { key: new_key };
     }
-
 }
 
 impl Pseudonymize for Blake3Hasher {
-    fn pseudo(&self, data: &[u8]) -> String{
+    fn pseudo(&self, data: &[u8]) -> String {
         return blake3::keyed_hash(&self.key, &data).to_string();
     }
-
 }
