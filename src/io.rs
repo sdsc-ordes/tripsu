@@ -6,7 +6,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use rand::Rng;
 use io_enum::{BufRead, Read, Write};
 
 #[derive(Read, BufRead)]
@@ -51,22 +50,15 @@ pub fn parse_config(path: &Path) -> Rules {
     };
 }
 
-// Read the key file.
-pub fn get_key(path: &Option<PathBuf>) -> Vec<u8> {
-    return match path {
-        Some(key) => {
-            let mut key_file = File::open(key).expect("Error opening key file.");
-            let mut key = Vec::new();
-            key_file
-                .read_to_end(&mut key)
-                .expect("Error reading key file.");
-            key
-        }
-        None => {
-            let random_bytes = rand::thread_rng().gen::<[u8; 32]>().to_vec();
-            random_bytes
-        }
-    };
+// Read cryptographic key from input file.
+pub fn get_key(path: &PathBuf) -> Vec<u8> {
+        let mut key_file = File::open(path).expect("Error opening key file.");
+        let mut key = Vec::new();
+        key_file
+            .read_to_end(&mut key)
+            .expect("Error reading key file.");
+
+        return key
 }
     
 
