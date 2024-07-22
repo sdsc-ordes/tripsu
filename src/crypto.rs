@@ -68,3 +68,71 @@ pub trait Pseudonymize {
         return u.clone();
     }
 }
+
+// Helper enums to instantiate various hashers
+
+pub enum Algorithm {
+    Blake3,
+}
+
+impl Default for Algorithm {
+    fn default() -> Self {
+        return Algorithm::Blake3
+    }
+}
+
+pub enum Hasher {
+    Blake3(Blake3Hasher),
+}
+
+
+impl Hasher {
+    pub fn new(algo: Algorithm, key: Option<Vec<u8>>) -> Self {
+        let salt= key.unwrap_or(generate_key(32));
+        match algo {
+            Algorithm::Blake3 => Hasher::Blake3(Blake3Hasher::new(salt)),
+        }
+    }
+
+    pub fn get_pseudonymizer(&self) -> &dyn Pseudonymize {
+        match self {
+            Hasher::Blake3(h) => h,
+        }
+    }
+}
+
+impl Default for Hasher {
+    fn default() -> Self {
+        Hasher::new(Algorithm::Blake3, None)
+    }
+}
+
+
+
+// BLAKE3 hasher
+
+pub struct Blake3Hasher {
+    pub key: [u8; 32],
+}
+
+impl Blake3Hasher {
+    pub fn new(key: Vec<u8>) -> Self {
+
+        let mut new_key = [0u8; 32];
+        if key.len() == 32 {
+            new_key.copy_from_slice(&key[..32]);
+        } else {
+            panic!("Key must be 32 bytes long");
+        }
+
+        return Self { key: new_key };
+    }
+
+}
+
+impl Pseudonymize for Blake3Hasher {
+    fn pseudo(&self, data: &[u8]) -> String{
+        return blake3::keyed_hash(&self.key, &data).to_string();
+    }
+
+}
