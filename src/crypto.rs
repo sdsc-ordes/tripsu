@@ -85,7 +85,7 @@ pub fn get_pseudonymizer(algo: Option<Algorithm>, key: Option<Vec<u8>>) -> impl 
         Algorithm::Blake3 => Blake3Hasher::new(secret),
     };
 
-    return pseudonymizer
+    return pseudonymizer;
 }
 
 // BLAKE3 hasher
