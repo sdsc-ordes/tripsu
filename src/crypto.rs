@@ -80,9 +80,9 @@ impl Default for Algorithm {
     }
 }
 
-pub fn get_pseudonymizer(algo: Option<Algorithm>, key: Option<Vec<u8>>) -> impl Pseudonymize {
+pub fn get_pseudonymizer(algo: Option<Algorithm>, secret: Option<Vec<u8>>) -> impl Pseudonymize {
     let pseudonymizer = match algo.unwrap_or_default() {
-        Algorithm::Blake3 => Blake3Hasher::new(key),
+        Algorithm::Blake3 => Blake3Hasher::new(secret),
     };
 
     return pseudonymizer;
