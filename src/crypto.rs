@@ -100,7 +100,7 @@ impl Blake3Hasher {
 
         secret.as_ref().inspect(
             |s| if s.len() < MIN_SECRET_SIZE {
-                panic!("Secret must be at least 32 bytes long");
+                panic!("Secret must be at least {MIN_SECRET_SIZE} bytes long");
         });
 
         // blake3 key must be exactly 32 bytes long
