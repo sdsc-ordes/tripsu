@@ -7,7 +7,7 @@ use std::{
 };
 
 use crate::{
-    crypto::{get_pseudonymizer, Pseudonymize},
+    crypto::{new_pseudonymizer, Pseudonymize},
     io,
     log::Logger,
     model::TripleMask,
@@ -85,7 +85,7 @@ pub fn pseudonymize_graph(
     let node_to_type: HashMap<String, String> = load_type_map(buf_index);
 
     let secret = secret_path.as_ref().map(io::read_bytes);
-    let pseudonymizer = get_pseudonymizer(None, secret);
+    let pseudonymizer = new_pseudonymizer(None, secret);
 
     let mut triples = io::parse_ntriples(buf_input);
 
