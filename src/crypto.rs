@@ -2,8 +2,6 @@ use super::model::Entity;
 use crate::{model::TripleMask, rdf_types::*};
 use rand::Rng;
 
-const MIN_SECRET_SIZE: usize = 32;
-
 // generate a cryptographic key of predetermined length
 pub(crate) fn generate_key(size: usize) -> Vec<u8> {
     let mut rng = rand::thread_rng();
@@ -80,7 +78,7 @@ impl Default for Algorithm {
     }
 }
 
-pub fn get_pseudonymizer(algo: Option<Algorithm>, secret: Option<Vec<u8>>) -> impl Pseudonymize {
+pub fn new_pseudonymizer(algo: Option<Algorithm>, secret: Option<Vec<u8>>) -> impl Pseudonymize {
     let pseudonymizer = match algo.unwrap_or_default() {
         Algorithm::Blake3 => Blake3Hasher::new(secret),
     };
@@ -97,8 +95,8 @@ pub struct Blake3Hasher {
 impl Blake3Hasher {
     pub fn new(secret: Option<Vec<u8>>) -> Self {
         secret.as_ref().inspect(|s| {
-            if s.len() < MIN_SECRET_SIZE {
-                panic!("Secret must be at least {MIN_SECRET_SIZE} bytes long");
+            if s.len() < 32 {
+                panic!("Secret must be at least 32 bytes long");
             }
         });
 
@@ -117,5 +115,46 @@ impl Blake3Hasher {
 impl Pseudonymize for Blake3Hasher {
     fn pseudo(&self, data: &[u8]) -> String {
         return blake3::keyed_hash(&self.key, data).to_string();
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn is_valid_hex(input: &str) -> bool {
+        input.chars().all(|c| c.is_digit(16))
+    }
+
+    // Test the generation of a cryptographic key
+    #[test]
+    fn test_generate_key() {
+        let key = generate_key(42);
+        assert_eq!(key.len(), 42);
+    }
+
+    #[test]
+    fn test_pseudo_named_node() {
+        let hasher = Blake3Hasher::new(None);
+        let named_node = NamedNode {
+            iri: "http://example.com/abc".to_string(),
+        };
+        let pseudo = hasher.pseudo_named_node(&named_node).iri;
+        // test that output is prefix + hash
+        assert_eq!(pseudo.starts_with("http://example.com/"), true);
+        assert!(is_valid_hex(pseudo.strip_prefix("http://example.com/").unwrap()));
+            
+    }
+
+    #[test]
+    fn test_pseudo_literal() {
+        let hasher = Blake3Hasher::new(None);
+        let literal = Literal::Simple {
+            value: "example".to_string(),
+        };
+        let pseudo_literal = hasher.pseudo_literal(&literal);
+        // test that output is quoted hash
+        assert!(is_valid_hex(&pseudo_literal.to_string().trim_matches('"')));
     }
 }
