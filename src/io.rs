@@ -50,15 +50,15 @@ pub fn parse_config(path: &Path) -> Rules {
     };
 }
 
-// Read cryptographic key from input file.
-pub fn get_key(path: &PathBuf) -> Vec<u8> {
-    let mut key_file = File::open(path).expect("Error opening key file.");
-    let mut key = Vec::new();
-    key_file
-        .read_to_end(&mut key)
+// Read all file content as bytes.
+pub fn read_bytes(path: &PathBuf) -> Vec<u8> {
+    let mut file = File::open(path).expect("Error opening key file.");
+    let mut data = Vec::new();
+    file
+        .read_to_end(&mut data)
         .expect("Error reading key file.");
 
-    return key;
+    return data;
 }
 
 #[cfg(test)]
