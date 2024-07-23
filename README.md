@@ -120,14 +120,12 @@ echo "The quick brown fox jumps over the lazy dog" > secret.txt
 tripsu pseudo -s secret.txt -x index.nt -c rules.yaml input.nt > output.nt
 ```
 
-> [!TIP]
-> For each subcommand, you can use `--help` to see all options.
-
 In both subcommands, the input defaults to stdin and the output to stdout,
 allowing to pipe both up- and downstream `tripsu` (see next section).
 
-For more information about use-cases and configuration, see the
-[tutorial](docs/tutorial.md).
+> [!TIP]
+> Each subcommand supports the `--help` option to show all options.
+> For more information about use-cases and configuration, see the [tutorial](docs/tutorial.md).
 
 ## Development
 
