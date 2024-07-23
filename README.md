@@ -106,7 +106,7 @@ Indexing only requires an RDF file as input:
 tripsu index input.nt > index.nt
 ```
 
-Pseudonomyzation requires an RDF file, index and config as input:
+Pseudonymization requires an RDF file, index and config as input:
 
 ```shell
 tripsu pseudo --index index.nt --config rules.yaml input.nt > output.nt
