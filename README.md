@@ -112,13 +112,7 @@ Pseudonymization requires an RDF file, index and config as input:
 tripsu pseudo --index index.nt --config rules.yaml input.nt > output.nt
 ```
 
->[!NOTE]
-> By default, pseudonymization uses a random seed. To make the process deterministic, you may provide a secret.
-
-```shell
-echo "The quick brown fox jumps over the lazy dog" > secret.txt
-tripsu pseudo -s secret.txt -x index.nt -c rules.yaml input.nt > output.nt
-```
+By default, pseudonymization uses a random key. To make the process deterministic, you may provide a file containing a fixed key with `--secret`.
 
 In both subcommands, the input defaults to stdin and the output to stdout,
 allowing to pipe both up- and downstream `tripsu` (see next section).

@@ -61,8 +61,8 @@ struct PseudoArgs {
     #[arg(short, long, default_value = "-")]
     output: PathBuf,
 
-    /// File containing the key used to generate pseudonyms.
-    /// Defaults to a random key.
+    /// File containing the secret used to generate pseudonyms.
+    /// Default is to use a random key.
     #[arg(short, long, default_value=None)]
     secret: Option<PathBuf>,
 }
