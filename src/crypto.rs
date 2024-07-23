@@ -2,6 +2,8 @@ use super::model::Entity;
 use crate::{model::TripleMask, rdf_types::*};
 use rand::Rng;
 
+const MIN_SECRET_SIZE: usize = 32;
+
 // generate a cryptographic key of predetermined length
 pub(crate) fn generate_key(size: usize) -> Vec<u8> {
     let mut rng = rand::thread_rng();
@@ -79,10 +81,9 @@ impl Default for Algorithm {
 }
 
 pub fn get_pseudonymizer(algo: Option<Algorithm>, key: Option<Vec<u8>>) -> impl Pseudonymize {
-    let secret = key.unwrap_or(generate_key(32));
 
     let pseudonymizer = match algo.unwrap_or_default() {
-        Algorithm::Blake3 => Blake3Hasher::new(secret),
+        Algorithm::Blake3 => Blake3Hasher::new(key),
     };
 
     return pseudonymizer;
@@ -95,15 +96,22 @@ pub struct Blake3Hasher {
 }
 
 impl Blake3Hasher {
-    pub fn new(key: Vec<u8>) -> Self {
-        let mut new_key = [0u8; 32];
-        if key.len() == 32 {
-            new_key.copy_from_slice(&key[..32]);
-        } else {
-            panic!("Key must be 32 bytes long");
-        }
+    pub fn new(secret: Option<Vec<u8>>) -> Self {
 
-        return Self { key: new_key };
+        secret.as_ref().inspect(
+            |s| if s.len() < MIN_SECRET_SIZE {
+                panic!("Secret must be at least 32 bytes long");
+        });
+
+        // blake3 key must be exactly 32 bytes long
+        let mut key = [0u8; 32];
+        let key_vec = match secret {
+            Some(s) => blake3::hash(&s).as_bytes()[..32].to_vec(),
+            None => generate_key(32),
+        };
+        key.copy_from_slice(&key_vec[..32]);
+
+        return Self { key };
     }
 }
 
