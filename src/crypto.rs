@@ -2,17 +2,21 @@ use super::model::Entity;
 use crate::{model::TripleMask, rdf_types::*};
 use rand::Rng;
 
-// generate a cryptographic key of predetermined length
+/// Generate a cryptographic key of predetermined length
 pub(crate) fn generate_key(size: usize) -> Vec<u8> {
     let mut rng = rand::thread_rng();
     return (0..size).map(|_| rng.gen::<u8>()).collect();
 }
 
+/// Provides a generic interface for pseudonymization of RDF data
+/// Implementers only define raw bytes pseudonymization, while
+/// higher-level methods are provided.
 pub trait Pseudonymize {
-    // implementers need to define raw bytes pseudonymization
+
+    /// Pseudonymize a byte array
     fn pseudo(&self, input: &[u8]) -> String;
 
-    // Pseudonymize parts of a triple set by its mask
+    /// Pseudonymize parts of a triple set by its mask
     fn pseudo_triple(&self, triple: &Triple, mask: TripleMask) -> Triple {
         let pseudo_subject = if mask.is_set(&TripleMask::SUBJECT) {
             &self.pseudo_entity(&triple.subject.clone().into())
@@ -33,6 +37,7 @@ pub trait Pseudonymize {
         };
     }
 
+    /// Pseudonymize an entity (component of a triple) based on its type.
     fn pseudo_entity(&self, e: &Entity) -> Entity {
         match e {
             Entity::Literal(l) => Entity::Literal(self.pseudo_literal(l)),
@@ -40,7 +45,8 @@ pub trait Pseudonymize {
             Entity::BlankNode(b) => Entity::BlankNode(self.pseudo_blank_node(b)),
         }
     }
-    // private methods? Blanket implementations
+    
+    /// Pseudonymize a named node, preserving its prefix.
     fn pseudo_named_node(&self, t: &NamedNode) -> NamedNode {
         // We check for the last fragment or path separator in the IRI
         let prefix_end = t.iri.rfind(['#', '/']).unwrap();
@@ -51,6 +57,7 @@ pub trait Pseudonymize {
         };
     }
 
+    /// Pseudonymize a literal resulting in a simple literal (hash string).
     fn pseudo_literal(&self, l: &Literal) -> Literal {
         let value = match l {
             Literal::Typed { value, datatype: _ } => value,
@@ -61,13 +68,14 @@ pub trait Pseudonymize {
         return Literal::Simple { value: crypted };
     }
 
+    /// Leave blank nodes unchanged.
     fn pseudo_blank_node(&self, u: &BlankNode) -> BlankNode {
         return u.clone();
     }
 }
 
-// Helper enums to instantiate various hashers
 
+/// Available pseudonymization algorithms.
 pub enum Algorithm {
     Blake3,
 }
@@ -78,6 +86,8 @@ impl Default for Algorithm {
     }
 }
 
+/// Factory method for creating a pseudonymizer
+/// based on the selected algorithm and secret key.
 pub fn new_pseudonymizer(algo: Option<Algorithm>, secret: Option<Vec<u8>>) -> impl Pseudonymize {
     let pseudonymizer = match algo.unwrap_or_default() {
         Algorithm::Blake3 => Blake3Hasher::new(secret),
@@ -86,8 +96,8 @@ pub fn new_pseudonymizer(algo: Option<Algorithm>, secret: Option<Vec<u8>>) -> im
     return pseudonymizer;
 }
 
-// BLAKE3 hasher
 
+/// BLAKE3-based pseudonymizer.
 pub struct Blake3Hasher {
     pub key: [u8; 32],
 }
