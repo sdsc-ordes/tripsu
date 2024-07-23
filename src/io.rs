@@ -54,8 +54,7 @@ pub fn parse_config(path: &Path) -> Rules {
 pub fn read_bytes(path: &PathBuf) -> Vec<u8> {
     let mut file = File::open(path).expect("Error opening key file.");
     let mut data = Vec::new();
-    file
-        .read_to_end(&mut data)
+    file.read_to_end(&mut data)
         .expect("Error reading key file.");
 
     return data;

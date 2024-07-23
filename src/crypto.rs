@@ -81,7 +81,6 @@ impl Default for Algorithm {
 }
 
 pub fn get_pseudonymizer(algo: Option<Algorithm>, key: Option<Vec<u8>>) -> impl Pseudonymize {
-
     let pseudonymizer = match algo.unwrap_or_default() {
         Algorithm::Blake3 => Blake3Hasher::new(key),
     };
@@ -97,10 +96,10 @@ pub struct Blake3Hasher {
 
 impl Blake3Hasher {
     pub fn new(secret: Option<Vec<u8>>) -> Self {
-
-        secret.as_ref().inspect(
-            |s| if s.len() < MIN_SECRET_SIZE {
+        secret.as_ref().inspect(|s| {
+            if s.len() < MIN_SECRET_SIZE {
                 panic!("Secret must be at least {MIN_SECRET_SIZE} bytes long");
+            }
         });
 
         // blake3 key must be exactly 32 bytes long
