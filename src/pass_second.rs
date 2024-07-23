@@ -75,7 +75,7 @@ pub fn pseudonymize_graph(
     config: &Path,
     output: &Path,
     index: &Path,
-    key_path: &Option<PathBuf>,
+    secret_path: &Option<PathBuf>,
 ) {
     let buf_input = io::get_reader(input);
     let buf_index = io::get_reader(index);
@@ -84,8 +84,8 @@ pub fn pseudonymize_graph(
     let rules_config = io::parse_config(config);
     let node_to_type: HashMap<String, String> = load_type_map(buf_index);
 
-    let key = key_path.as_ref().map(io::get_key);
-    let pseudonymizer = get_pseudonymizer(None, key);
+    let secret = secret_path.as_ref().map(io::read_bytes);
+    let pseudonymizer = get_pseudonymizer(None, secret);
 
     let mut triples = io::parse_ntriples(buf_input);
 
