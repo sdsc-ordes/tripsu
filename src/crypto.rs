@@ -12,7 +12,6 @@ pub(crate) fn generate_key(size: usize) -> Vec<u8> {
 /// Implementers only define raw bytes pseudonymization, while
 /// higher-level methods are provided.
 pub trait Pseudonymize {
-
     /// Pseudonymize a byte array
     fn pseudo(&self, input: &[u8]) -> String;
 
@@ -45,7 +44,7 @@ pub trait Pseudonymize {
             Entity::BlankNode(b) => Entity::BlankNode(self.pseudo_blank_node(b)),
         }
     }
-    
+
     /// Pseudonymize a named node, preserving its prefix.
     fn pseudo_named_node(&self, t: &NamedNode) -> NamedNode {
         // We check for the last fragment or path separator in the IRI
@@ -74,7 +73,6 @@ pub trait Pseudonymize {
     }
 }
 
-
 /// Available pseudonymization algorithms.
 pub enum Algorithm {
     Blake3,
@@ -95,7 +93,6 @@ pub fn new_pseudonymizer(algo: Option<Algorithm>, secret: Option<Vec<u8>>) -> im
 
     return pseudonymizer;
 }
-
 
 /// BLAKE3-based pseudonymizer.
 pub struct Blake3Hasher {
@@ -128,7 +125,6 @@ impl Pseudonymize for Blake3Hasher {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -153,8 +149,9 @@ mod tests {
         let pseudo = hasher.pseudo_named_node(&named_node).iri;
         // test that output is prefix + hash
         assert_eq!(pseudo.starts_with("http://example.com/"), true);
-        assert!(is_valid_hex(pseudo.strip_prefix("http://example.com/").unwrap()));
-            
+        assert!(is_valid_hex(
+            pseudo.strip_prefix("http://example.com/").unwrap()
+        ));
     }
 
     #[test]
