@@ -144,7 +144,7 @@ mod tests {
     fn test_pseudo_named_node() {
         let hasher = Blake3Hasher::new(None);
         let named_node = NamedNode {
-            iri: "http://example.com/abc".to_string(),
+            iri: "http://example.com/tripsu".to_string(),
         };
         let pseudo = hasher.pseudo_named_node(&named_node).iri;
         // test that output is prefix + hash
