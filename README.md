@@ -106,20 +106,20 @@ Indexing only requires an RDF file as input:
 tripsu index input.nt > index.nt
 ```
 
-Pseudonomyzation requires an RDF file, index and config as input:
+Pseudonymization requires an RDF file, index and config as input:
 
 ```shell
 tripsu pseudo --index index.nt --config rules.yaml input.nt > output.nt
 ```
 
-> [!TIP]
-> For each subcommand, you can use `--help` to see all options.
+By default, pseudonymization uses a random key. To make the process deterministic, you may provide a file containing a fixed key with `--secret`.
 
 In both subcommands, the input defaults to stdin and the output to stdout,
 allowing to pipe both up- and downstream `tripsu` (see next section).
 
-For more information about use-cases and configuration, see the
-[tutorial](docs/tutorial.md).
+> [!TIP]
+> Each subcommand supports the `--help` option to show all options.
+> For more information about use-cases and configuration, see the [tutorial](docs/tutorial.md).
 
 ## Development
 

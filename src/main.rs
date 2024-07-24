@@ -60,6 +60,11 @@ struct PseudoArgs {
     /// Defaults to `stdout`.
     #[arg(short, long, default_value = "-")]
     output: PathBuf,
+
+    /// File containing the secret used to generate pseudonyms.
+    /// Default is to use a random key.
+    #[arg(short, long, default_value=None)]
+    secret: Option<PathBuf>,
 }
 
 #[derive(Subcommand, Debug)]
@@ -86,7 +91,14 @@ fn main() {
         }
         Subcommands::Pseudo(args) => {
             info!(log, "Args: {:?}", args);
-            pseudonymize_graph(&log, &args.input, &args.config, &args.output, &args.index)
+            pseudonymize_graph(
+                &log,
+                &args.input,
+                &args.config,
+                &args.output,
+                &args.index,
+                &args.secret,
+            )
         }
     }
 }

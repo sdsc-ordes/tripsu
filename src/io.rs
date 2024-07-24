@@ -2,8 +2,8 @@ use crate::rules::Rules;
 use rio_turtle::NTriplesParser;
 use std::{
     fs::File,
-    io::{self, stdin, stdout, BufRead, BufReader, BufWriter},
-    path::Path,
+    io::{self, stdin, stdout, BufRead, BufReader, BufWriter, Read},
+    path::{Path, PathBuf},
 };
 
 use io_enum::{BufRead, Read, Write};
@@ -48,6 +48,16 @@ pub fn parse_config(path: &Path) -> Rules {
         Ok(file) => serde_yml::from_reader(file).expect("Error parsing config file."),
         Err(e) => panic!("Cannot open file '{:?}': '{}'.", path, e),
     };
+}
+
+// Read all file content as bytes.
+pub fn read_bytes(path: &PathBuf) -> Vec<u8> {
+    let mut file = File::open(path).expect("Error opening key file.");
+    let mut data = Vec::new();
+    file.read_to_end(&mut data)
+        .expect("Error reading key file.");
+
+    return data;
 }
 
 #[cfg(test)]
