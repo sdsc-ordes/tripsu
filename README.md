@@ -71,7 +71,8 @@ cargo build --release
 ./target/release/tripsu --help
 ```
 
-> [!TIP] Check the [development section](#development) for other setups (Nix
+> [!TIP]
+> Check the [development section](#development) for other setups (Nix
 > etc.).
 
 ## Usage
@@ -118,7 +119,8 @@ deterministic, you may provide a file containing a fixed key with `--secret`.
 In both subcommands, the input defaults to stdin and the output to stdout,
 allowing to pipe both up- and downstream `tripsu` (see next section).
 
-> [!TIP] Each subcommand supports the `--help` option to show all options. For
+> [!TIP]
+> Each subcommand supports the `--help` option to show all options. For
 > more information about use-cases and configuration, see the
 > [tutorial](docs/tutorial.md).
 
