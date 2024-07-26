@@ -139,7 +139,7 @@ mod tests {
         let output_path = dir.path().join("output.nt");
         let type_map_path = Path::new("tests/data/type_map.nt");
         let key = None;
-
+        let invert_match = false;
         pseudonymize_graph(
             &logger,
             &input_path,
@@ -147,6 +147,7 @@ mod tests {
             &output_path,
             &type_map_path,
             &key,
+            &invert_match,
         );
     }
 }
