@@ -24,6 +24,11 @@ impl TripleMask {
     pub fn is_set(&self, other: &TripleMask) -> bool {
         return (*other - *self).bits() == 0;
     }
+
+    // Inverts the bits of the TripleMask
+    pub fn invert(&self) -> TripleMask {
+        return !*self;
+    }
 }
 
 #[cfg(test)]

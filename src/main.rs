@@ -51,6 +51,9 @@ struct PseudoArgs {
     #[arg(default_value = "-")]
     input: PathBuf,
 
+    #[arg(short = 'v', long)]
+    invert_match: bool,
+
     /// The config file descriptor to use for defining RDF elements to pseudonymize.
     /// Format: yaml
     #[arg(short, long)]
@@ -98,6 +101,7 @@ fn main() {
                 &args.output,
                 &args.index,
                 &args.secret,
+                &args.invert_match,
             )
         }
     }
