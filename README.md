@@ -71,6 +71,7 @@ cargo build --release
 ./target/release/tripsu --help
 ```
 
+<!-- prettier-ignore -->
 > [!TIP]
 > Check the [development section](#development) for other setups (Nix
 > etc.).
@@ -119,6 +120,7 @@ deterministic, you may provide a file containing a fixed key with `--secret`.
 In both subcommands, the input defaults to stdin and the output to stdout,
 allowing to pipe both up- and downstream `tripsu` (see next section).
 
+<!-- prettier-ignore -->
 > [!TIP]
 > Each subcommand supports the `--help` option to show all options. For
 > more information about use-cases and configuration, see the
