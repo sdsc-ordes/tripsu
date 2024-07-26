@@ -51,6 +51,8 @@ struct PseudoArgs {
     #[arg(default_value = "-")]
     input: PathBuf,
 
+    // Invert the matching rules for the subject and the object.
+    // Disabled by default
     #[arg(short = 'v', long)]
     invert_match: bool,
 
