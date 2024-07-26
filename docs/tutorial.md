@@ -2,18 +2,18 @@
 
 ## Motivation
 
-The main use-case for `tripsu` is to be used in combination with other CLI tools up-
-and downstream via piping. Let us assume that we're running a SPARQL query on a
-large graph and we would like to pseudonymize some of the triples. This is how
-the flow should look like:
+The main use-case for `tripsu` is to be used in combination with other CLI tools
+up- and downstream via piping. Let us assume that we're running a SPARQL query
+on a large graph and we would like to pseudonymize some of the triples. This is
+how the flow should look like:
 
 ```shell
 curl <sparql-query> | tripsu pseudo -x index.nt -c config.yaml > pseudo.nt
 ```
 
-For this flow to stream data instead of loading everything into memory, note that 
-an indexing step is required to allow the pseudonymization to run on a stream without
-loading the graph into memory.
+For this flow to stream data instead of loading everything into memory, note
+that an indexing step is required to allow the pseudonymization to run on a
+stream without loading the graph into memory.
 
 ## Example
 

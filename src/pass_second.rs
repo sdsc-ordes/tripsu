@@ -18,7 +18,12 @@ use crate::{
     },
 };
 
-fn match_rules(triple: Triple, rules: &Rules, type_map: &HashMap<String, String>) -> TripleMask {
+fn match_rules(
+    triple: Triple,
+    rules: &Rules,
+    type_map: &HashMap<String, String>,
+    invert_match: &bool,
+) -> TripleMask {
     // Check each field of the triple against the rules
     let mut mask = TripleMask::default();
 
@@ -26,6 +31,10 @@ fn match_rules(triple: Triple, rules: &Rules, type_map: &HashMap<String, String>
     mask = match_type_rule_object(&triple.object, mask, type_map, rules);
     mask = match_predicate_rule(&triple.predicate, mask, rules);
     mask = match_subject_predicate_rule(&triple.subject, &triple.predicate, mask, type_map, rules);
+
+    if *invert_match {
+        mask = mask.invert();
+    }
 
     return mask;
 }
@@ -38,8 +47,9 @@ fn process_triple(
     node_to_type: &HashMap<String, String>,
     out: &mut impl Write,
     hasher: &dyn Pseudonymize,
+    invert_match: &bool,
 ) {
-    let mask = match_rules(triple.clone(), rules_config, node_to_type);
+    let mask = match_rules(triple.clone(), rules_config, node_to_type, invert_match);
 
     let r = || -> std::io::Result<()> {
         out.write_all(hasher.pseudo_triple(&triple, mask).to_string().as_bytes())?;
@@ -76,6 +86,7 @@ pub fn pseudonymize_graph(
     output: &Path,
     index: &Path,
     secret_path: &Option<PathBuf>,
+    invert_match: &bool,
 ) {
     let buf_input = io::get_reader(input);
     let buf_index = io::get_reader(index);
@@ -99,6 +110,7 @@ pub fn pseudonymize_graph(
                     &node_to_type,
                     &mut buf_output,
                     &pseudonymizer,
+                    invert_match,
                 );
                 Result::<(), TurtleError>::Ok(())
             })
@@ -127,7 +139,7 @@ mod tests {
         let output_path = dir.path().join("output.nt");
         let type_map_path = Path::new("tests/data/type_map.nt");
         let key = None;
-
+        let invert_match = false;
         pseudonymize_graph(
             &logger,
             &input_path,
@@ -135,6 +147,7 @@ mod tests {
             &output_path,
             &type_map_path,
             &key,
+            &invert_match,
         );
     }
 }
