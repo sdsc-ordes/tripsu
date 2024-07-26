@@ -50,4 +50,17 @@ mod tests {
         assert!(mask_s.is_set(&TripleMask::SUBJECT));
         assert!(mask_so.is_set(&TripleMask::SUBJECT));
     }
+
+    #[test]
+    // Test the invert method of TripleMask
+    fn test_triplemask_invert() {
+        let mask_empty = TripleMask::default();
+        let mask_so = TripleMask::SUBJECT | TripleMask::OBJECT;
+
+        assert!(mask_empty.invert().is_set(&TripleMask::SUBJECT));
+        assert!(mask_empty.invert().is_set(&TripleMask::OBJECT));
+
+        assert!(!mask_so.invert().is_set(&TripleMask::SUBJECT));
+        assert!(!mask_so.invert().is_set(&TripleMask::OBJECT));
+    }
 }
