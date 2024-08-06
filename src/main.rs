@@ -3,16 +3,16 @@ mod crypto;
 mod io;
 mod log;
 mod model;
-mod pass_first;
-mod pass_second;
+mod index;
+mod pseudo;
 mod rdf_types;
 mod rules;
 
 // Define the imports.
 use crate::{
     log::{create_logger, info},
-    pass_first::create_type_map,
-    pass_second::pseudonymize_graph,
+    index::create_type_map,
+    pseudo::pseudonymize_graph,
 };
 
 use clap::{Args, Parser, Subcommand};
