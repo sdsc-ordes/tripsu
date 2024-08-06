@@ -29,7 +29,6 @@ pub struct Rules {
     pub subjects: SubjectRules,
 
     pub objects: ObjectRules,
-
 }
 
 /// Check all parts of the triple against rules.
@@ -38,10 +37,8 @@ pub fn match_rules(
     rules: &Rules,
     type_map: &HashMap<String, String>,
 ) -> TripleMask {
-
-    let mut mask = 
-        match_subject_rules(triple, rules, type_map)
-        | match_object_rules(triple, rules, type_map);
+    let mut mask =
+        match_subject_rules(triple, rules, type_map) | match_object_rules(triple, rules, type_map);
 
     if rules.invert {
         mask = mask.invert();
@@ -57,27 +54,23 @@ pub fn match_subject_rules(
     type_map: &HashMap<String, String>,
 ) -> TripleMask {
     let pseudo_subject = match &triple.subject {
-        Subject::NamedNode(n) => {
-            match_type(&n.iri, rules, type_map)
-        },
+        Subject::NamedNode(n) => match_type(&n.iri, rules, type_map),
         _ => false,
     };
     let pseudo_object = match &triple.object {
-        Term::NamedNode(n) => {
-            match_type(&n.iri, rules, type_map)
-        },
+        Term::NamedNode(n) => match_type(&n.iri, rules, type_map),
         _ => false,
     };
 
     let mut mask = TripleMask::default();
     if pseudo_subject {
-        mask |=  TripleMask::SUBJECT;
+        mask |= TripleMask::SUBJECT;
     };
     if pseudo_object {
         mask |= TripleMask::OBJECT;
     };
 
-    return mask
+    return mask;
 }
 
 /// Checks triple against object rules
@@ -93,7 +86,7 @@ pub fn match_object_rules(
             } else {
                 match_type_predicate(&n.iri, &triple.predicate.iri, type_map, rules)
             }
-        },
+        }
         _ => false,
     };
 
@@ -103,7 +96,7 @@ pub fn match_object_rules(
         TripleMask::default()
     };
 
-    return mask
+    return mask;
 }
 
 /// Check if the type of input instance URI is in the rules.
@@ -126,27 +119,23 @@ fn match_type_predicate(
     type_map: &HashMap<String, String>,
     rules: &Rules,
 ) -> bool {
-
     let subject_type = match type_map.get(subject) {
         None => return false,
-        Some(v) => v
+        Some(v) => v,
     };
     let preds = rules.objects.on_type_predicate.get(subject_type);
     if preds.is_none() || !preds.unwrap().contains(predicate) {
-        return false
+        return false;
     }
 
-    return true
+    return true;
 }
-
-
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{model::TripleMask, rdf_types::Triple};
     use rstest::rstest;
-use crate::model::TripleMask;
-    use crate::rdf_types::Triple;
 
     fn set_type_rule(t: &str) -> Rules {
         let mut rules = Rules::default();
@@ -185,10 +174,7 @@ use crate::model::TripleMask;
         let mut set = HashSet::new();
         set.insert(p.to_string());
 
-        rules
-            .objects
-            .on_type_predicate
-            .insert(s.to_string(), set);
+        rules.objects.on_type_predicate.insert(s.to_string(), set);
 
         return rules;
     }

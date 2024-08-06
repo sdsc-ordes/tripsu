@@ -11,11 +11,8 @@ use crate::{
     io,
     log::Logger,
     rdf_types::*,
-    rules::{
-        match_rules, Rules,
-    },
+    rules::{match_rules, Rules},
 };
-
 
 // mask and encode input triple
 // NOTE: This will need the type-map to perform masking
