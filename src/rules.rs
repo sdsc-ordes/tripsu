@@ -147,7 +147,6 @@ mod tests {
     const SUBJECT_IRI: &str = "Alice";
     const PREDICATE_IRI: &str = "hasName";
 
-
     // Helper macro to create a HashMap from pairs
     #[macro_export]
     macro_rules! index {
@@ -157,7 +156,7 @@ mod tests {
 
         ($($key:expr => $value:expr),+ $(,)?) => {
             ::std::collections::HashMap::from([
-                $((String::from($key), String::from($value))),* 
+                $((String::from($key), String::from($value))),*
             ])
         };
     }
@@ -165,7 +164,6 @@ mod tests {
     fn parse_rules(yml: &str) -> Rules {
         serde_yml::from_str(yml).unwrap()
     }
-
 
     #[rstest]
     // Subject is in the rules & type index
@@ -179,11 +177,13 @@ mod tests {
         #[case] rule_type: &str,
         #[case] match_expected: bool,
     ) {
-        let rules = parse_rules(&format!("
+        let rules = parse_rules(&format!(
+            "
             subjects:
               of_type:
               - {rule_type}
-        "));
+        "
+        ));
 
         assert_eq!(match_type(SUBJECT_IRI, &rules, &index), match_expected);
     }
@@ -194,11 +194,13 @@ mod tests {
     // Predicate is not in the rules
     #[case("hasAge", false)]
     fn predicate_rule(#[case] rule_predicate: &str, #[case] match_expected: bool) {
-        let rules = parse_rules(&format!("
+        let rules = parse_rules(&format!(
+            "
             objects:
               on_predicate:
               - {rule_predicate}
-        "));
+        "
+        ));
         assert_eq!(match_predicate(PREDICATE_IRI, &rules), match_expected);
     }
 
@@ -217,15 +219,18 @@ mod tests {
         #[case] index: HashMap<String, String>,
         #[case] match_expected: bool,
     ) {
-
-        let rules = parse_rules(&format!("
+        let rules = parse_rules(&format!(
+            "
             objects:
               on_type_predicate:
                 {rule_type}:
                 - {rule_predicate}
-        "));
+        "
+        ));
 
-        assert_eq!(match_type_predicate(SUBJECT_IRI, PREDICATE_IRI, &index, &rules), match_expected);
-
+        assert_eq!(
+            match_type_predicate(SUBJECT_IRI, PREDICATE_IRI, &index, &rules),
+            match_expected
+        );
     }
 }
