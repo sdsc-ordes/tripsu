@@ -85,15 +85,18 @@ pub fn match_object_rules(
     rules: &Rules,
     type_map: &HashMap<String, String>,
 ) -> TripleMask {
+
+    if match_predicate(&triple.predicate.iri, rules) {
+        return TripleMask::OBJECT;
+    }
+
     let pseudo_object = match &triple.subject {
         Subject::NamedNode(n) => {
-            if match_predicate(&triple.predicate.iri, rules) {
-                true
-            } else {
-                match_type_predicate(&n.iri, &triple.predicate.iri, type_map, rules)
-            }
-        }
-        _ => false,
+            match_type_predicate(&n.iri, &triple.predicate.iri, type_map, rules)
+        },
+        Subject::BlankNode(b) => {
+            match_type_predicate(&b.id, &triple.predicate.iri, type_map, rules)
+        },
     };
 
     let mask = if pseudo_object {
