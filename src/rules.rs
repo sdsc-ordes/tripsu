@@ -4,12 +4,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::model::TripleMask;
 
+/// Rules for pseudonymizing subjects
 #[derive(Serialize, Deserialize, Debug, Default)]
 struct SubjectRules {
     // Replace values of nodes with a certain type.
     of_type: HashSet<String>,
 }
 
+/// Rules for pseudonymizing objects
 #[derive(Serialize, Deserialize, Debug, Default)]
 struct ObjectRules {
     // Replace values in matched `predicates`.
@@ -18,6 +20,7 @@ struct ObjectRules {
     on_type_predicate: HashMap<String, HashSet<String>>,
 }
 
+/// Rules for pseudonymizing triples
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Rules {
     // Invert all matchings
@@ -27,6 +30,80 @@ pub struct Rules {
 
     pub objects: ObjectRules,
 
+}
+
+/// Check all parts of the triple against rules.
+pub fn match_rules(
+    triple: &Triple,
+    rules: &Rules,
+    type_map: &HashMap<String, String>,
+) -> TripleMask {
+
+    let mut mask = 
+        match_subject_rules(triple, rules, type_map)
+        | match_object_rules(triple, rules, type_map);
+
+    if rules.invert {
+        mask = mask.invert();
+    }
+
+    return mask;
+}
+
+/// Checks subject and object against subject-rules.
+pub fn match_subject_rules(
+    triple: &Triple,
+    rules: &Rules,
+    type_map: &HashMap<String, String>,
+) -> TripleMask {
+    let pseudo_subject = match &triple.subject {
+        Subject::NamedNode(n) => {
+            match_type(&n.iri, rules, type_map)
+        },
+        _ => false,
+    };
+    let pseudo_object = match &triple.object {
+        Term::NamedNode(n) => {
+            match_type(&n.iri, rules, type_map)
+        },
+        _ => false,
+    };
+
+    let mut mask = TripleMask::default();
+    if pseudo_subject {
+        mask |=  TripleMask::SUBJECT;
+    };
+    if pseudo_object {
+        mask |= TripleMask::OBJECT;
+    };
+
+    return mask
+}
+
+/// Checks triple against object rules
+pub fn match_object_rules(
+    triple: &Triple,
+    rules: &Rules,
+    type_map: &HashMap<String, String>,
+) -> TripleMask {
+    let pseudo_object = match &triple.object {
+        Term::NamedNode(n) => {
+            if match_predicate(&n.iri, rules) {
+                true
+            } else {
+                match_type_predicate(&n.iri, &triple.predicate.iri, type_map, rules)
+            }
+        },
+        _ => false,
+    };
+
+    let mask = if pseudo_object {
+        TripleMask::OBJECT
+    } else {
+        TripleMask::default()
+    };
+
+    return mask
 }
 
 /// Check if the type of input instance URI is in the rules.
@@ -62,65 +139,14 @@ fn match_type_predicate(
     return true
 }
 
-pub fn match_subject_rules(
-    triple: &Triple,
-    rules: &Rules,
-    type_map: &HashMap<String, String>,
-) -> TripleMask {
-    let pseudo_subject = match &triple.subject {
-        Subject::NamedNode(n) => {
-            match_type(&n.iri, rules, type_map)
-        },
-        _ => false,
-    };
-    let pseudo_object = match &triple.object {
-        Term::NamedNode(n) => {
-            match_type(&n.iri, rules, type_map)
-        },
-        _ => false,
-    };
-
-    let mut mask = TripleMask::default();
-    if pseudo_subject {
-        mask = mask | TripleMask::SUBJECT;
-    };
-    if pseudo_object {
-        mask = mask | TripleMask::OBJECT;
-    };
-
-    return mask
-}
-
-pub fn match_object_rules(
-    triple: &Triple,
-    rules: &Rules,
-    type_map: &HashMap<String, String>,
-) -> TripleMask {
-    let pseudo_object = match &triple.object {
-        Term::NamedNode(n) => {
-            if match_predicate(&n.iri, rules) {
-                true
-            } else {
-                match_type_predicate(&n.iri, &triple.predicate.iri, type_map, rules)
-            }
-        },
-        _ => false,
-    };
-
-    let mask = if pseudo_object {
-        TripleMask::OBJECT
-    } else {
-        TripleMask::default()
-    };
-
-    return mask
-}
 
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use rstest::rstest;
+use crate::model::TripleMask;
+    use crate::rdf_types::Triple;
 
     fn set_type_rule(t: &str) -> Rules {
         let mut rules = Rules::default();
