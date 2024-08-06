@@ -170,7 +170,7 @@ use crate::model::TripleMask;
         return rules;
     }
 
-    fn set_subject_predicate_rule(s: &str, p: &str) -> Rules {
+    fn set_type_predicate_rule(s: &str, p: &str) -> Rules {
         let mut rules = Rules {
             invert: false,
             subjects: SubjectRules {
@@ -195,39 +195,25 @@ use crate::model::TripleMask;
 
     #[rstest]
     // Subject is in the rules & type index
-    #[case(true, "Alice", "Alice", "Person", "Person", true, false)]
+    #[case("Alice", HashMap::from([("Alice", "Person")]), "Person", true)]
     // Subject is in the type index, not in the rules
-    #[case(true, "Alice", "Alice", "Person", "Bank", false, false)]
+    #[case("Alice", HashMap::from([("Alice", "Person")]), "Bank", false)]
     // Subject is not in the type index
-    #[case(true, "Alice", "BankName", "Bank", "Bank", false, false)]
-    // Object is in the rules & type index
-    #[case(false, "Alice", "Alice", "Person", "Person", false, true)]
+    #[case("Alice", HashMap::from([("BankName", "Bank")]), "Bank", false)]
     fn type_rule(
-        #[case] is_subject: bool,
-        #[case] node_iri: &str,
-        #[case] index_subject: &str,
-        #[case] index_object: &str,
+        #[case] subject: &str,
+        #[case] index: HashMap<&str, &str>,
         #[case] rule_type: &str,
-        #[case] expected_s: bool,
-        #[case] expected_o: bool,
+        #[case] match_expected: bool,
     ) {
+        // convert index key/values into Strings
+        let type_index: HashMap<String, String> = index
+            .iter()
+            .map(|(k, v)| (k.to_string(), v.to_string()))
+            .collect();
+
         let rules = set_type_rule(rule_type);
-        let mut type_index = HashMap::new();
-        type_index.insert(index_subject.to_string(), index_object.to_string());
-        let mut mask = TripleMask::default();
-        mask = if is_subject {
-            let node = Subject::NamedNode(NamedNode {
-                iri: node_iri.to_string(),
-            });
-            match_type_rule_subject(&node, mask, &type_index, &rules)
-        } else {
-            let node = Term::NamedNode(NamedNode {
-                iri: node_iri.to_string(),
-            });
-            match_type_rule_object(&node, mask, &type_index, &rules)
-        };
-        assert_eq!(mask.is_set(&TripleMask::SUBJECT), expected_s);
-        assert_eq!(mask.is_set(&TripleMask::OBJECT), expected_o);
+        assert_eq!(match_type(subject, &rules, &type_index), match_expected);
     }
 
     #[rstest]
@@ -273,7 +259,7 @@ use crate::model::TripleMask;
             iri: predicate_iri.to_string(),
         };
 
-        let rules = set_subject_predicate_rule(rule_subject, rule_predicate);
+        let rules = set_type_predicate_rule(rule_subject, rule_predicate);
 
         let mut mask = TripleMask::default();
         let mut type_map = HashMap::new();
