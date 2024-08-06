@@ -161,31 +161,13 @@ mod tests {
     }
 
     fn set_predicate_rule(p: &str) -> Rules {
-        let mut rules = Rules {
-            invert: false,
-            subjects: SubjectRules {
-                of_type: HashSet::new(),
-            },
-            objects: ObjectRules {
-                on_predicate: HashSet::new(),
-                on_type_predicate: HashMap::new(),
-            },
-        };
+        let mut rules = Rules::default();
         rules.objects.on_predicate.insert(p.to_string());
         return rules;
     }
 
     fn set_type_predicate_rule(s: &str, p: &str) -> Rules {
-        let mut rules = Rules {
-            invert: false,
-            subjects: SubjectRules {
-                of_type: HashSet::new(),
-            },
-            objects: ObjectRules {
-                on_predicate: HashSet::new(),
-                on_type_predicate: HashMap::new(),
-            },
-        };
+        let mut rules = Rules::default();
 
         let mut set = HashSet::new();
         set.insert(p.to_string());
