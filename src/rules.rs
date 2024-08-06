@@ -86,7 +86,6 @@ pub fn match_object_rules(
     rules: &Rules,
     type_map: &HashMap<String, String>,
 ) -> TripleMask {
-
     if match_predicate(&triple.predicate.iri, rules) {
         return TripleMask::OBJECT;
     }
@@ -94,17 +93,17 @@ pub fn match_object_rules(
     let pseudo_object = match &triple.subject {
         Subject::NamedNode(n) => {
             match_type_predicate(&n.iri, &triple.predicate.iri, type_map, rules)
-        },
+        }
         Subject::BlankNode(b) => {
             match_type_predicate(&b.id, &triple.predicate.iri, type_map, rules)
-        },
+        }
     };
 
     if pseudo_object {
-        return TripleMask::OBJECT
+        return TripleMask::OBJECT;
     }
 
-    return TripleMask::default()
+    return TripleMask::default();
 }
 
 /// Check if the type of input instance URI is in the rules.

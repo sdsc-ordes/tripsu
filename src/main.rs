@@ -1,17 +1,17 @@
 // Define the module.
 mod crypto;
+mod index;
 mod io;
 mod log;
 mod model;
-mod index;
 mod pseudo;
 mod rdf_types;
 mod rules;
 
 // Define the imports.
 use crate::{
-    log::{create_logger, info},
     index::create_type_map,
+    log::{create_logger, info},
     pseudo::pseudonymize_graph,
 };
 
