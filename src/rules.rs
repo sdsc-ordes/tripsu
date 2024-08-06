@@ -239,14 +239,16 @@ mod tests {
     }
 
     #[rstest]
-    // sensitive subject, sensitive literal object
+    // sensitive subject, on-type sensitive object
     #[case(r#"<urn:Alice> <urn:hasAge> "42" ."#, 0b101)]
-    // sensitive subject, non-sensitive object
-    #[case(r#"<urn:Alice> <urn:hasHeight> 174 ."#, 0b100)]
+    // sensitive subject, sensitive literal object
+    #[case(r#"<urn:Alice> <urn:hasLastName> "Foobar" ."#, 0b101)]
     // sensitive subject, sensitive named node object
     #[case(r#"<urn:Alice> <urn:hasFriend> <urn:Bob> ."#, 0b101)]
     // non-sensitive subject, sensitive named node object
     #[case(r#"<urn:ACME> <urn:hasEmployee> <urn:Bob> ."#, 0b001)]
+    // non-sensitive subject, non-sensitive object
+    #[case(r#"<urn:ACME> <urn:hasAge> "200" ."#, 0b000)]
     // Test the parsing of different triples against fixed rules/index.
     fn individual_triple(#[case] triple: &str, #[case] expected_mask: u8) {
         let rules: Rules = parse_rules(
@@ -254,7 +256,9 @@ mod tests {
             subjects:
               of_type: ["urn:Person"]
             objects:
-              on_predicate: ["urn:hasAge"]
+              on_predicate: ["urn:hasLastName"]
+              on_type_predicate:
+                "urn:Person": ["urn:hasAge"]
             "#,
         );
         let index = index! {
