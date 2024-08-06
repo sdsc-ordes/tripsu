@@ -8,6 +8,7 @@ use crate::model::TripleMask;
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct SubjectRules {
     // Replace values of nodes with a certain type.
+    #[serde(default)]
     of_type: HashSet<String>,
 }
 
@@ -15,8 +16,10 @@ pub struct SubjectRules {
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct ObjectRules {
     // Replace values in matched `predicates`.
+    #[serde(default)]
     on_predicate: HashSet<String>,
     // Replace values of predicates for specific types
+    #[serde(default)]
     on_type_predicate: HashMap<String, HashSet<String>>,
 }
 
@@ -24,10 +27,13 @@ pub struct ObjectRules {
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Rules {
     // Invert all matchings
+    #[serde(default)]
     pub invert: bool,
 
+    #[serde(default)]
     pub subjects: SubjectRules,
 
+    #[serde(default)]
     pub objects: ObjectRules,
 }
 
@@ -135,16 +141,12 @@ fn match_type_predicate(
 mod tests {
     use super::*;
     use rstest::rstest;
+    use serde_yml;
 
+    // Instance used in tests
     const SUBJECT_IRI: &str = "Alice";
     const PREDICATE_IRI: &str = "hasName";
 
-    fn set_type_rule(t: &str) -> Rules {
-        let mut rules = Rules::default();
-
-        rules.subjects.of_type.insert(t.to_string());
-        return rules;
-    }
 
     // Helper macro to create a HashMap from pairs
     #[macro_export]
@@ -160,22 +162,10 @@ mod tests {
         };
     }
 
-    fn set_predicate_rule(p: &str) -> Rules {
-        let mut rules = Rules::default();
-        rules.objects.on_predicate.insert(p.to_string());
-        return rules;
+    fn parse_rules(yml: &str) -> Rules {
+        serde_yml::from_str(yml).unwrap()
     }
 
-    fn set_type_predicate_rule(s: &str, p: &str) -> Rules {
-        let mut rules = Rules::default();
-
-        let mut set = HashSet::new();
-        set.insert(p.to_string());
-
-        rules.objects.on_type_predicate.insert(s.to_string(), set);
-
-        return rules;
-    }
 
     #[rstest]
     // Subject is in the rules & type index
@@ -189,9 +179,12 @@ mod tests {
         #[case] rule_type: &str,
         #[case] match_expected: bool,
     ) {
-        // convert index key/values into Strings
+        let rules = parse_rules(&format!("
+            subjects:
+              of_type:
+              - {rule_type}
+        "));
 
-        let rules = set_type_rule(rule_type);
         assert_eq!(match_type(SUBJECT_IRI, &rules, &index), match_expected);
     }
 
@@ -201,7 +194,11 @@ mod tests {
     // Predicate is not in the rules
     #[case("hasAge", false)]
     fn predicate_rule(#[case] rule_predicate: &str, #[case] match_expected: bool) {
-        let rules = set_predicate_rule(rule_predicate);
+        let rules = parse_rules(&format!("
+            objects:
+              on_predicate:
+              - {rule_predicate}
+        "));
         assert_eq!(match_predicate(PREDICATE_IRI, &rules), match_expected);
     }
 
@@ -221,8 +218,12 @@ mod tests {
         #[case] match_expected: bool,
     ) {
 
-        let rules = set_type_predicate_rule(rule_type, rule_predicate);
-
+        let rules = parse_rules(&format!("
+            objects:
+              on_type_predicate:
+                {rule_type}:
+                - {rule_predicate}
+        "));
 
         assert_eq!(match_type_predicate(SUBJECT_IRI, PREDICATE_IRI, &index, &rules), match_expected);
 
