@@ -61,11 +61,12 @@ pub fn match_subject_rules(
 ) -> TripleMask {
     let pseudo_subject = match &triple.subject {
         Subject::NamedNode(n) => match_type(&n.iri, rules, type_map),
-        _ => false,
+        Subject::BlankNode(_) => false,
     };
     let pseudo_object = match &triple.object {
         Term::NamedNode(n) => match_type(&n.iri, rules, type_map),
-        _ => false,
+        Term::BlankNode(_) => false,
+        Term::Literal(_) => false,
     };
 
     let mut mask = TripleMask::default();
@@ -99,20 +100,19 @@ pub fn match_object_rules(
         },
     };
 
-    let mask = if pseudo_object {
-        TripleMask::OBJECT
-    } else {
-        TripleMask::default()
-    };
+    if pseudo_object {
+        return TripleMask::OBJECT
+    }
 
-    return mask;
+    return TripleMask::default()
 }
 
 /// Check if the type of input instance URI is in the rules.
 fn match_type(subject: &str, rules: &Rules, type_map: &HashMap<String, String>) -> bool {
-    match type_map.get(subject) {
-        Some(v) => rules.subjects.of_type.contains(v),
-        None => false,
+    if let Some(v) = type_map.get(subject) {
+        rules.subjects.of_type.contains(v)
+    } else {
+        false
     }
 }
 
