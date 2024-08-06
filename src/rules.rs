@@ -53,7 +53,7 @@ pub fn match_rules(
     return mask;
 }
 
-/// Checks subject and object against subject-rules.
+/// Check triple against subject-pseudonymization rules.
 pub fn match_subject_rules(
     triple: &Triple,
     rules: &Rules,
@@ -79,15 +79,15 @@ pub fn match_subject_rules(
     return mask;
 }
 
-/// Checks triple against object rules
+/// Checks triple against object-pseudonymization rules
 pub fn match_object_rules(
     triple: &Triple,
     rules: &Rules,
     type_map: &HashMap<String, String>,
 ) -> TripleMask {
-    let pseudo_object = match &triple.object {
-        Term::NamedNode(n) => {
-            if match_predicate(&n.iri, rules) {
+    let pseudo_object = match &triple.subject {
+        Subject::NamedNode(n) => {
+            if match_predicate(&triple.predicate.iri, rules) {
                 true
             } else {
                 match_type_predicate(&n.iri, &triple.predicate.iri, type_map, rules)
