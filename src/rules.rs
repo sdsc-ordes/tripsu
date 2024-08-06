@@ -142,6 +142,8 @@ fn match_type_predicate(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rio_api::parser::TriplesParser;
+    use rio_turtle::{TurtleError, TurtleParser};
     use rstest::rstest;
     use serde_yml;
 
@@ -234,5 +236,38 @@ mod tests {
             match_type_predicate(SUBJECT_IRI, PREDICATE_IRI, &index, &rules),
             match_expected
         );
+    }
+
+    #[rstest]
+    // sensitive subject, sensitive literal object
+    #[case(r#"<urn:Alice> <urn:hasAge> "42" ."#, 0b101)]
+    // sensitive subject, non-sensitive object
+    #[case(r#"<urn:Alice> <urn:hasHeight> 174 ."#, 0b100)]
+    // sensitive subject, sensitive named node object
+    #[case(r#"<urn:Alice> <urn:hasFriend> <urn:Bob> ."#, 0b101)]
+    // non-sensitive subject, sensitive named node object
+    #[case(r#"<urn:ACME> <urn:hasEmployee> <urn:Bob> ."#, 0b001)]
+    // Test the parsing of different triples against fixed rules/index.
+    fn individual_triple(#[case] triple: &str, #[case] expected_mask: u8) {
+        let rules: Rules = parse_rules(
+            r#"
+            subjects:
+              of_type: ["urn:Person"]
+            objects:
+              on_predicate: ["urn:hasAge"]
+            "#,
+        );
+        let index = index! {
+            "urn:Alice" => "urn:Person",
+            "urn:Bob" => "urn:Person",
+            "urn:ACME" => "urn:Organization"
+        };
+        TurtleParser::new(triple.as_ref(), None)
+            .parse_all(&mut |t| {
+                let mask = match_rules(&t.into(), &rules, &index);
+                assert_eq!(mask.bits(), expected_mask);
+                Ok(()) as Result<(), TurtleError>
+            })
+            .unwrap();
     }
 }
