@@ -167,9 +167,9 @@ mod tests {
 
     #[rstest]
     // Subject is in the rules & type index
-    #[case(index! { "Alice" => "Person" }, "Person", true)]
+    #[case(index! { SUBJECT_IRI => "Person" }, "Person", true)]
     // Subject is in the type index, not in the rules
-    #[case(index! { "Alice" => "Person" }, "Bank", false)]
+    #[case(index! { SUBJECT_IRI => "Person" }, "Bank", false)]
     // Subject is not in the type index
     #[case(index! { "BankName" => "Bank" }, "Bank", false)]
     fn type_rule(
@@ -190,7 +190,7 @@ mod tests {
 
     #[rstest]
     // Predicate is in the rules
-    #[case("hasName", true)]
+    #[case(PREDICATE_IRI, true)]
     // Predicate is not in the rules
     #[case("hasAge", false)]
     fn predicate_rule(#[case] rule_predicate: &str, #[case] match_expected: bool) {
@@ -206,11 +206,11 @@ mod tests {
 
     #[rstest]
     // Subject predicate in config
-    #[case("Person", "hasName", index! { "Alice" => "Person" }, true)]
+    #[case("Person", "hasName", index! { SUBJECT_IRI => "Person" }, true)]
     // Subject in config, predicate not
-    #[case("Person", "hasAge", index! { "Alice" => "Person" }, false)]
+    #[case("Person", "hasAge", index! { SUBJECT_IRI => "Person" }, false)]
     // Subject predicate not in config
-    #[case("Bob", "hasAge", index! { "Alice" => "Person" }, false)]
+    #[case("Bob", "hasAge", index! { SUBJECT_IRI => "Person" }, false)]
     // Subject not in type index
     #[case("Bob", "hasAge", index! { "Bob" => "Person" }, false)]
     fn type_predicate_rule(
