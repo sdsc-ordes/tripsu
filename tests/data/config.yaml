@@ -1,15 +1,21 @@
+# Invert the matching rules for subjects and objects.
+invert: false
+
 # hash URIs of people and online accounts
-replace_uri_of_nodes_with_type:
+subjects:
+  of_type:
   - "http://xmlns.com/foaf/0.1/Person" # All nodes which are rdf:type Person
   - "http://xmlns.com/foaf/OnlineAccount" # "" OnlineAccount
 
-# hash name only for instances of person and online account
-replace_values_of_subject_predicate:
-  "http://xmlns.com/foaf/OnlineAccount":
-    - "http://schema.org/name"
-  "http://xmlns.com/foaf/0.1/Person":
-    - "http://schema.org/name"
-
-# hash accesscode values for all nodes
-replace_value_of_predicate:
+objects:
+  # hash accesscode values for all nodes
+  on_predicate:
   - "http://schema.org/accessCode"
+  #on_type:  # NOTE: not currently supported
+  #- "http://example.org/UserAccount"
+  # hash name only for instances of person and online account
+  on_type_predicate:
+    "http://xmlns.com/foaf/OnlineAccount":
+    - "http://schema.org/name"
+    "http://xmlns.com/foaf/0.1/Person":
+    - "http://schema.org/name"

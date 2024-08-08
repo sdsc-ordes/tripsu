@@ -4,238 +4,274 @@ use serde::{Deserialize, Serialize};
 
 use crate::model::TripleMask;
 
+/// Rules for pseudonymizing subjects
+#[derive(Serialize, Deserialize, Debug, Default)]
+pub struct SubjectRules {
+    // Replace values of nodes with a certain type.
+    #[serde(default)]
+    of_type: HashSet<String>,
+}
+
+/// Rules for pseudonymizing objects
+#[derive(Serialize, Deserialize, Debug, Default)]
+pub struct ObjectRules {
+    // Replace values in matched `predicates`.
+    #[serde(default)]
+    on_predicate: HashSet<String>,
+    // Replace values of predicates for specific types
+    #[serde(default)]
+    on_type_predicate: HashMap<String, HashSet<String>>,
+}
+
+/// Rules for pseudonymizing triples
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Rules {
-    // Replace values of nodes with a certain type.
-    pub replace_uri_of_nodes_with_type: HashSet<String>,
+    // Invert all matchings
+    #[serde(default)]
+    pub invert: bool,
 
-    // Replace values of `subject` & `predicate`.
-    pub replace_values_of_subject_predicate: HashMap<String, HashSet<String>>,
+    #[serde(default)]
+    pub subjects: SubjectRules,
 
-    // Replace values in matched `predicates`.
-    pub replace_value_of_predicate: HashSet<String>,
+    #[serde(default)]
+    pub objects: ObjectRules,
 }
 
-pub fn match_type_rule_named_node(
-    is_subject: bool,
-    n: &NamedNode,
-    mask: TripleMask,
+/// Check all parts of the triple against rules.
+pub fn match_rules(
+    triple: &Triple,
     rules: &Rules,
     type_map: &HashMap<String, String>,
 ) -> TripleMask {
-    let iri_type = if let Some(v) = type_map.get(&n.iri) {
-        v
-    } else {
-        // Not in the type map.
-        return mask;
+    let mut mask =
+        match_subject_rules(triple, rules, type_map) | match_object_rules(triple, rules, type_map);
+
+    if rules.invert {
+        mask = mask.invert();
+    }
+
+    return mask;
+}
+
+/// Check triple against subject-pseudonymization rules.
+pub fn match_subject_rules(
+    triple: &Triple,
+    rules: &Rules,
+    type_map: &HashMap<String, String>,
+) -> TripleMask {
+    let pseudo_subject = match &triple.subject {
+        Subject::NamedNode(n) => match_type(&n.iri, rules, type_map),
+        Subject::BlankNode(_) => false,
+    };
+    let pseudo_object = match &triple.object {
+        Term::NamedNode(n) => match_type(&n.iri, rules, type_map),
+        Term::BlankNode(_) => false,
+        Term::Literal(_) => false,
     };
 
-    if !rules.replace_uri_of_nodes_with_type.contains(iri_type) {
-        // Not in the rules.
-        return mask;
-    }
-
-    return if is_subject {
-        mask | TripleMask::SUBJECT
-    } else {
-        mask | TripleMask::OBJECT
+    let mut mask = TripleMask::default();
+    if pseudo_subject {
+        mask |= TripleMask::SUBJECT;
     };
+    if pseudo_object {
+        mask |= TripleMask::OBJECT;
+    };
+
+    return mask;
 }
 
-pub fn match_type_rule_subject(
-    subject: &Subject,
-    mask: TripleMask,
-    type_map: &HashMap<String, String>,
+/// Checks triple against object-pseudonymization rules
+pub fn match_object_rules(
+    triple: &Triple,
     rules: &Rules,
+    type_map: &HashMap<String, String>,
 ) -> TripleMask {
-    match subject {
+    if match_predicate(&triple.predicate.iri, rules) {
+        return TripleMask::OBJECT;
+    }
+
+    let pseudo_object = match &triple.subject {
         Subject::NamedNode(n) => {
-            return mask | match_type_rule_named_node(true, n, mask, rules, type_map);
+            match_type_predicate(&n.iri, &triple.predicate.iri, type_map, rules)
         }
-        Subject::BlankNode(_) => return mask,
+        Subject::BlankNode(b) => {
+            match_type_predicate(&b.id, &triple.predicate.iri, type_map, rules)
+        }
+    };
+
+    if pseudo_object {
+        return TripleMask::OBJECT;
     }
+
+    return TripleMask::default();
 }
 
-pub fn match_type_rule_object(
-    object: &Term,
-    mask: TripleMask,
-    type_map: &HashMap<String, String>,
-    rules: &Rules,
-) -> TripleMask {
-    match object {
-        Term::NamedNode(n) => {
-            return mask | match_type_rule_named_node(false, n, mask, rules, type_map);
-        }
-        _ => return mask,
-    }
-}
-
-pub fn match_predicate_rule(predicate: &NamedNode, mask: TripleMask, rules: &Rules) -> TripleMask {
-    let NamedNode { iri: i } = predicate;
-
-    if rules.replace_value_of_predicate.contains(i) {
-        return mask | TripleMask::OBJECT;
+/// Check if the type of input instance URI is in the rules.
+fn match_type(subject: &str, rules: &Rules, type_map: &HashMap<String, String>) -> bool {
+    if let Some(v) = type_map.get(subject) {
+        rules.subjects.of_type.contains(v)
     } else {
-        return mask;
+        false
     }
 }
 
-pub fn match_subject_predicate_rule(
-    subject: &Subject,
-    predicate: &NamedNode,
-    mask: TripleMask,
+/// Check if the predicate URI is in the rules.
+fn match_predicate(predicate: &str, rules: &Rules) -> bool {
+    rules.objects.on_predicate.contains(predicate)
+}
+
+/// Check if the combination of subject type and predicate URIs is in the rules.
+fn match_type_predicate(
+    subject: &str,
+    predicate: &str,
     type_map: &HashMap<String, String>,
     rules: &Rules,
-) -> TripleMask {
-    match subject {
-        Subject::NamedNode(n) => {
-            let subject_type = if let Some(v) = type_map.get(&n.iri) {
-                v
-            } else {
-                // Not in the type map.
-                return mask;
-            };
-
-            let preds = rules.replace_values_of_subject_predicate.get(subject_type);
-            if preds.is_none() || !preds.unwrap().contains(&predicate.iri) {
-                // Not in the rules.
-                return mask;
-            }
-
-            return mask | TripleMask::OBJECT;
-        }
-        Subject::BlankNode(_) => return mask,
+) -> bool {
+    let subject_type = match type_map.get(subject) {
+        None => return false,
+        Some(v) => v,
+    };
+    let preds = rules.objects.on_type_predicate.get(subject_type);
+    if preds.is_none() || !preds.unwrap().contains(predicate) {
+        return false;
     }
+
+    return true;
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rio_api::parser::TriplesParser;
+    use rio_turtle::{TurtleError, TurtleParser};
     use rstest::rstest;
+    use serde_yml;
 
-    fn set_type_rule(t: &str) -> Rules {
-        let mut rules = Rules::default();
+    // Instance used in tests
+    const SUBJECT_IRI: &str = "Alice";
+    const PREDICATE_IRI: &str = "hasName";
 
-        rules.replace_uri_of_nodes_with_type.insert(t.to_string());
-        return rules;
-    }
-
-    fn set_predicate_rule(p: &str) -> Rules {
-        let mut rules = Rules {
-            replace_uri_of_nodes_with_type: HashSet::new(),
-            replace_values_of_subject_predicate: HashMap::new(),
-            replace_value_of_predicate: HashSet::new(),
-        };
-        rules.replace_value_of_predicate.insert(p.to_string());
-        return rules;
-    }
-
-    fn set_subject_predicate_rule(s: &str, p: &str) -> Rules {
-        let mut rules = Rules {
-            replace_uri_of_nodes_with_type: HashSet::new(),
-            replace_values_of_subject_predicate: HashMap::new(),
-            replace_value_of_predicate: HashSet::new(),
+    // Helper macro to create a HashMap from pairs
+    #[macro_export]
+    macro_rules! index {
+    () => {
+            ::std::collections::HashMap::new()
         };
 
-        let mut set = HashSet::new();
-        set.insert(p.to_string());
+        ($($key:expr => $value:expr),+ $(,)?) => {
+            ::std::collections::HashMap::from([
+                $((String::from($key), String::from($value))),*
+            ])
+        };
+    }
 
-        rules
-            .replace_values_of_subject_predicate
-            .insert(s.to_string(), set);
-
-        return rules;
+    fn parse_rules(yml: &str) -> Rules {
+        serde_yml::from_str(yml).unwrap()
     }
 
     #[rstest]
     // Subject is in the rules & type index
-    #[case(true, "Alice", "Alice", "Person", "Person", true, false)]
+    #[case(index! { SUBJECT_IRI => "Person" }, "Person", true)]
     // Subject is in the type index, not in the rules
-    #[case(true, "Alice", "Alice", "Person", "Bank", false, false)]
+    #[case(index! { SUBJECT_IRI => "Person" }, "Bank", false)]
     // Subject is not in the type index
-    #[case(true, "Alice", "BankName", "Bank", "Bank", false, false)]
-    // Object is in the rules & type index
-    #[case(false, "Alice", "Alice", "Person", "Person", false, true)]
+    #[case(index! { "BankName" => "Bank" }, "Bank", false)]
     fn type_rule(
-        #[case] is_subject: bool,
-        #[case] node_iri: &str,
-        #[case] index_subject: &str,
-        #[case] index_object: &str,
+        #[case] index: HashMap<String, String>,
         #[case] rule_type: &str,
-        #[case] expected_s: bool,
-        #[case] expected_o: bool,
+        #[case] match_expected: bool,
     ) {
-        let rules = set_type_rule(rule_type);
-        let mut type_index = HashMap::new();
-        type_index.insert(index_subject.to_string(), index_object.to_string());
-        let mut mask = TripleMask::default();
-        mask = if is_subject {
-            let node = Subject::NamedNode(NamedNode {
-                iri: node_iri.to_string(),
-            });
-            match_type_rule_subject(&node, mask, &type_index, &rules)
-        } else {
-            let node = Term::NamedNode(NamedNode {
-                iri: node_iri.to_string(),
-            });
-            match_type_rule_object(&node, mask, &type_index, &rules)
-        };
-        assert_eq!(mask.is_set(&TripleMask::SUBJECT), expected_s);
-        assert_eq!(mask.is_set(&TripleMask::OBJECT), expected_o);
+        let rules = parse_rules(&format!(
+            "
+            subjects:
+              of_type:
+              - {rule_type}
+        "
+        ));
+
+        assert_eq!(match_type(SUBJECT_IRI, &rules, &index), match_expected);
     }
 
     #[rstest]
     // Predicate is in the rules
-    #[case("hasName", "hasName", true)]
+    #[case(PREDICATE_IRI, true)]
     // Predicate is not in the rules
-    #[case("hasName", "hasAge", false)]
-    fn predicate_rule(#[case] node_iri: &str, #[case] rule_type: &str, #[case] expected_o: bool) {
-        let predicate = NamedNode {
-            iri: node_iri.to_string(),
-        };
-        let rules = set_predicate_rule(rule_type);
-        let mut mask = TripleMask::default();
-
-        mask = match_predicate_rule(&predicate, mask, &rules);
-
-        assert!(!mask.is_set(&TripleMask::SUBJECT));
-        assert_eq!(mask.is_set(&TripleMask::OBJECT), expected_o);
+    #[case("hasAge", false)]
+    fn predicate_rule(#[case] rule_predicate: &str, #[case] match_expected: bool) {
+        let rules = parse_rules(&format!(
+            "
+            objects:
+              on_predicate:
+              - {rule_predicate}
+        "
+        ));
+        assert_eq!(match_predicate(PREDICATE_IRI, &rules), match_expected);
     }
 
     #[rstest]
     // Subject predicate in config
-    #[case("Alice", "hasName", "Person", "hasName", "Alice", "Person", true)]
+    #[case("Person", "hasName", index! { SUBJECT_IRI => "Person" }, true)]
     // Subject in config, predicate not
-    #[case("Alice", "hasName", "Person", "hasAge", "Alice", "Person", false)]
+    #[case("Person", "hasAge", index! { SUBJECT_IRI => "Person" }, false)]
     // Subject predicate not in config
-    #[case("Alice", "hasName", "Bob", "hasAge", "Alice", "Person", false)]
+    #[case("Bob", "hasAge", index! { SUBJECT_IRI => "Person" }, false)]
     // Subject not in type index
-    #[case("Alice", "hasName", "Bob", "hasAge", "Bob", "Person", false)]
-    fn subject_predicate_rule(
-        #[case] subject_iri: &str,
-        #[case] predicate_iri: &str,
-        #[case] rule_subject: &str,
+    #[case("Bob", "hasAge", index! { "Bob" => "Person" }, false)]
+    fn type_predicate_rule(
+        #[case] rule_type: &str,
         #[case] rule_predicate: &str,
-        #[case] index_subject: &str,
-        #[case] index_object: &str,
-        #[case] expected_o: bool,
+        #[case] index: HashMap<String, String>,
+        #[case] match_expected: bool,
     ) {
-        let subject = Subject::NamedNode(NamedNode {
-            iri: subject_iri.to_string(),
-        });
-        let predicate = NamedNode {
-            iri: predicate_iri.to_string(),
+        let rules = parse_rules(&format!(
+            "
+            objects:
+              on_type_predicate:
+                {rule_type}:
+                - {rule_predicate}
+        "
+        ));
+
+        assert_eq!(
+            match_type_predicate(SUBJECT_IRI, PREDICATE_IRI, &index, &rules),
+            match_expected
+        );
+    }
+
+    #[rstest]
+    // sensitive subject, on-type sensitive object
+    #[case(r#"<urn:Alice> <urn:hasAge> "42" ."#, 0b101)]
+    // sensitive subject, sensitive literal object
+    #[case(r#"<urn:Alice> <urn:hasLastName> "Foobar" ."#, 0b101)]
+    // sensitive subject, sensitive named node object
+    #[case(r#"<urn:Alice> <urn:hasFriend> <urn:Bob> ."#, 0b101)]
+    // non-sensitive subject, sensitive named node object
+    #[case(r#"<urn:ACME> <urn:hasEmployee> <urn:Bob> ."#, 0b001)]
+    // non-sensitive subject, non-sensitive object
+    #[case(r#"<urn:ACME> <urn:hasAge> "200" ."#, 0b000)]
+    // Test the parsing of different triples against fixed rules/index.
+    fn individual_triple(#[case] triple: &str, #[case] expected_mask: u8) {
+        let rules: Rules = parse_rules(
+            r#"
+            subjects:
+              of_type: ["urn:Person"]
+            objects:
+              on_predicate: ["urn:hasLastName"]
+              on_type_predicate:
+                "urn:Person": ["urn:hasAge"]
+            "#,
+        );
+        let index = index! {
+            "urn:Alice" => "urn:Person",
+            "urn:Bob" => "urn:Person",
+            "urn:ACME" => "urn:Organization"
         };
-
-        let rules = set_subject_predicate_rule(rule_subject, rule_predicate);
-
-        let mut mask = TripleMask::default();
-        let mut type_map = HashMap::new();
-        type_map.insert(index_subject.to_string(), index_object.to_string());
-
-        mask = match_subject_predicate_rule(&subject, &predicate, mask, &type_map, &rules);
-
-        assert!(!mask.is_set(&TripleMask::SUBJECT));
-        assert_eq!(mask.is_set(&TripleMask::OBJECT), expected_o);
+        TurtleParser::new(triple.as_ref(), None)
+            .parse_all(&mut |t| {
+                let mask = match_rules(&t.into(), &rules, &index);
+                assert_eq!(mask.bits(), expected_mask);
+                Ok(()) as Result<(), TurtleError>
+            })
+            .unwrap();
     }
 }

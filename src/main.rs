@@ -1,18 +1,18 @@
 // Define the module.
 mod crypto;
+mod index;
 mod io;
 mod log;
 mod model;
-mod pass_first;
-mod pass_second;
+mod pseudo;
 mod rdf_types;
 mod rules;
 
 // Define the imports.
 use crate::{
+    index::create_type_map,
     log::{create_logger, info},
-    pass_first::create_type_map,
-    pass_second::pseudonymize_graph,
+    pseudo::pseudonymize_graph,
 };
 
 use clap::{Args, Parser, Subcommand};
@@ -50,11 +50,6 @@ struct PseudoArgs {
     /// Defaults to `stdin`.
     #[arg(default_value = "-")]
     input: PathBuf,
-
-    /// Invert the matching rules for the subject and the object.
-    /// Disabled by default
-    #[arg(short = 'v', long)]
-    invert_match: bool,
 
     /// The config file descriptor to use for defining RDF elements to pseudonymize.
     /// Format: yaml
@@ -103,7 +98,6 @@ fn main() {
                 &args.output,
                 &args.index,
                 &args.secret,
-                &args.invert_match,
             )
         }
     }
