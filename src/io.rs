@@ -1,4 +1,5 @@
 use crate::rules::Rules;
+use crate::PseudoArgs;
 use rio_turtle::NTriplesParser;
 use std::{
     fs::File,
@@ -43,9 +44,17 @@ pub fn parse_ntriples(reader: impl BufRead) -> NTriplesParser<impl BufRead> {
 }
 
 // Parse yaml configuration file.
-pub fn parse_config(path: &Path) -> Rules {
+pub fn parse_config(path: &Path) -> PseudoArgs {
     return match File::open(path) {
         Ok(file) => serde_yml::from_reader(file).expect("Error parsing config file."),
+        Err(e) => panic!("Cannot open file '{:?}': '{}'.", path, e),
+    };
+}
+
+// Parse yaml configuration file.
+pub fn parse_rules(path: &Path) -> Rules {
+    return match File::open(path) {
+        Ok(file) => serde_yml::from_reader(file).expect("Error parsing rules file."),
         Err(e) => panic!("Cannot open file '{:?}': '{}'.", path, e),
     };
 }
@@ -62,7 +71,7 @@ pub fn read_bytes(path: &PathBuf) -> Vec<u8> {
 
 #[cfg(test)]
 mod tests {
-    use super::{parse_config, parse_ntriples};
+    use super::{parse_rules, parse_ntriples};
     use rio_api::parser::TriplesParser;
     use std::{
         io::{BufRead, BufReader},
@@ -86,8 +95,8 @@ mod tests {
     }
     // Test the parsing of a config file.
     #[test]
-    fn config_parsing() {
-        let config_path = Path::new("tests/data/config.yaml");
-        parse_config(&config_path);
+    fn config_rules() {
+        let config_path = Path::new("tests/data/rules.yaml");
+        parse_rules(&config_path);
     }
 }
