@@ -1,5 +1,4 @@
 use crate::rules::Rules;
-use crate::PseudoArgs;
 use rio_turtle::NTriplesParser;
 use std::{
     fs::File,
@@ -41,14 +40,6 @@ pub fn get_writer(path: &Path) -> Writer {
 // This function takes ownership of a generic type which implements `BufRead`.
 pub fn parse_ntriples(reader: impl BufRead) -> NTriplesParser<impl BufRead> {
     return NTriplesParser::new(reader);
-}
-
-// Parse yaml configuration file.
-pub fn parse_config(path: &Path) -> PseudoArgs {
-    return match File::open(path) {
-        Ok(file) => serde_yml::from_reader(file).expect("Error parsing config file."),
-        Err(e) => panic!("Cannot open file '{:?}': '{}'.", path, e),
-    };
 }
 
 // Parse yaml configuration file.
