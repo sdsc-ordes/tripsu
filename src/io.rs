@@ -62,7 +62,7 @@ pub fn read_bytes(path: &PathBuf) -> Vec<u8> {
 
 #[cfg(test)]
 mod tests {
-    use super::{parse_rules, parse_ntriples};
+    use super::{parse_ntriples, parse_rules};
     use rio_api::parser::TriplesParser;
     use std::{
         io::{BufRead, BufReader},

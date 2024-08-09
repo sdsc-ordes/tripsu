@@ -77,13 +77,7 @@ pub fn pseudonymize_graph(
     while !triples.is_end() {
         triples
             .parse_step(&mut |t: TripleView| {
-                process_triple(
-                    t.into(),
-                    &rules,
-                    &index,
-                    &mut buf_output,
-                    &pseudonymizer,
-                );
+                process_triple(t.into(), &rules, &index, &mut buf_output, &pseudonymizer);
                 Result::<(), TurtleError>::Ok(())
             })
             .inspect_err(|e| {
