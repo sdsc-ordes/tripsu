@@ -51,10 +51,10 @@ struct PseudoArgs {
     #[arg(default_value = "-")]
     input: PathBuf,
 
-    /// The config file descriptor to use for defining RDF elements to pseudonymize.
+    /// File defining which RDF elements to pseudonymize.
     /// Format: yaml
     #[arg(short, long)]
-    config: PathBuf,
+    rules: PathBuf,
 
     /// Output file descriptor for pseudonymized triples.
     /// Defaults to `stdout`.
@@ -94,7 +94,7 @@ fn main() {
             pseudonymize_graph(
                 &log,
                 &args.input,
-                &args.config,
+                &args.rules,
                 &args.output,
                 &args.index,
                 &args.secret,
