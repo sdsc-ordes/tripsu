@@ -19,11 +19,11 @@ use crate::{
 fn process_triple(
     triple: Triple,
     rules_config: &Rules,
-    index: &HashMap<String, String>,
+    node_to_type: &HashMap<String, String>,
     out: &mut impl Write,
     hasher: &dyn Pseudonymize,
 ) {
-    let mask = match_rules(&triple, rules_config, index);
+    let mask = match_rules(&triple, rules_config, node_to_type);
 
     let r = || -> std::io::Result<()> {
         out.write_all(hasher.pseudo_triple(&triple, mask).to_string().as_bytes())?;
@@ -66,7 +66,7 @@ pub fn pseudonymize_graph(
     let mut buf_output = io::get_writer(output);
 
     let rules = io::parse_rules(rules_path);
-    let index: HashMap<String, String> = load_type_map(buf_index);
+    let node_to_type: HashMap<String, String> = load_type_map(buf_index);
 
     let secret = secret_path.as_ref().map(io::read_bytes);
     let pseudonymizer = new_pseudonymizer(None, secret);
@@ -77,7 +77,13 @@ pub fn pseudonymize_graph(
     while !triples.is_end() {
         triples
             .parse_step(&mut |t: TripleView| {
-                process_triple(t.into(), &rules, &index, &mut buf_output, &pseudonymizer);
+                process_triple(
+                    t.into(),
+                    &rules,
+                    &node_to_type,
+                    &mut buf_output,
+                    &pseudonymizer,
+                );
                 Result::<(), TurtleError>::Ok(())
             })
             .inspect_err(|e| {
