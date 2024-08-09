@@ -19,11 +19,11 @@ use crate::{
 fn process_triple(
     triple: Triple,
     rules_config: &Rules,
-    node_to_type: &HashMap<String, String>,
+    index: &HashMap<String, String>,
     out: &mut impl Write,
     hasher: &dyn Pseudonymize,
 ) {
-    let mask = match_rules(&triple, rules_config, node_to_type);
+    let mask = match_rules(&triple, rules_config, index);
 
     let r = || -> std::io::Result<()> {
         out.write_all(hasher.pseudo_triple(&triple, mask).to_string().as_bytes())?;
@@ -56,17 +56,17 @@ fn load_type_map(input: impl BufRead) -> HashMap<String, String> {
 pub fn pseudonymize_graph(
     _: &Logger,
     input: &Path,
-    config: &Path,
+    rules_path: &Path,
     output: &Path,
-    index: &Path,
+    index_path: &Path,
     secret_path: &Option<PathBuf>,
 ) {
     let buf_input = io::get_reader(input);
-    let buf_index = io::get_reader(index);
+    let buf_index = io::get_reader(index_path);
     let mut buf_output = io::get_writer(output);
 
-    let rules_config = io::parse_config(config);
-    let node_to_type: HashMap<String, String> = load_type_map(buf_index);
+    let rules = io::parse_rules(rules_path);
+    let index: HashMap<String, String> = load_type_map(buf_index);
 
     let secret = secret_path.as_ref().map(io::read_bytes);
     let pseudonymizer = new_pseudonymizer(None, secret);
@@ -79,8 +79,8 @@ pub fn pseudonymize_graph(
             .parse_step(&mut |t: TripleView| {
                 process_triple(
                     t.into(),
-                    &rules_config,
-                    &node_to_type,
+                    &rules,
+                    &index,
                     &mut buf_output,
                     &pseudonymizer,
                 );
@@ -107,14 +107,14 @@ mod tests {
 
         let dir = tempdir().unwrap();
         let input_path = Path::new("tests/data/test.nt");
-        let config_path = Path::new("tests/data/config.yaml");
+        let rules_path = Path::new("tests/data/rules.yaml");
         let output_path = dir.path().join("output.nt");
         let type_map_path = Path::new("tests/data/type_map.nt");
         let key = None;
         pseudonymize_graph(
             &logger,
             &input_path,
-            &config_path,
+            &rules_path,
             &output_path,
             &type_map_path,
             &key,
