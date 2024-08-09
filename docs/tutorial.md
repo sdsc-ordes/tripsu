@@ -116,7 +116,8 @@ Would become:
 Given the following config:
 
 ```yaml
-replace_value_of_predicate:
+objects:
+  on_predicate:
   - "http://schema.org/name"
 ```
 
