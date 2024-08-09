@@ -13,9 +13,11 @@ use crate::{
     index::create_type_map,
     log::{create_logger, info},
     pseudo::pseudonymize_graph,
+    io::parse_config,
 };
 
 use clap::{Args, Parser, Subcommand};
+use serde::Deserialize;
 use std::path::PathBuf;
 
 #[derive(Parser)]
@@ -27,7 +29,7 @@ struct Cli {
     command: Subcommands,
 }
 
-#[derive(Args, Debug)]
+#[derive(Args, Debug, Deserialize)]
 struct IndexArgs {
     /// Output file descriptor to for the node-to-type index.
     #[arg(short, long, default_value = "-")]
@@ -39,7 +41,7 @@ struct IndexArgs {
     input: PathBuf,
 }
 
-#[derive(Args, Debug)]
+#[derive(Args, Debug, Deserialize)]
 struct PseudoArgs {
     /// Index file produced by prepare-index.
     /// Required for pseudonymization.
@@ -51,11 +53,17 @@ struct PseudoArgs {
     #[arg(default_value = "-")]
     input: PathBuf,
 
-    /// The config file descriptor to use for defining RDF elements to pseudonymize.
+    /// File containing rules defining what RDF elements to pseudonymize.
     /// Format: yaml
     #[arg(short, long)]
-    config: PathBuf,
+    rules: PathBuf,
 
+    /// File from which to read command line options.
+    /// Format: yaml
+    #[serde(default)]
+    #[arg(short, long)]
+    config: Option<PathBuf>,
+    
     /// Output file descriptor for pseudonymized triples.
     /// Defaults to `stdout`.
     #[arg(short, long, default_value = "-")]
@@ -63,6 +71,7 @@ struct PseudoArgs {
 
     /// File containing the secret used to generate pseudonyms.
     /// Default is to use a random key.
+    #[serde(default)]
     #[arg(short, long, default_value=None)]
     secret: Option<PathBuf>,
 }
@@ -82,19 +91,29 @@ enum Subcommands {
 
 fn main() {
     let log = create_logger(false);
-    let cli = Cli::parse();
+    let mut cli = Cli::parse();
 
     match cli.command {
         Subcommands::Index(args) => {
             info!(log, "Args: {:?}", args);
             create_type_map(&args.input, &args.output)
         }
-        Subcommands::Pseudo(args) => {
+        Subcommands::Pseudo(ref mut args) => {
+
+            if let Some(cfg) = &args.config {
+                info!(log, "Using config file: {:?}", args.config);
+                *args = parse_config(&cfg)
+            };
+
             info!(log, "Args: {:?}", args);
+
+            if args.secret.is_none() {
+                info!(log, "Using a random key for pseudonymization");
+            }
             pseudonymize_graph(
                 &log,
                 &args.input,
-                &args.config,
+                &args.rules,
                 &args.output,
                 &args.index,
                 &args.secret,
