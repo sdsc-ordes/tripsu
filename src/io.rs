@@ -86,7 +86,7 @@ mod tests {
     }
     // Test the parsing of a config file.
     #[test]
-    fn config_rules() {
+    fn rules_parsing() {
         let config_path = Path::new("tests/data/rules.yaml");
         parse_rules(&config_path);
     }
