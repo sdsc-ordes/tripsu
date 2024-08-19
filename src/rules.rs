@@ -4,9 +4,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::model::TripleMask;
 
-/// Rules for pseudonymizing subjects
+/// Rules for pseudonymizing nodes
 #[derive(Serialize, Deserialize, Debug, Default)]
-pub struct SubjectRules {
+pub struct NodeRules {
     // Replace values of nodes with a certain type.
     #[serde(default)]
     of_type: HashSet<String>,
@@ -31,7 +31,7 @@ pub struct Rules {
     pub invert: bool,
 
     #[serde(default)]
-    pub subjects: SubjectRules,
+    pub nodes: NodeRules,
 
     #[serde(default)]
     pub objects: ObjectRules,
@@ -44,7 +44,7 @@ pub fn match_rules(
     type_map: &HashMap<String, String>,
 ) -> TripleMask {
     let mut mask =
-        match_subject_rules(triple, rules, type_map) | match_object_rules(triple, rules, type_map);
+        match_node_rules(triple, rules, type_map) | match_object_rules(triple, rules, type_map);
 
     if rules.invert {
         mask = mask.invert();
@@ -53,8 +53,8 @@ pub fn match_rules(
     return mask;
 }
 
-/// Check triple against subject-pseudonymization rules.
-pub fn match_subject_rules(
+/// Check triple against node-pseudonymization rules.
+pub fn match_node_rules(
     triple: &Triple,
     rules: &Rules,
     type_map: &HashMap<String, String>,
@@ -109,7 +109,7 @@ pub fn match_object_rules(
 /// Check if the type of input instance URI is in the rules.
 fn match_type(subject: &str, rules: &Rules, type_map: &HashMap<String, String>) -> bool {
     if let Some(v) = type_map.get(subject) {
-        rules.subjects.of_type.contains(v)
+        rules.nodes.of_type.contains(v)
     } else {
         false
     }
@@ -148,7 +148,7 @@ mod tests {
     use serde_yml;
 
     // Instance used in tests
-    const SUBJECT_IRI: &str = "Alice";
+    const NODE_IRI: &str = "Alice";
     const PREDICATE_IRI: &str = "hasName";
 
     // Helper macro to create a HashMap from pairs
@@ -171,9 +171,9 @@ mod tests {
 
     #[rstest]
     // Subject is in the rules & type index
-    #[case(index! { SUBJECT_IRI => "Person" }, "Person", true)]
+    #[case(index! { NODE_IRI => "Person" }, "Person", true)]
     // Subject is in the type index, not in the rules
-    #[case(index! { SUBJECT_IRI => "Person" }, "Bank", false)]
+    #[case(index! { NODE_IRI => "Person" }, "Bank", false)]
     // Subject is not in the type index
     #[case(index! { "BankName" => "Bank" }, "Bank", false)]
     fn type_rule(
@@ -183,13 +183,13 @@ mod tests {
     ) {
         let rules = parse_rules(&format!(
             "
-            subjects:
+            nodes:
               of_type:
               - {rule_type}
         "
         ));
 
-        assert_eq!(match_type(SUBJECT_IRI, &rules, &index), match_expected);
+        assert_eq!(match_type(NODE_IRI, &rules, &index), match_expected);
     }
 
     #[rstest]
@@ -210,11 +210,11 @@ mod tests {
 
     #[rstest]
     // Subject predicate in config
-    #[case("Person", "hasName", index! { SUBJECT_IRI => "Person" }, true)]
+    #[case("Person", "hasName", index! { NODE_IRI => "Person" }, true)]
     // Subject in config, predicate not
-    #[case("Person", "hasAge", index! { SUBJECT_IRI => "Person" }, false)]
+    #[case("Person", "hasAge", index! { NODE_IRI => "Person" }, false)]
     // Subject predicate not in config
-    #[case("Bob", "hasAge", index! { SUBJECT_IRI => "Person" }, false)]
+    #[case("Bob", "hasAge", index! { NODE_IRI => "Person" }, false)]
     // Subject not in type index
     #[case("Bob", "hasAge", index! { "Bob" => "Person" }, false)]
     fn type_predicate_rule(
@@ -233,7 +233,7 @@ mod tests {
         ));
 
         assert_eq!(
-            match_type_predicate(SUBJECT_IRI, PREDICATE_IRI, &index, &rules),
+            match_type_predicate(NODE_IRI, PREDICATE_IRI, &index, &rules),
             match_expected
         );
     }
@@ -253,7 +253,7 @@ mod tests {
     fn individual_triple(#[case] triple: &str, #[case] expected_mask: u8) {
         let rules: Rules = parse_rules(
             r#"
-            subjects:
+            nodes:
               of_type: ["urn:Person"]
             objects:
               on_predicate: ["urn:hasLastName"]
