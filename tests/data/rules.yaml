@@ -1,8 +1,8 @@
-# Invert the matching rules for subjects and objects.
+# Invert the matching rules for nodes and objects.
 invert: false
 
 # hash URIs of people and online accounts
-subjects:
+nodes:
   of_type:
   - "http://xmlns.com/foaf/0.1/Person" # All nodes which are rdf:type Person
   - "http://xmlns.com/foaf/OnlineAccount" # "" OnlineAccount
