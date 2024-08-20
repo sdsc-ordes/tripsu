@@ -1,9 +1,10 @@
 use rio_api::parser::TriplesParser;
 use rio_turtle::TurtleError;
-use std::{io::Write, path::Path};
+use std::path::Path;
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use serde_yml;
 
 use crate::{
     io,
@@ -11,9 +12,9 @@ use crate::{
 };
 
 #[derive(Serialize, Deserialize)]
-struct Index {
-    types: Vec<String>,
-    map: HashMap<[u8; 8], usize>,
+pub struct Index {
+    pub types: Vec<String>,
+    map: HashMap<[u8; 8], Vec<usize>>,
 
     #[serde(skip)]
     hasher: DefaultHasher,
@@ -26,7 +27,7 @@ impl Index {
         self.hasher.finish().to_be_bytes()
     }
 
-    fn new() -> Self {
+    pub fn new() -> Self {
         Index {
             types: Vec::new(),
             map: HashMap::new(),
@@ -34,29 +35,52 @@ impl Index {
         }
     }
 
-    fn insert(&mut self, subject_key: &str, type_val: &str) {
+    // Insert input subject-type mapping into the index.
+    // The index will store the hash of the subject.
+    pub fn insert(&mut self, subject_key: &str, type_val: &str) -> Result<(), std::io::Error> {
         let key = self.hash(subject_key);
         let type_idx: usize;
+
+        // Get type index or add a new one
         if self.types.contains(&type_val.to_string()) {
             type_idx = self.types.iter().position(|x| *x == type_val).unwrap();
         } else {
             type_idx = self.types.len();
             self.types.push(type_val.to_string());
         }
-        self.map.insert(key, type_idx);
+        // Insert mapping into the index
+        match self.map.get_mut(&key) {
+            Some(v) => {
+                v.push(type_idx);
+            },
+            None => {
+                self.map.insert(key, vec![type_idx]);
+            }
+        }
+
+        Ok(())
     }
 
-    fn get(&mut self, subject_key: &str) -> Option<&str> {
+    pub fn get(&mut self, subject_key: &str) -> Option<Vec<&String>> {
         let key = self.hash(subject_key);
-        self.map.get(&key).map(|i| self.types[*i].as_str())
+        let val = if let Some(v) = self.map.get(&key) {
+            Some(v.iter().map(|i| &self.types[*i]).collect())
+        } else {
+            None
+        };
+        
+        return val
+
     }
 }
 
-fn index_triple(t: Triple, out: &mut impl Write) {
+fn index_triple(t: Triple, index: &mut Index) {
     if t.predicate.iri.as_str() == "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" {
         let r = || -> std::io::Result<()> {
-            out.write_all(t.to_string().as_bytes())?;
-            out.write_all(b" .\n")
+            index.insert(
+                &t.subject.to_string(),
+                &t.object.to_string(),
+            )
         }();
 
         if let Err(e) = r {
@@ -67,18 +91,20 @@ fn index_triple(t: Triple, out: &mut impl Write) {
 
 pub fn create_type_map(input: &Path, output: &Path) {
     let buf_in = io::get_reader(input);
-    let mut buf_out = io::get_writer(output);
+    let buf_out = io::get_writer(output);
     let mut triples = io::parse_ntriples(buf_in);
+    let mut index = Index::new();
 
 
     while !triples.is_end() {
         let _ = triples
             .parse_step(&mut |t: TripleView| {
-                index_triple(t.into(), &mut buf_out);
+                index_triple(t.into(), &mut index);
                 Result::<(), TurtleError>::Ok(())
             })
             .inspect_err(|e| {
                 panic!("Parsing error occured: {e}");
             });
     }
+    let _ = serde_yml::to_writer(buf_out, &index);
 }
