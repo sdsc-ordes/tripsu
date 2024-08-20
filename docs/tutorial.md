@@ -61,7 +61,7 @@ better understand how they operate.
 Given the following config:
 
 ```yaml
-subjects:
+nodes:
   of_type:
   - "http://xmlns.com/foaf/0.1/Person"
 ```
