@@ -2,7 +2,10 @@ use crate::rdf_types::*;
 use ::std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 
-use crate::model::TripleMask;
+use crate::{
+    index::Index,
+    model::TripleMask,
+};
 
 /// Rules for pseudonymizing nodes
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -41,7 +44,7 @@ pub struct Rules {
 pub fn match_rules(
     triple: &Triple,
     rules: &Rules,
-    type_map: &HashMap<String, String>,
+    type_map: &mut Index,
 ) -> TripleMask {
     let mut mask =
         match_node_rules(triple, rules, type_map) | match_object_rules(triple, rules, type_map);
@@ -57,7 +60,7 @@ pub fn match_rules(
 pub fn match_node_rules(
     triple: &Triple,
     rules: &Rules,
-    type_map: &HashMap<String, String>,
+    type_map: &mut Index,
 ) -> TripleMask {
     let pseudo_subject = match &triple.subject {
         Subject::NamedNode(n) => match_type(&n.iri, rules, type_map),
@@ -84,7 +87,7 @@ pub fn match_node_rules(
 pub fn match_object_rules(
     triple: &Triple,
     rules: &Rules,
-    type_map: &HashMap<String, String>,
+    type_map: &mut Index,
 ) -> TripleMask {
     if match_predicate(&triple.predicate.iri, rules) {
         return TripleMask::OBJECT;
@@ -107,9 +110,10 @@ pub fn match_object_rules(
 }
 
 /// Check if the type of input instance URI is in the rules.
-fn match_type(subject: &str, rules: &Rules, type_map: &HashMap<String, String>) -> bool {
+fn match_type(subject: &str, rules: &Rules, type_map: &mut Index) -> bool {
     if let Some(v) = type_map.get(subject) {
-        rules.nodes.of_type.contains(v)
+        v.iter()
+            .any(|&i| rules.nodes.of_type.contains(i))
     } else {
         false
     }
@@ -124,19 +128,21 @@ fn match_predicate(predicate: &str, rules: &Rules) -> bool {
 fn match_type_predicate(
     subject: &str,
     predicate: &str,
-    type_map: &HashMap<String, String>,
+    type_map: &mut Index,
     rules: &Rules,
 ) -> bool {
-    let subject_type = match type_map.get(subject) {
+    let subject_types = match type_map.get(subject) {
         None => return false,
         Some(v) => v,
     };
-    let preds = rules.objects.on_type_predicate.get(subject_type);
-    if preds.is_none() || !preds.unwrap().contains(predicate) {
-        return false;
-    }
+    let tp = subject_types
+        .iter()
+        .map(|typ| rules.objects.on_type_predicate.get(typ))
+        .any(|preds| {
+            preds.is_some() && preds.unwrap().contains(predicate)
+        });
 
-    return true;
+    return tp;
 }
 
 #[cfg(test)]

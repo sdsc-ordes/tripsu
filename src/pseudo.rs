@@ -8,6 +8,7 @@ use std::{
 
 use crate::{
     crypto::{new_pseudonymizer, Pseudonymize},
+    index::Index,
     io,
     log::Logger,
     rdf_types::*,
@@ -19,7 +20,7 @@ use crate::{
 fn process_triple(
     triple: Triple,
     rules_config: &Rules,
-    node_to_type: &HashMap<String, String>,
+    node_to_type: &mut Index,
     out: &mut impl Write,
     hasher: &dyn Pseudonymize,
 ) {
