@@ -1,7 +1,7 @@
 use rio_api::parser::TriplesParser;
 use rio_turtle::TurtleError;
 use std::{
-    io::{BufRead, Write},
+    io::Write,
     path::{Path, PathBuf},
 };
 
