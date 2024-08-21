@@ -31,18 +31,17 @@ impl TypeIndex {
         let vec: Vec<(String, String)> = type_map.collect();
         let mut idx = TypeIndex::new();
         idx.types = vec
-                .clone()
-                .iter()
-                .map(|(_, t)| t.clone())
-                .collect::<std::collections::HashSet<String>>()
-                .into_iter()
-                .collect();
+            .clone()
+            .iter()
+            .map(|(_, t)| t.clone())
+            .collect::<std::collections::HashSet<String>>()
+            .into_iter()
+            .collect();
 
-        vec.iter()
-            .for_each(
-                |(subject, type_uri)| {
-                    idx.insert(&subject.to_string(), &type_uri.to_string()).unwrap()
-            });
+        vec.iter().for_each(|(subject, type_uri)| {
+            idx.insert(&subject.to_string(), &type_uri.to_string())
+                .unwrap()
+        });
 
         return idx;
     }
@@ -139,7 +138,10 @@ mod tests {
 
         let mut idx = TypeIndex::from_iter(vals);
 
-        assert_eq!(idx.get("urn:Alice").unwrap(), vec!["urn:Person", "urn:Employee"]);
+        assert_eq!(
+            idx.get("urn:Alice").unwrap(),
+            vec!["urn:Person", "urn:Employee"]
+        );
         println!("{}", serde_yml::to_string(&idx).unwrap());
     }
 }
