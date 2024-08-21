@@ -1,4 +1,4 @@
-use crate::rules::Rules;
+use crate::{index::TypeIndex, rules::Rules};
 use rio_turtle::NTriplesParser;
 use std::{
     fs::File,
@@ -46,7 +46,15 @@ pub fn parse_ntriples(reader: impl BufRead) -> NTriplesParser<impl BufRead> {
 pub fn parse_rules(path: &Path) -> Rules {
     return match File::open(path) {
         Ok(file) => serde_yml::from_reader(file).expect("Error parsing rules file."),
-        Err(e) => panic!("Cannot open file '{:?}': '{}'.", path, e),
+        Err(e) => panic!("Cannot open rules file '{:?}': '{}'.", path, e),
+    };
+}
+
+// Parse yaml type index
+pub fn parse_index(path: &Path) -> TypeIndex {
+    return match File::open(path) {
+        Ok(file) => serde_yml::from_reader(file).expect("Error parsing index file."),
+        Err(e) => panic!("Cannot open index file '{:?}': '{}'.", path, e),
     };
 }
 
