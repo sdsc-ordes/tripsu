@@ -28,16 +28,21 @@ impl TypeIndex {
     }
 
     pub fn from_iter(type_map: impl Iterator<Item = (String, String)>) -> Self {
-        let mut idx = TypeIndex {
-            types: type_map
-                .map(|(_, &t)| t.clone())
+        let vec: Vec<(String, String)> = type_map.collect();
+        let mut idx = TypeIndex::new();
+        idx.types = vec
+                .clone()
+                .iter()
+                .map(|(_, t)| t.clone())
                 .collect::<std::collections::HashSet<String>>()
                 .into_iter()
-                .collect(),
-            map: HashMap::new(),
-        };
+                .collect();
 
-            type_map.for_each(|(subject, type_uri)| idx.insert(&subject.to_string(), &type_uri.to_string()).unwrap());
+        vec.iter()
+            .for_each(
+                |(subject, type_uri)| {
+                    idx.insert(&subject.to_string(), &type_uri.to_string()).unwrap()
+            });
 
         return idx;
     }
@@ -123,7 +128,7 @@ mod tests {
     use super::*;
     #[test]
     // Test the parsing of a triple.
-    fn index_from_map() {
+    fn index_from_iter() {
         let vals = vec![
             ("urn:Alice", "urn:Person"),
             ("urn:Alice", "urn:Employee"),
@@ -132,8 +137,7 @@ mod tests {
         .into_iter()
         .map(|(a, b)| (a.to_string(), b.to_string()));
 
-        let map = HashMap::from_iter(vals);
-        let mut idx = TypeIndex::from_map(map);
+        let mut idx = TypeIndex::from_iter(vals);
 
         assert_eq!(idx.get("urn:Alice").unwrap(), vec!["urn:Person", "urn:Employee"]);
         println!("{}", serde_yml::to_string(&idx).unwrap());
