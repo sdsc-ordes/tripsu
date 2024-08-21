@@ -13,41 +13,54 @@ use crate::{
     rdf_types::{Triple, TripleView},
 };
 
+/// Stores a mapping from hashed instance uri to their types
 #[derive(Serialize, Deserialize)]
-pub struct Index {
+pub struct TypeIndex {
     pub types: Vec<String>,
-    map: HashMap<[u8; 8], Vec<usize>>,
-
-    #[serde(skip)]
-    hasher: DefaultHasher,
+    map: HashMap<String, Vec<usize>>,
 }
 
-impl Index {
-    fn hash(&mut self, s: &str) -> [u8; 8] {
-        s.hash(&mut self.hasher);
-        self.hasher.finish().to_be_bytes()
+impl TypeIndex {
+    fn hash(&mut self, s: &str) -> String {
+        let mut hasher = DefaultHasher::new();
+        s.hash(&mut hasher);
+        hasher.finish().to_string()
+    }
+
+    pub fn from_iter(type_map: impl Iterator<Item = (String, String)>) -> Self {
+        let mut idx = TypeIndex {
+            types: type_map
+                .map(|(_, &t)| t.clone())
+                .collect::<std::collections::HashSet<String>>()
+                .into_iter()
+                .collect(),
+            map: HashMap::new(),
+        };
+
+            type_map.for_each(|(subject, type_uri)| idx.insert(&subject.to_string(), &type_uri.to_string()).unwrap());
+
+        return idx;
     }
 
     pub fn new() -> Self {
-        Index {
+        TypeIndex {
             types: Vec::new(),
             map: HashMap::new(),
-            hasher: DefaultHasher::new(),
         }
     }
 
     // Insert input subject-type mapping into the index.
     // The index will store the hash of the subject.
-    pub fn insert(&mut self, subject_key: &str, type_val: &str) -> Result<(), std::io::Error> {
-        let key = self.hash(subject_key);
+    pub fn insert(&mut self, subject_uri: &str, type_uri: &str) -> Result<(), std::io::Error> {
+        let key = self.hash(subject_uri);
         let type_idx: usize;
 
         // Get type index or add a new one
-        if self.types.contains(&type_val.to_string()) {
-            type_idx = self.types.iter().position(|x| *x == type_val).unwrap();
+        if self.types.contains(&type_uri.to_string()) {
+            type_idx = self.types.iter().position(|x| *x == type_uri).unwrap();
         } else {
             type_idx = self.types.len();
-            self.types.push(type_val.to_string());
+            self.types.push(type_uri.to_string());
         }
         // Insert mapping into the index
         match self.map.get_mut(&key) {
@@ -74,7 +87,7 @@ impl Index {
     }
 }
 
-fn index_triple(t: Triple, index: &mut Index) {
+fn index_triple(t: Triple, index: &mut TypeIndex) {
     if t.predicate.iri.as_str() == "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" {
         let r = || -> std::io::Result<()> {
             index.insert(&t.subject.to_string(), &t.object.to_string())
@@ -86,11 +99,11 @@ fn index_triple(t: Triple, index: &mut Index) {
     }
 }
 
-pub fn create_type_map(input: &Path, output: &Path) {
+pub fn create_type_index(input: &Path, output: &Path) {
     let buf_in = io::get_reader(input);
     let buf_out = io::get_writer(output);
     let mut triples = io::parse_ntriples(buf_in);
-    let mut index = Index::new();
+    let mut index = TypeIndex::new();
 
     while !triples.is_end() {
         let _ = triples
@@ -103,4 +116,26 @@ pub fn create_type_map(input: &Path, output: &Path) {
             });
     }
     let _ = serde_yml::to_writer(buf_out, &index);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    // Test the parsing of a triple.
+    fn index_from_map() {
+        let vals = vec![
+            ("urn:Alice", "urn:Person"),
+            ("urn:Alice", "urn:Employee"),
+            ("urn:ACME", "urn:Organization"),
+        ]
+        .into_iter()
+        .map(|(a, b)| (a.to_string(), b.to_string()));
+
+        let map = HashMap::from_iter(vals);
+        let mut idx = TypeIndex::from_map(map);
+
+        assert_eq!(idx.get("urn:Alice").unwrap(), vec!["urn:Person", "urn:Employee"]);
+        println!("{}", serde_yml::to_string(&idx).unwrap());
+    }
 }
