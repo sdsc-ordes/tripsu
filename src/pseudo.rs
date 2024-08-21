@@ -83,14 +83,14 @@ mod tests {
 
     #[test]
     // Test the parsing of a triple.
-    fn encrypt_nt_file() {
+    fn pseudo_nt_file() {
         let logger = log::create_logger(true);
 
         let dir = tempdir().unwrap();
         let input_path = Path::new("tests/data/test.nt");
         let rules_path = Path::new("tests/data/rules.yaml");
         let output_path = dir.path().join("output.nt");
-        let type_map_path = Path::new("tests/data/type_map.nt");
+        let type_map_path = Path::new("tests/data/type_index.yaml");
         let key = None;
         pseudonymize_graph(
             &logger,
