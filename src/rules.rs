@@ -2,7 +2,7 @@ use crate::rdf_types::*;
 use ::std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 
-use crate::{index::Index, model::TripleMask};
+use crate::{index::TypeIndex, model::TripleMask};
 
 /// Rules for pseudonymizing nodes
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -38,7 +38,7 @@ pub struct Rules {
 }
 
 /// Check all parts of the triple against rules.
-pub fn match_rules(triple: &Triple, rules: &Rules, type_map: &mut Index) -> TripleMask {
+pub fn match_rules(triple: &Triple, rules: &Rules, type_map: &mut TypeIndex) -> TripleMask {
     let mut mask =
         match_node_rules(triple, rules, type_map) | match_object_rules(triple, rules, type_map);
 
@@ -50,7 +50,7 @@ pub fn match_rules(triple: &Triple, rules: &Rules, type_map: &mut Index) -> Trip
 }
 
 /// Check triple against node-pseudonymization rules.
-pub fn match_node_rules(triple: &Triple, rules: &Rules, type_map: &mut Index) -> TripleMask {
+pub fn match_node_rules(triple: &Triple, rules: &Rules, type_map: &mut TypeIndex) -> TripleMask {
     let pseudo_subject = match &triple.subject {
         Subject::NamedNode(n) => match_type(&n.iri, rules, type_map),
         Subject::BlankNode(_) => false,
@@ -73,7 +73,7 @@ pub fn match_node_rules(triple: &Triple, rules: &Rules, type_map: &mut Index) ->
 }
 
 /// Checks triple against object-pseudonymization rules
-pub fn match_object_rules(triple: &Triple, rules: &Rules, type_map: &mut Index) -> TripleMask {
+pub fn match_object_rules(triple: &Triple, rules: &Rules, type_map: &mut TypeIndex) -> TripleMask {
     if match_predicate(&triple.predicate.iri, rules) {
         return TripleMask::OBJECT;
     }
@@ -95,7 +95,7 @@ pub fn match_object_rules(triple: &Triple, rules: &Rules, type_map: &mut Index) 
 }
 
 /// Check if the type of input instance URI is in the rules.
-fn match_type(subject: &str, rules: &Rules, type_map: &mut Index) -> bool {
+fn match_type(subject: &str, rules: &Rules, type_map: &mut TypeIndex) -> bool {
     if let Some(v) = type_map.get(subject) {
         v.iter().any(|&i| rules.nodes.of_type.contains(i))
     } else {
@@ -112,7 +112,7 @@ fn match_predicate(predicate: &str, rules: &Rules) -> bool {
 fn match_type_predicate(
     subject: &str,
     predicate: &str,
-    type_map: &mut Index,
+    type_map: &mut TypeIndex,
     rules: &Rules,
 ) -> bool {
     let Some(instance_types) = type_map.get(subject) else {
@@ -149,9 +149,10 @@ mod tests {
         };
 
         ($($key:expr => $value:expr),+ $(,)?) => {
-            ::std::collections::HashMap::from([
+            TypeIndex::from_map(
+                ::std::collections::HashMap::from([
                 $((String::from($key), String::from($value))),*
-            ])
+            ]))
         };
     }
 
@@ -167,7 +168,7 @@ mod tests {
     // Subject is not in the type index
     #[case(index! { "BankName" => "Bank" }, "Bank", false)]
     fn type_rule(
-        #[case] index: HashMap<String, String>,
+        #[case] mut index: TypeIndex,
         #[case] rule_type: &str,
         #[case] match_expected: bool,
     ) {
@@ -179,7 +180,7 @@ mod tests {
         "
         ));
 
-        assert_eq!(match_type(NODE_IRI, &rules, &index), match_expected);
+        assert_eq!(match_type(NODE_IRI, &rules, &mut index), match_expected);
     }
 
     #[rstest]
@@ -210,7 +211,7 @@ mod tests {
     fn type_predicate_rule(
         #[case] rule_type: &str,
         #[case] rule_predicate: &str,
-        #[case] index: HashMap<String, String>,
+        #[case] mut index: TypeIndex,
         #[case] match_expected: bool,
     ) {
         let rules = parse_rules(&format!(
@@ -223,7 +224,7 @@ mod tests {
         ));
 
         assert_eq!(
-            match_type_predicate(NODE_IRI, PREDICATE_IRI, &index, &rules),
+            match_type_predicate(NODE_IRI, PREDICATE_IRI, &mut index, &rules),
             match_expected
         );
     }
@@ -251,14 +252,14 @@ mod tests {
                 "urn:Person": ["urn:hasAge"]
             "#,
         );
-        let index = index! {
+        let mut index = index! {
             "urn:Alice" => "urn:Person",
             "urn:Bob" => "urn:Person",
             "urn:ACME" => "urn:Organization"
         };
         TurtleParser::new(triple.as_ref(), None)
             .parse_all(&mut |t| {
-                let mask = match_rules(&t.into(), &rules, &index);
+                let mask = match_rules(&t.into(), &rules, &mut index);
                 assert_eq!(mask.bits(), expected_mask);
                 Ok(()) as Result<(), TurtleError>
             })
