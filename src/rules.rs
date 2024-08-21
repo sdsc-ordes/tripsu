@@ -149,10 +149,10 @@ mod tests {
         };
 
         ($($key:expr => $value:expr),+ $(,)?) => {
-            TypeIndex::from_map(
-                ::std::collections::HashMap::from([
+            TypeIndex::from_iter(
+                vec![
                 $((String::from($key), String::from($value))),*
-            ]))
+            ].into_iter())
         };
     }
 
