@@ -1,14 +1,13 @@
 use rio_api::parser::TriplesParser;
 use rio_turtle::TurtleError;
 use std::{
-    collections::HashMap,
     io::{BufRead, Write},
     path::{Path, PathBuf},
 };
 
 use crate::{
     crypto::{new_pseudonymizer, Pseudonymize},
-    index::Index,
+    index::TypeIndex,
     io,
     log::Logger,
     rdf_types::*,
@@ -20,7 +19,7 @@ use crate::{
 fn process_triple(
     triple: Triple,
     rules_config: &Rules,
-    node_to_type: &mut Index,
+    node_to_type: &mut TypeIndex,
     out: &mut impl Write,
     hasher: &dyn Pseudonymize,
 ) {
@@ -36,24 +35,6 @@ fn process_triple(
     }
 }
 
-// Create a index mapping node -> type from an input ntriples buffer
-fn load_type_map(input: impl BufRead) -> HashMap<String, String> {
-    let mut node_to_type: HashMap<String, String> = HashMap::new();
-    let mut triples = io::parse_ntriples(input);
-
-    while !triples.is_end() {
-        let _: Result<(), TurtleError> = triples.parse_step(&mut |t| {
-            node_to_type.insert(
-                t.subject.to_string().replace(['<', '>'], ""),
-                t.object.to_string().replace(['<', '>'], ""),
-            );
-            Ok(())
-        });
-    }
-
-    return node_to_type;
-}
-
 pub fn pseudonymize_graph(
     _: &Logger,
     input: &Path,
@@ -63,11 +44,10 @@ pub fn pseudonymize_graph(
     secret_path: &Option<PathBuf>,
 ) {
     let buf_input = io::get_reader(input);
-    let buf_index = io::get_reader(index_path);
     let mut buf_output = io::get_writer(output);
 
     let rules = io::parse_rules(rules_path);
-    let node_to_type: HashMap<String, String> = load_type_map(buf_index);
+    let mut type_index = io::parse_index(index_path);
 
     let secret = secret_path.as_ref().map(io::read_bytes);
     let pseudonymizer = new_pseudonymizer(None, secret);
@@ -81,7 +61,7 @@ pub fn pseudonymize_graph(
                 process_triple(
                     t.into(),
                     &rules,
-                    &node_to_type,
+                    &mut type_index,
                     &mut buf_output,
                     &pseudonymizer,
                 );
