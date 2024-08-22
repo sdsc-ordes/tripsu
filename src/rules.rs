@@ -145,7 +145,7 @@ mod tests {
     #[macro_export]
     macro_rules! index {
     () => {
-            ::std::collections::HashMap::new()
+            TypeIndex::new()
         };
 
         ($($key:expr => $value:expr),+ $(,)?) => {
