@@ -2,6 +2,7 @@ use rio_api::parser::TriplesParser;
 use rio_turtle::TurtleError;
 use serde::{Deserialize, Serialize};
 use serde_yml;
+use smallvec::{SmallVec, smallvec};
 use std::{
     collections::HashMap,
     hash::{DefaultHasher, Hash, Hasher},
@@ -17,7 +18,7 @@ use crate::{
 #[derive(Serialize, Deserialize)]
 pub struct TypeIndex {
     pub types: Vec<String>,
-    map: HashMap<String, Vec<usize>>,
+    map: HashMap<String, SmallVec<[usize; 1]>>,
 }
 
 impl TypeIndex {
@@ -72,7 +73,7 @@ impl TypeIndex {
                 v.push(type_idx);
             }
             None => {
-                self.map.insert(key, vec![type_idx]);
+                self.map.insert(key, smallvec![type_idx]);
             }
         }
 
