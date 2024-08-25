@@ -4,7 +4,7 @@ set -euo pipefail
 
 ### Final output path
 OUTPUT="profiling.md"
-PROFILE='debug'
+PROFILE='release'
 BUILD_ARGS=( )
 [[ "${PROFILE}" == 'release' ]] && BUILD_ARGS+=( '--release' )
 ### setup binaries
