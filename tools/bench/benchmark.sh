@@ -4,7 +4,9 @@ set -euo pipefail
 
 ### Final output path
 OUTPUT="profiling.md"
-
+PROFILE='debug'
+BUILD_ARGS=( )
+[[ "${PROFILE}" == 'release' ]] && BUILD_ARGS+=( '--release' )
 ### setup binaries
 
 # baseline binary
@@ -18,14 +20,14 @@ BASE_URL="$(git config --get remote.origin.url)"
         ${BASE_URL} \
         ${BASE_DIR} \
     && cd ${BASE_DIR} \
-    && just build --release
+    && just build "${BUILD_ARGS[@]}"
 )
-BASE_BIN="${BASE_DIR}/target/release/tripsu"
+BASE_BIN="${BASE_DIR}/target/${PROFILE}/tripsu"
 
 # current binary
 COMP_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-just build --release
-COMP_BIN=./target/release/tripsu
+just build "${BUILD_ARGS[@]}"
+COMP_BIN="./target/${PROFILE}/tripsu"
 
 # setup data
 DATA_URL="https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/proteomes.rdf.xz"
