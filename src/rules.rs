@@ -79,12 +79,18 @@ pub fn match_object_rules(triple: &Triple, rules: &Rules, type_map: &mut TypeInd
     }
 
     let pseudo_object = match &triple.subject {
-        Subject::NamedNode(n) => {
-            match_type_predicate(&n.to_string(), &triple.predicate.to_string(), type_map, rules)
-        }
-        Subject::BlankNode(b) => {
-            match_type_predicate(&b.to_string(), &triple.predicate.to_string(), type_map, rules)
-        }
+        Subject::NamedNode(n) => match_type_predicate(
+            &n.to_string(),
+            &triple.predicate.to_string(),
+            type_map,
+            rules,
+        ),
+        Subject::BlankNode(b) => match_type_predicate(
+            &b.to_string(),
+            &triple.predicate.to_string(),
+            type_map,
+            rules,
+        ),
     };
 
     if pseudo_object {

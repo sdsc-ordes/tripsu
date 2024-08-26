@@ -21,7 +21,7 @@ pub struct TypeIndex {
 }
 
 impl TypeIndex {
-    fn hash(&self, s: & impl Hash) -> u64 {
+    fn hash(&self, s: &impl Hash) -> u64 {
         let mut hasher = DefaultHasher::new();
         s.hash(&mut hasher);
         hasher.finish().to_le()
@@ -30,10 +30,7 @@ impl TypeIndex {
     pub fn from_iter<'a>(type_map: impl Iterator<Item = (&'a str, &'a str)>) -> Self {
         let mut idx = TypeIndex::new();
 
-        type_map.for_each(|(subject_uri, type_uri)| {
-            idx.insert(&subject_uri, &type_uri)
-                .unwrap()
-        });
+        type_map.for_each(|(subject_uri, type_uri)| idx.insert(subject_uri, type_uri).unwrap());
 
         return idx;
     }
@@ -74,7 +71,6 @@ impl TypeIndex {
     pub fn get(&self, subject_key: &str) -> Option<Vec<&String>> {
         let key = self.hash(&subject_key.to_string());
         self.map
-
             .get(&key)
             .map(|v| v.iter().map(|i| &self.types[*i]).collect())
     }
