@@ -21,25 +21,17 @@ pub struct TypeIndex {
 }
 
 impl TypeIndex {
-    fn hash(&mut self, s: &str) -> u64 {
+    fn hash(&self, s: & impl Hash) -> u64 {
         let mut hasher = DefaultHasher::new();
         s.hash(&mut hasher);
         hasher.finish().to_le()
     }
 
-    pub fn from_iter(type_map: impl Iterator<Item = (String, String)>) -> Self {
-        let vec: Vec<(String, String)> = type_map.collect();
+    pub fn from_iter<'a>(type_map: impl Iterator<Item = (&'a str, &'a str)>) -> Self {
         let mut idx = TypeIndex::new();
-        idx.types = vec
-            .clone()
-            .iter()
-            .map(|(_, t)| t.clone())
-            .collect::<std::collections::HashSet<String>>()
-            .into_iter()
-            .collect();
 
-        vec.iter().for_each(|(subject, type_uri)| {
-            idx.insert(&subject.to_string(), &type_uri.to_string())
+        type_map.for_each(|(subject_uri, type_uri)| {
+            idx.insert(&subject_uri, &type_uri)
                 .unwrap()
         });
 
@@ -56,7 +48,7 @@ impl TypeIndex {
     // Insert input subject-type mapping into the index.
     // The index will store the hash of the subject.
     pub fn insert(&mut self, subject_uri: &str, type_uri: &str) -> Result<(), std::io::Error> {
-        let key = self.hash(subject_uri);
+        let key = self.hash(&subject_uri.to_string());
         let type_idx: usize;
 
         // Get type index or add a new one
@@ -79,9 +71,10 @@ impl TypeIndex {
         Ok(())
     }
 
-    pub fn get(&mut self, subject_key: &str) -> Option<Vec<&String>> {
-        let key = self.hash(subject_key);
+    pub fn get(&self, subject_key: &str) -> Option<Vec<&String>> {
+        let key = self.hash(&subject_key.to_string());
         self.map
+
             .get(&key)
             .map(|v| v.iter().map(|i| &self.types[*i]).collect())
     }
@@ -128,9 +121,9 @@ mod tests {
             ("urn:ACME", "urn:Organization"),
         ]
         .into_iter()
-        .map(|(a, b)| (a.to_string(), b.to_string()));
+        .map(|(a, b)| (a, b));
 
-        let mut idx = TypeIndex::from_iter(vals);
+        let idx = TypeIndex::from_iter(vals);
 
         assert_eq!(
             idx.get("urn:Alice").unwrap(),
