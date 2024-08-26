@@ -23,6 +23,13 @@ nix-develop-ci *args:
     { [ -n "${cmd:-}" ] || cmd=("zsh"); } && \
     nix develop ./tools/nix#ci --command "${cmd[@]}"
 
+# Enter nix development shell for benchmarking.
+nix-develop-bench *args:
+    cd "{{root_dir}}" && \
+    cmd=("$@") && \
+    { [ -n "${cmd:-}" ] || cmd=("zsh"); } && \
+    nix develop ./tools/nix#bench --command "${cmd[@]}"
+
 ## Standard stuff =============================================================
 # Format the code.
 format *args:
