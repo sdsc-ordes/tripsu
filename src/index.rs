@@ -71,11 +71,11 @@ impl TypeIndex {
         Ok(())
     }
 
-    pub fn get(&self, subject_key: &str) -> Option<Vec<&String>> {
+    pub fn get(&self, subject_key: &str) -> Option<Vec<&str>> {
         let key = self.hash(&subject_key.to_string());
         self.map
             .get(&key)
-            .map(|v| v.iter().map(|i| &self.types[*i]).collect())
+            .map(|v| v.iter().map(|i| self.types[*i].as_ref()).collect())
     }
 }
 
