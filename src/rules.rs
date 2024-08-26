@@ -52,11 +52,11 @@ pub fn match_rules(triple: &Triple, rules: &Rules, type_map: &mut TypeIndex) -> 
 /// Check triple against node-pseudonymization rules.
 pub fn match_node_rules(triple: &Triple, rules: &Rules, type_map: &mut TypeIndex) -> TripleMask {
     let pseudo_subject = match &triple.subject {
-        Subject::NamedNode(n) => match_type(&n.iri, rules, type_map),
+        Subject::NamedNode(n) => match_type(&n.to_string(), rules, type_map),
         Subject::BlankNode(_) => false,
     };
     let pseudo_object = match &triple.object {
-        Term::NamedNode(n) => match_type(&n.iri, rules, type_map),
+        Term::NamedNode(n) => match_type(&n.to_string(), rules, type_map),
         Term::BlankNode(_) => false,
         Term::Literal(_) => false,
     };
@@ -151,7 +151,7 @@ mod tests {
         ($($key:expr => $value:expr),+ $(,)?) => {
             TypeIndex::from_iter(
                 vec![
-                $((String::from($key), String::from($value))),*
+                $(($key, $value)),*
             ].into_iter())
         };
     }
