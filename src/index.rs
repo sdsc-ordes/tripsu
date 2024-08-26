@@ -18,14 +18,14 @@ use crate::{
 #[derive(Serialize, Deserialize)]
 pub struct TypeIndex {
     pub types: Vec<String>,
-    map: HashMap<String, SmallVec<[usize; 1]>>,
+    map: HashMap<u64, SmallVec<[usize; 1]>>,
 }
 
 impl TypeIndex {
-    fn hash(&mut self, s: &str) -> String {
+    fn hash(&mut self, s: &str) -> u64 {
         let mut hasher = DefaultHasher::new();
         s.hash(&mut hasher);
-        hasher.finish().to_string()
+        hasher.finish().to_le()
     }
 
     pub fn from_iter(type_map: impl Iterator<Item = (String, String)>) -> Self {
