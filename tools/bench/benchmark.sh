@@ -18,6 +18,7 @@ BASE_BRANCH='main'
 BASE_DIR=$(mktemp -d)
 BASE_URL="$(git config --get remote.origin.url)"
 (
+    GIT_CLONE_PROTECTION_ACTIVE=false \
     git clone \
         --branch "${BASE_BRANCH}" \
         "${BASE_URL}" \
@@ -100,7 +101,7 @@ mem_prof() {
     local HEAP_OUT
     HEAP_OUT=$(mktemp)
     echo -n "$name: "
-    heaptrack -o "${HEAP_OUT}" "${cmd}" >/dev/null
+    heaptrack -o "${HEAP_OUT}" ${cmd} >/dev/null
     heaptrack_print "${HEAP_OUT}.zst" \
     | grep '^peak heap memory'
 }
