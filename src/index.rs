@@ -116,9 +116,9 @@ mod tests {
     // Test the parsing of a triple.
     fn index_from_iter() {
         let vals = vec![
-            ("urn:Alice", "urn:Person"),
-            ("urn:Alice", "urn:Employee"),
-            ("urn:ACME", "urn:Organization"),
+            ("<urn:Alice>", "<urn:Person>"),
+            ("<urn:Alice>", "<urn:Employee>"),
+            ("<urn:ACME>", "<urn:Organization>"),
         ]
         .into_iter()
         .map(|(a, b)| (a, b));
@@ -126,8 +126,8 @@ mod tests {
         let idx = TypeIndex::from_iter(vals);
 
         assert_eq!(
-            idx.get("urn:Alice").unwrap(),
-            vec!["urn:Person", "urn:Employee"]
+            idx.get("<urn:Alice>").unwrap(),
+            vec!["<urn:Person>", "<urn:Employee>"]
         );
         println!("{}", serde_json::to_string(&idx).unwrap());
     }
