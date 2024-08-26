@@ -53,7 +53,7 @@ pub fn parse_rules(path: &Path) -> Rules {
 // Parse yaml type index
 pub fn parse_index(path: &Path) -> TypeIndex {
     return match File::open(path) {
-        Ok(file) => serde_yml::from_reader(file).expect("Error parsing index file."),
+        Ok(file) => serde_json::from_reader(file).expect("Error parsing index file."),
         Err(e) => panic!("Cannot open index file '{:?}': '{}'.", path, e),
     };
 }

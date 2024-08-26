@@ -1,7 +1,7 @@
 use rio_api::parser::TriplesParser;
 use rio_turtle::TurtleError;
 use serde::{Deserialize, Serialize};
-use serde_yml;
+use serde_json;
 use smallvec::{SmallVec, smallvec};
 use std::{
     collections::HashMap,
@@ -120,7 +120,7 @@ pub fn create_type_index(input: &Path, output: &Path) {
                 panic!("Parsing error occured: {e}");
             });
     }
-    let _ = serde_yml::to_writer(buf_out, &index);
+    let _ = serde_json::to_writer(buf_out, &index);
 }
 
 #[cfg(test)]
@@ -143,6 +143,6 @@ mod tests {
             idx.get("urn:Alice").unwrap(),
             vec!["urn:Person", "urn:Employee"]
         );
-        println!("{}", serde_yml::to_string(&idx).unwrap());
+        println!("{}", serde_json::to_string(&idx).unwrap());
     }
 }

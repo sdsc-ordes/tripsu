@@ -90,7 +90,7 @@ mod tests {
         let input_path = Path::new("tests/data/test.nt");
         let rules_path = Path::new("tests/data/rules.yaml");
         let output_path = dir.path().join("output.nt");
-        let type_map_path = Path::new("tests/data/type_index.yaml");
+        let type_map_path = Path::new("tests/data/type_index.json");
         let key = None;
         pseudonymize_graph(
             &logger,
