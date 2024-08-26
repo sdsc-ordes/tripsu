@@ -1,8 +1,7 @@
 use rio_api::parser::TriplesParser;
 use rio_turtle::TurtleError;
 use serde::{Deserialize, Serialize};
-use serde_json;
-use smallvec::{SmallVec, smallvec};
+use smallvec::{smallvec, SmallVec};
 use std::{
     collections::HashMap,
     hash::{DefaultHasher, Hash, Hasher},
@@ -82,21 +81,15 @@ impl TypeIndex {
 
     pub fn get(&mut self, subject_key: &str) -> Option<Vec<&String>> {
         let key = self.hash(subject_key);
-        let val = if let Some(v) = self.map.get(&key) {
-            Some(v.iter().map(|i| &self.types[*i]).collect())
-        } else {
-            None
-        };
-
-        return val;
+        self.map
+            .get(&key)
+            .map(|v| v.iter().map(|i| &self.types[*i]).collect())
     }
 }
 
 fn index_triple(t: Triple, index: &mut TypeIndex) {
     if t.predicate.iri.as_str() == "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" {
-        let r = || -> std::io::Result<()> {
-            index.insert(&t.subject.to_string(), &t.object.to_string())
-        }();
+        let r = { index.insert(&t.subject.to_string(), &t.object.to_string()) };
 
         if let Err(e) = r {
             panic!("Error writting to out buffer: {e}");
