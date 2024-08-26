@@ -13,7 +13,10 @@ use crate::{
     rdf_types::{Triple, TripleView},
 };
 
-/// Stores a mapping from hashed instance uri to their types
+/// Stores a mapping from hashed instance uri to their types.
+/// The type URIs are stored once as a vector of strings.
+/// Each subject in map is stored as hash(subject_uri): u64
+/// and refers to its types using their vector index.
 #[derive(Serialize, Deserialize)]
 pub struct TypeIndex {
     pub types: Vec<String>,
@@ -48,14 +51,14 @@ impl TypeIndex {
         let key = self.hash(&subject_uri.to_string());
         let type_idx: usize;
 
-        // Get type index or add a new one
+        // Get type index or add a new one.
         if self.types.contains(&type_uri.to_string()) {
             type_idx = self.types.iter().position(|x| *x == type_uri).unwrap();
         } else {
             type_idx = self.types.len();
             self.types.push(type_uri.to_string());
         }
-        // Insert mapping into the index
+        // Insert mapping into the index.
         match self.map.get_mut(&key) {
             Some(v) => {
                 v.push(type_idx);
