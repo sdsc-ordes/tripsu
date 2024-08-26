@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Benchmark runtime and memory usage of tripsu
+# Compares the working directory version against a baseline branch (main by default)
+
 set -euo pipefail
 
 ### Final output path
