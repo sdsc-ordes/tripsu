@@ -74,16 +74,16 @@ pub fn match_node_rules(triple: &Triple, rules: &Rules, type_map: &mut TypeIndex
 
 /// Checks triple against object-pseudonymization rules
 pub fn match_object_rules(triple: &Triple, rules: &Rules, type_map: &mut TypeIndex) -> TripleMask {
-    if match_predicate(&triple.predicate.iri, rules) {
+    if match_predicate(&triple.predicate.to_string(), rules) {
         return TripleMask::OBJECT;
     }
 
     let pseudo_object = match &triple.subject {
         Subject::NamedNode(n) => {
-            match_type_predicate(&n.iri, &triple.predicate.iri, type_map, rules)
+            match_type_predicate(&n.to_string(), &triple.predicate.to_string(), type_map, rules)
         }
         Subject::BlankNode(b) => {
-            match_type_predicate(&b.id, &triple.predicate.iri, type_map, rules)
+            match_type_predicate(&b.to_string(), &triple.predicate.to_string(), type_map, rules)
         }
     };
 
