@@ -138,8 +138,8 @@ mod tests {
     use serde_yml;
 
     // Instance used in tests
-    const NODE_IRI: &str = "Alice";
-    const PREDICATE_IRI: &str = "hasName";
+    const NODE_IRI: &str = "<Alice>";
+    const PREDICATE_IRI: &str = "<hasName>";
 
     // Helper macro to create a HashMap from pairs
     #[macro_export]
@@ -162,11 +162,11 @@ mod tests {
 
     #[rstest]
     // Subject is in the rules & type index
-    #[case(index! { NODE_IRI => "Person" }, "Person", true)]
+    #[case(index! { NODE_IRI => "<Person>" }, "<Person>", true)]
     // Subject is in the type index, not in the rules
-    #[case(index! { NODE_IRI => "Person" }, "Bank", false)]
+    #[case(index! { NODE_IRI => "<Person>" }, "<Bank>", false)]
     // Subject is not in the type index
-    #[case(index! { "BankName" => "Bank" }, "Bank", false)]
+    #[case(index! { "<BankName>" => "<Bank>" }, "<Bank>", false)]
     fn type_rule(
         #[case] mut index: TypeIndex,
         #[case] rule_type: &str,
@@ -201,13 +201,13 @@ mod tests {
 
     #[rstest]
     // Subject predicate in config
-    #[case("Person", "hasName", index! { NODE_IRI => "Person" }, true)]
+    #[case("<Person>", "<hasName>", index! { NODE_IRI => "<Person>" }, true)]
     // Subject in config, predicate not
-    #[case("Person", "hasAge", index! { NODE_IRI => "Person" }, false)]
+    #[case("<Person>", "<hasAge>", index! { NODE_IRI => "<Person>" }, false)]
     // Subject predicate not in config
-    #[case("Bob", "hasAge", index! { NODE_IRI => "Person" }, false)]
+    #[case("<Bob>", "<hasAge>", index! { NODE_IRI => "<Person>" }, false)]
     // Subject not in type index
-    #[case("Bob", "hasAge", index! { "Bob" => "Person" }, false)]
+    #[case("<Bob>", "<hasAge>", index! { "<Bob>" => "<Person>" }, false)]
     fn type_predicate_rule(
         #[case] rule_type: &str,
         #[case] rule_predicate: &str,
@@ -245,18 +245,20 @@ mod tests {
         let rules: Rules = parse_rules(
             r#"
             nodes:
-              of_type: ["urn:Person"]
+              of_type: ["<urn:Person>"]
             objects:
-              on_predicate: ["urn:hasLastName"]
+              on_predicate: ["<urn:hasLastName>"]
               on_type_predicate:
-                "urn:Person": ["urn:hasAge"]
+                "<urn:Person>": ["<urn:hasAge>"]
             "#,
         );
         let mut index = index! {
-            "urn:Alice" => "urn:Person",
-            "urn:Bob" => "urn:Person",
-            "urn:ACME" => "urn:Organization"
+            "<urn:Alice>" => "<urn:Person>",
+            "<urn:Bob>" => "<urn:Person>",
+            "<urn:ACME>" => "<urn:Organization>"
         };
+        println!("{}", serde_yml::to_string(&rules).unwrap());
+        println!("{}", serde_json::to_string(&index).unwrap());
         TurtleParser::new(triple.as_ref(), None)
             .parse_all(&mut |t| {
                 let mask = match_rules(&t.into(), &rules, &mut index);
