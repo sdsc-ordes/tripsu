@@ -1,13 +1,13 @@
 use rio_api::parser::TriplesParser;
 use rio_turtle::TurtleError;
 use std::{
-    collections::HashMap,
-    io::{BufRead, Write},
+    io::Write,
     path::{Path, PathBuf},
 };
 
 use crate::{
     crypto::{new_pseudonymizer, Pseudonymize},
+    index::TypeIndex,
     io,
     log::Logger,
     rdf_types::*,
@@ -19,7 +19,7 @@ use crate::{
 fn process_triple(
     triple: Triple,
     rules_config: &Rules,
-    node_to_type: &HashMap<String, String>,
+    node_to_type: &mut TypeIndex,
     out: &mut impl Write,
     hasher: &dyn Pseudonymize,
 ) {
@@ -35,24 +35,6 @@ fn process_triple(
     }
 }
 
-// Create a index mapping node -> type from an input ntriples buffer
-fn load_type_map(input: impl BufRead) -> HashMap<String, String> {
-    let mut node_to_type: HashMap<String, String> = HashMap::new();
-    let mut triples = io::parse_ntriples(input);
-
-    while !triples.is_end() {
-        let _: Result<(), TurtleError> = triples.parse_step(&mut |t| {
-            node_to_type.insert(
-                t.subject.to_string().replace(['<', '>'], ""),
-                t.object.to_string().replace(['<', '>'], ""),
-            );
-            Ok(())
-        });
-    }
-
-    return node_to_type;
-}
-
 pub fn pseudonymize_graph(
     _: &Logger,
     input: &Path,
@@ -62,11 +44,10 @@ pub fn pseudonymize_graph(
     secret_path: &Option<PathBuf>,
 ) {
     let buf_input = io::get_reader(input);
-    let buf_index = io::get_reader(index_path);
     let mut buf_output = io::get_writer(output);
 
     let rules = io::parse_rules(rules_path);
-    let node_to_type: HashMap<String, String> = load_type_map(buf_index);
+    let mut type_index = io::parse_index(index_path);
 
     let secret = secret_path.as_ref().map(io::read_bytes);
     let pseudonymizer = new_pseudonymizer(None, secret);
@@ -80,7 +61,7 @@ pub fn pseudonymize_graph(
                 process_triple(
                     t.into(),
                     &rules,
-                    &node_to_type,
+                    &mut type_index,
                     &mut buf_output,
                     &pseudonymizer,
                 );
@@ -102,14 +83,14 @@ mod tests {
 
     #[test]
     // Test the parsing of a triple.
-    fn encrypt_nt_file() {
+    fn pseudo_nt_file() {
         let logger = log::create_logger(true);
 
         let dir = tempdir().unwrap();
         let input_path = Path::new("tests/data/test.nt");
         let rules_path = Path::new("tests/data/rules.yaml");
         let output_path = dir.path().join("output.nt");
-        let type_map_path = Path::new("tests/data/type_map.nt");
+        let type_map_path = Path::new("tests/data/type_index.json");
         let key = None;
         pseudonymize_graph(
             &logger,

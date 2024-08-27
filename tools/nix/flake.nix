@@ -82,6 +82,11 @@
           dasel
         ];
 
+        benchInputs = with pkgs; [
+          hyperfine
+          heaptrack
+        ];
+
         # Things needed at runtime.
         buildInputs = [];
 
@@ -97,6 +102,12 @@
             default = mkShell {
               inherit buildInputs;
               nativeBuildInputs = nativeBuildInputsBasic ++ nativeBuildInputsDev;
+            };
+            bench = mkShell {
+              inherit buildInputs;
+              nativeBuildInputs = nativeBuildInputsBasic 
+                ++ nativeBuildInputsDev
+                ++ benchInputs;
             };
 
             ci = mkShell {

@@ -714,11 +714,12 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.120"
+version = "1.0.127"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e0d21c9a8cae1235ad58a00c11cb40d4b1e5c784f1ef2c537876ed6ffd8b7c5"
+checksum = "8043c06d9f82bd7271361ed64f415fe5e12a77fdb52e573e7f06a516dea329ad"
 dependencies = [
  "itoa",
+ "memchr",
  "ryu",
  "serde",
 ]
@@ -778,6 +779,15 @@ dependencies = [
  "term",
  "thread_local",
  "time",
+]
+
+[[package]]
+name = "smallvec"
+version = "1.13.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
+dependencies = [
+ "serde",
 ]
 
 [[package]]
@@ -906,7 +916,7 @@ dependencies = [
 
 [[package]]
 name = "tripsu"
-version = "0.0.2"
+version = "0.1.0"
 dependencies = [
  "bitflags",
  "blake3",
@@ -917,10 +927,12 @@ dependencies = [
  "rio_turtle",
  "rstest",
  "serde",
+ "serde_json",
  "serde_yml",
  "slog",
  "slog-async",
  "slog-term",
+ "smallvec",
  "tempfile",
 ]
 
