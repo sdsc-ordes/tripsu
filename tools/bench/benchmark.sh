@@ -81,7 +81,7 @@ cpu_prof() {
     local branch2=$3
     local cmd2=$4
     local out=$5
-    hyperfine --export-markdown "${out}" -r 2 \
+    hyperfine --export-markdown "${out}" -r 5 \
         -n "${branch1}" "${cmd1}" \
         -n "${branch2}" "${cmd2}"
 }
@@ -167,5 +167,5 @@ mem_prof "${COMP_BRANCH}" "${COMP_CMD_PSD}" >> "${HEAP_PSD_OUT}"
 ### Reporting
 make_report \
     "${HYPF_IDX_OUT}" "${HYPF_PSD_OUT}" \
-    "${HEAP_IDX_OUT}" "${HEAP_PSD_OUT}" 
+    "${HEAP_IDX_OUT}" "${HEAP_PSD_OUT}" \
     "${BASE_BRANCH}" > "${OUTPUT}"
