@@ -69,7 +69,7 @@ function check_new_version() {
     local new_version="$1"
 
     # Check that is a version.
-    if [ "$(ci_container_mgr run --rm alpine/semver semver "$new_version" | tail -1)" != "$new_version" ]; then
+    if [ "$(ci_container_mgr run --rm docker.io/alpine/semver semver "$new_version" | tail -1)" != "$new_version" ]; then
         die "Your version '$new_version' is not sem. version compliant."
     fi
 
