@@ -2,11 +2,8 @@
   description = "tripsu";
 
   nixConfig = {
-    substituters = [
-      # Add here some other mirror if needed.
-      "https://cache.nixos.org/"
-    ];
     extra-substituters = [
+      "https://cache.nixos.org/"
       # Nix community's cache server
       "https://nix-community.cachix.org"
     ];
@@ -35,69 +32,78 @@
     };
   };
 
-  outputs = {
-    nixpkgs,
-    flake-utils,
-    rust-overlay,
-    ...
-  }: let
-    # This is string (without toString it would be a `path` which is put into the store)
-    rootDir = toString ./. + "../../..";
-  in
+  outputs =
+    {
+      nixpkgs,
+      flake-utils,
+      rust-overlay,
+      ...
+    }:
+    let
+      # This is string (without toString it would be a `path` which is put into the store)
+      rootDir = toString ./. + "../../..";
+    in
     flake-utils.lib.eachDefaultSystem
-    # Creates an attribute map `{ devShells.<system>.default = ...}`
-    # by calling this function:
-    (
-      system: let
-        overlays = [(import rust-overlay)];
+      # Creates an attribute map `{ devShells.<system>.default = ...}`
+      # by calling this function:
+      (
+        system:
+        let
+          overlays = [ (import rust-overlay) ];
 
-        # Import nixpkgs and load it into pkgs.
-        # Overlay the rust toolchain
-        lib = nixpkgs.lib;
-        pkgs = import nixpkgs {
-          inherit system overlays;
-        };
+          # Import nixpkgs and load it into pkgs.
+          # Overlay the rust toolchain
+          lib = nixpkgs.lib;
+          pkgs = import nixpkgs {
+            inherit system overlays;
+          };
 
-        # Set the rust toolchain from the `rust-toolchain.toml`.
-        rustToolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile ../../rust-toolchain.toml;
+          # Set the rust toolchain from the `rust-toolchain.toml`.
+          rustToolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile ../../rust-toolchain.toml;
 
-        # Things needed only at compile-time.
-        nativeBuildInputsBasic = with pkgs; [
-          findutils
-          coreutils
-          bash
-          zsh
-          curl
-          git
-          jq
-        ];
+          # Things needed only at compile-time.
+          nativeBuildInputsBasic = with pkgs; [
+            findutils
+            coreutils
+            bash
+            zsh
+            curl
+            git
+            jq
+          ];
 
-        # Things needed only at compile-time.
-        nativeBuildInputsDev = with pkgs; [
-          rustToolchain
-          cargo-watch
-          just
+          # Things needed only at compile-time.
+          nativeBuildInputsDev = with pkgs; [
+            rustToolchain
+            cargo-watch
+            just
 
-          skopeo
-          dasel
-        ];
+            skopeo
+            dasel
+          ];
 
-        benchInputs = with pkgs; [
-          hyperfine
-          heaptrack
-        ];
+          benchInputs = with pkgs; [
+            hyperfine
+            heaptrack
+          ];
 
-        # Things needed at runtime.
-        buildInputs = [];
+          # Things needed at runtime.
+          buildInputs = [ ];
 
-        # The package of this CLI tool.
-        # The global version for tripsu.
-        # This is gonna get tooled later.
-        tripsu = (import ./pkgs/tripsu.nix) {
-          inherit rootDir rustToolchain pkgs lib;
-        };
-      in
-        with pkgs; rec {
+          # The package of this CLI tool.
+          # The global version for tripsu.
+          # This is gonna get tooled later.
+          tripsu = (import ./pkgs/tripsu.nix) {
+            inherit
+              rootDir
+              rustToolchain
+              pkgs
+              lib
+              ;
+          };
+        in
+        with pkgs;
+        rec {
           devShells = {
             default = mkShell {
               inherit buildInputs;
@@ -105,9 +111,7 @@
             };
             bench = mkShell {
               inherit buildInputs;
-              nativeBuildInputs = nativeBuildInputsBasic 
-                ++ nativeBuildInputsDev
-                ++ benchInputs;
+              nativeBuildInputs = nativeBuildInputsBasic ++ nativeBuildInputsDev ++ benchInputs;
             };
 
             ci = mkShell {
@@ -138,5 +142,5 @@
             };
           };
         }
-    );
+      );
 }
