@@ -3,7 +3,6 @@
 
   nixConfig = {
     extra-substituters = [
-      "https://cache.nixos.org/"
       # Nix community's cache server
       "https://nix-community.cachix.org"
     ];
