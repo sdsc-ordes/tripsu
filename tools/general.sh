@@ -67,12 +67,14 @@ function ci_setup_git() {
 }
 
 function ci_setup_nix() {
-    local install_prefix="${1:-/usr/sbin}"
+    # local install_prefix="${1:-/usr/sbin}"
 
-    print_info "Install Nix."
-    apk add curl bash xz shadow
-    sh <(curl -L https://nixos.org/nix/install) --daemon --yes
-    cp /root/.nix-profile/bin/* "$install_prefix/"
+    # print_info "Install Nix."
+    #
+    # apk add curl git bash xz shadow sudo -t deps
+    # sh <(curl -L https://nixos.org/nix/install) --no-daemon --yes || die "Could not install Nix."
+    # cp /root/.nix-profile/bin/* "$install_prefix/"
+    # apk del deps
 
     print_info "Enable Features for Nix."
     mkdir -p ~/.config/nix
@@ -80,6 +82,41 @@ function ci_setup_nix() {
         echo "experimental-features = nix-command flakes"
         echo "accept-flake-config = true"
     } >~/.config/nix/nix.conf
+
+}
+
+function ci_setup_github_workarounds() {
+    # Hacks to get the mounted nodejs by github actions work as its dynamically linked
+    # https://github.com/actions/checkout/issues/334#issuecomment-716068696
+    nix build --no-link 'nixpkgs#stdenv.cc.cc.lib' 'nixpkgs#glibc'
+    local ld_path link
+    ld_path="$(nix path-info 'nixpkgs#stdenv.cc.cc.lib')/lib"
+    echo "LD_LIBRARY_PATH=$ld_path" >"/container-setup/.ld-library-path"
+    link="$(nix path-info 'nixpkgs#glibc' --recursive | grep glibc | grep -v bin)/lib64" || die "Could not get link."
+    ln -s "$link" /lib64
+}
+
+function ci_setup_cachix {
+    local name="$1"
+    local token="$2"
+
+    print_info "Setup cachix binary cache."
+
+    [ -n "$name" ] ||
+        die "Cachix cache name is empty."
+    [ -n "$token" ] ||
+        die "Cachix token is empty."
+
+    cachix authtoken --stdin < <(echo "$token")
+    cachix use --mode user-nixconf "$name" ||
+        die "Could not setup cachix cache '$name'."
+
+    {
+        echo "extra-trusted-substituters = https://$CACHIX_CACHE_NAME.cachix.org"
+        echo "narinfo-cache-negative-ttl = 0"
+    } >>~/.config/nix/nix.conf
+
+    print_info "Cachix binary cache set up."
 }
 
 # Run the container manager which is defined.
@@ -89,10 +126,10 @@ function ci_container_mgr() {
     local mgr="${CONTAINER_MGR:-podman}"
 
     if command -v "$mgr" &>/dev/null; then
-        echo -e "Running '$mgr' as:\n$(printf "'%s' " "podman" "$@")" >&2
+        print_info "Running '$mgr' as:\n$(printf "'%s' " "podman" "$@")" >&2
         "$mgr" "$@"
     else
-        echo -e "Running docker as:\n$(printf "'%s' " "docker" "$@")"
+        print_info "Running docker as:\n$(printf "'%s' " "docker" "$@")"
         docker "$@"
     fi
 }

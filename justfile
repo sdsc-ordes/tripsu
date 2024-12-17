@@ -15,13 +15,14 @@ nix-develop *args:
     cd "{{root_dir}}" && \
     cmd=("$@") && \
     { [ -n "${cmd:-}" ] || cmd=("zsh"); } && \
-    nix develop ./tools/nix#default --command "${cmd[@]}"
+    nix develop ./tools/nix#default --accept-flake-config --command "${cmd[@]}"
 
 nix-develop-ci *args:
-    cd "{{root_dir}}" && \
-    cmd=("$@") && \
-    { [ -n "${cmd:-}" ] || cmd=("zsh"); } && \
-    nix develop ./tools/nix#ci --command "${cmd[@]}"
+    #!/usr/bin/env bash
+    set -eu
+    cd "{{root_dir}}"
+    cachix watch-exec "$CACHIX_CACHE_NAME" -- \
+        nix develop ./tools/nix#ci --accept-flake-config --command "$@"
 
 # Enter nix development shell for benchmarking.
 nix-develop-bench *args:
@@ -82,6 +83,27 @@ nix-package *args:
 nix-image *args:
     cd "{{root_dir}}" && \
        "./tools/build-image.sh" "$@"
+
+
+# Upload the dev shell to the Nix cache.
+nix-cache-upload-shell:
+    #!/usr/bin/env bash
+    set -eu
+    cd "{{root_dir}}"
+
+    profile=./dev-profile
+    mkdir -p "$profile"
+
+    # Cache development shell.
+    nix develop --profile "$profile/dev" ./tools/nix#ci --command true
+    cachix push "$CACHIX_CACHE_NAME" "$profile/dev"
+    rm -rf "$profile"
+
+    # Cache flake inputs.
+    nix flake archive ./tools/nix --json \
+      | jq -r '.path,(.inputs|to_entries[].value.path)' \
+      | cachix push "$CACHIX_CACHE_NAME"
+
 
 # Upload all images for CI (local machine)
 upload-ci-images:

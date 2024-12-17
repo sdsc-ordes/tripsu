@@ -3,15 +3,20 @@
 
   nixConfig = {
     substituters = [
-      # Add here some other mirror if needed.
-      "https://cache.nixos.org/"
+      "https://cache.nixos.org"
     ];
     extra-substituters = [
+      "https://tripsu.cachix.org"
       # Nix community's cache server
       "https://nix-community.cachix.org"
     ];
     extra-trusted-public-keys = [
       "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+      "tripsu.cachix.org-1:pWZmirIwlMxGMVWSDMjQm4R+zLp8gtaT8OfH0Sv/j4E="
+    ];
+    extra-trusted-substituters = [
+      "https://tripsu.cachix.org"
+      "https://cache.nixos.org"
     ];
   };
 
@@ -61,24 +66,33 @@
         # Set the rust toolchain from the `rust-toolchain.toml`.
         rustToolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile ../../rust-toolchain.toml;
 
-        # Things needed only at compile-time.
+        # Basic Packages.
         nativeBuildInputsBasic = with pkgs; [
+          procps
           findutils
           coreutils
+          gnugrep
           bash
-          zsh
           curl
           git
+          git-lfs
           jq
-        ];
-
-        # Things needed only at compile-time.
-        nativeBuildInputsDev = with pkgs; [
-          rustToolchain
-          cargo-watch
           just
 
+          # Nix binary cache.
+          cachix
+        ];
+
+        # Packges for development.
+        nativeBuildInputsDev = with pkgs; [
+          # General build tooling.
+          rustToolchain
+          cargo-watch
+
+          # Uploading images.
           skopeo
+
+          # Modifying toml files.
           dasel
         ];
 
@@ -91,14 +105,13 @@
         buildInputs = [];
 
         # The package of this CLI tool.
-        # The global version for tripsu.
-        # This is gonna get tooled later.
         tripsu = (import ./pkgs/tripsu.nix) {
           inherit rootDir rustToolchain pkgs lib;
         };
       in
         with pkgs; rec {
           devShells = {
+            # Local development environment.
             default = mkShell {
               inherit buildInputs;
               nativeBuildInputs = nativeBuildInputsBasic ++ nativeBuildInputsDev;
@@ -110,6 +123,7 @@
                 ++ benchInputs;
             };
 
+            # CI environment.
             ci = mkShell {
               inherit buildInputs;
               nativeBuildInputs = nativeBuildInputsBasic ++ nativeBuildInputsDev;
@@ -124,8 +138,20 @@
           };
 
           packages = {
+            # Package of this repo.
             tripsu = tripsu;
 
+            # Packages for CI.
+            ci = {
+              # CI bootstrapping packages:
+              # add some basic utils to the Nix store for CI.
+              bootstrap = pkgs.buildEnv {
+                name = "ci-bootstrap";
+                paths = nativeBuildInputsBasic;
+              };
+            };
+
+            # Container Images.
             images = {
               ci = (import ./images/ci.nix) {
                 inherit pkgs;
