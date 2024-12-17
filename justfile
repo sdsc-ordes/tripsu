@@ -24,6 +24,13 @@ nix-develop-ci *args:
     cachix watch-exec "$CACHIX_CACHE_NAME" -- \
         nix develop ./tools/nix#ci --accept-flake-config --command "$@"
 
+# Enter nix development shell for benchmarking.
+nix-develop-bench *args:
+    cd "{{root_dir}}" && \
+    cmd=("$@") && \
+    { [ -n "${cmd:-}" ] || cmd=("zsh"); } && \
+    nix develop ./tools/nix#bench --command "${cmd[@]}"
+
 ## Standard stuff =============================================================
 # Format the code.
 format *args:

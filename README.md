@@ -71,8 +71,10 @@ cargo build --release
 ./target/release/tripsu --help
 ```
 
+<!-- prettier-ignore -->
 > [!TIP]
-> Check the [development section](#development) for other setups (Nix etc.).
+> Check the [development section](#development) for other setups (Nix
+> etc.).
 
 ## Usage
 
@@ -106,20 +108,23 @@ Indexing only requires an RDF file as input:
 tripsu index input.nt > index.nt
 ```
 
-Pseudonomyzation requires an RDF file, index and config as input:
+Pseudonymization requires an RDF file, index and rules configuration as input:
 
 ```shell
-tripsu pseudo --index index.nt --config rules.yaml input.nt > output.nt
+tripsu pseudo --index index.nt --rules rules.yaml input.nt > output.nt
 ```
 
-> [!TIP]
-> For each subcommand, you can use `--help` to see all options.
+By default, pseudonymization uses a random key. To make the process
+deterministic, you may provide a file containing a fixed key with `--secret`.
 
 In both subcommands, the input defaults to stdin and the output to stdout,
 allowing to pipe both up- and downstream `tripsu` (see next section).
 
-For more information about use-cases and configuration, see the
-[tutorial](docs/tutorial.md).
+<!-- prettier-ignore -->
+> [!TIP]
+> Each subcommand supports the `--help` option to show all options. For
+> more information about use-cases and configuration, see the
+> [tutorial](docs/tutorial.md).
 
 ## Development
 
@@ -130,9 +135,9 @@ For technical documentation on setup and development, see the
 
 ## Copyright
 
-Copyright © 2023-2024 Swiss Data Science Center (SDSC), [www.datascience.ch](http://www.datascience.ch/). 
-All rights reserved. The SDSC is jointly established and legally represented 
-by the École Polytechnique Fédérale de Lausanne (EPFL) and the Eidgenössische 
-Technische Hochschule Zürich (ETH Zürich). This copyright encompasses all 
-materials, software, documentation, and other content created and developed 
-by the SDSC.
+Copyright © 2023-2024 Swiss Data Science Center (SDSC),
+[www.datascience.ch](http://www.datascience.ch/). All rights reserved. The SDSC
+is jointly established and legally represented by the École Polytechnique
+Fédérale de Lausanne (EPFL) and the Eidgenössische Technische Hochschule Zürich
+(ETH Zürich). This copyright encompasses all materials, software, documentation,
+and other content created and developed by the SDSC.

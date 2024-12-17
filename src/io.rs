@@ -1,9 +1,9 @@
-use crate::rules::Rules;
+use crate::{index::TypeIndex, rules::Rules};
 use rio_turtle::NTriplesParser;
 use std::{
     fs::File,
-    io::{self, stdin, stdout, BufRead, BufReader, BufWriter},
-    path::Path,
+    io::{self, stdin, stdout, BufRead, BufReader, BufWriter, Read},
+    path::{Path, PathBuf},
 };
 
 use io_enum::{BufRead, Read, Write};
@@ -43,16 +43,34 @@ pub fn parse_ntriples(reader: impl BufRead) -> NTriplesParser<impl BufRead> {
 }
 
 // Parse yaml configuration file.
-pub fn parse_config(path: &Path) -> Rules {
+pub fn parse_rules(path: &Path) -> Rules {
     return match File::open(path) {
-        Ok(file) => serde_yml::from_reader(file).expect("Error parsing config file."),
-        Err(e) => panic!("Cannot open file '{:?}': '{}'.", path, e),
+        Ok(file) => serde_yml::from_reader(file).expect("Error parsing rules file."),
+        Err(e) => panic!("Cannot open rules file '{:?}': '{}'.", path, e),
     };
+}
+
+// Parse yaml type index
+pub fn parse_index(path: &Path) -> TypeIndex {
+    return match File::open(path) {
+        Ok(file) => serde_json::from_reader(file).expect("Error parsing index file."),
+        Err(e) => panic!("Cannot open index file '{:?}': '{}'.", path, e),
+    };
+}
+
+// Read all file content as bytes.
+pub fn read_bytes(path: &PathBuf) -> Vec<u8> {
+    let mut file = File::open(path).expect("Error opening key file.");
+    let mut data = Vec::new();
+    file.read_to_end(&mut data)
+        .expect("Error reading key file.");
+
+    return data;
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{parse_config, parse_ntriples};
+    use super::{parse_ntriples, parse_rules};
     use rio_api::parser::TriplesParser;
     use std::{
         io::{BufRead, BufReader},
@@ -76,8 +94,8 @@ mod tests {
     }
     // Test the parsing of a config file.
     #[test]
-    fn config_parsing() {
-        let config_path = Path::new("tests/data/config.yaml");
-        parse_config(&config_path);
+    fn rules_parsing() {
+        let config_path = Path::new("tests/data/rules.yaml");
+        parse_rules(&config_path);
     }
 }

@@ -1,18 +1,18 @@
 // Define the module.
 mod crypto;
+mod index;
 mod io;
 mod log;
 mod model;
-mod pass_first;
-mod pass_second;
+mod pseudo;
 mod rdf_types;
 mod rules;
 
 // Define the imports.
 use crate::{
+    index::create_type_index,
     log::{create_logger, info},
-    pass_first::create_type_map,
-    pass_second::pseudonymize_graph,
+    pseudo::pseudonymize_graph,
 };
 
 use clap::{Args, Parser, Subcommand};
@@ -51,15 +51,20 @@ struct PseudoArgs {
     #[arg(default_value = "-")]
     input: PathBuf,
 
-    /// The config file descriptor to use for defining RDF elements to pseudonymize.
+    /// File defining which RDF elements to pseudonymize.
     /// Format: yaml
     #[arg(short, long)]
-    config: PathBuf,
+    rules: PathBuf,
 
     /// Output file descriptor for pseudonymized triples.
     /// Defaults to `stdout`.
     #[arg(short, long, default_value = "-")]
     output: PathBuf,
+
+    /// File containing the secret used to generate pseudonyms.
+    /// Default is to use a random key.
+    #[arg(short, long, default_value=None)]
+    secret: Option<PathBuf>,
 }
 
 #[derive(Subcommand, Debug)]
@@ -82,11 +87,18 @@ fn main() {
     match cli.command {
         Subcommands::Index(args) => {
             info!(log, "Args: {:?}", args);
-            create_type_map(&args.input, &args.output)
+            create_type_index(&args.input, &args.output)
         }
         Subcommands::Pseudo(args) => {
             info!(log, "Args: {:?}", args);
-            pseudonymize_graph(&log, &args.input, &args.config, &args.output, &args.index)
+            pseudonymize_graph(
+                &log,
+                &args.input,
+                &args.rules,
+                &args.output,
+                &args.index,
+                &args.secret,
+            )
         }
     }
 }

@@ -41,13 +41,14 @@
   };
 
   outputs = {
+    self,
     nixpkgs,
     flake-utils,
     rust-overlay,
     ...
   }: let
-    # This is string (without toString it would be a `path` which is put into the store)
-    rootDir = toString ./. + "../../..";
+    lib = nixpkgs.lib;
+    rootDir = ./../..;
   in
     flake-utils.lib.eachDefaultSystem
     # Creates an attribute map `{ devShells.<system>.default = ...}`
@@ -58,7 +59,6 @@
 
         # Import nixpkgs and load it into pkgs.
         # Overlay the rust toolchain
-        lib = nixpkgs.lib;
         pkgs = import nixpkgs {
           inherit system overlays;
         };
@@ -96,6 +96,11 @@
           dasel
         ];
 
+        benchInputs = with pkgs; [
+          hyperfine
+          heaptrack
+        ];
+
         # Things needed at runtime.
         buildInputs = [];
 
@@ -110,6 +115,12 @@
             default = mkShell {
               inherit buildInputs;
               nativeBuildInputs = nativeBuildInputsBasic ++ nativeBuildInputsDev;
+            };
+            bench = mkShell {
+              inherit buildInputs;
+              nativeBuildInputs = nativeBuildInputsBasic 
+                ++ nativeBuildInputsDev
+                ++ benchInputs;
             };
 
             # CI environment.

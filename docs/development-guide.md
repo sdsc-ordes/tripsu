@@ -66,7 +66,7 @@ just test
 
 ## Build the Package & Image
 
-To build the package with Nix run:
+To build the package with Nix run:b
 
 ```shell
 just nix-package
@@ -110,3 +110,11 @@ It will:
 **Note: If the release pipeline fails, you can just run this same command again.
 Also rerun it when you made a mistake, it will cancel the current release (works
 also when `--amend`ing on the current commit)**
+
+## Benchmarking performances
+
+A benchmarking script is provided in `tools/bench/benchmark.sh`, along with a nix devshell. To run the benchmark in the isolated environment, run:
+
+```shell
+just nix-develop-bench bash ./tools/bench/benchmark.sh
+```
