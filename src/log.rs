@@ -20,7 +20,7 @@ pub fn create_logger(use_stdout: bool) -> Arc<Logger> {
         .fuse();
 
     let drain = slog_async::Async::new(drain)
-        .chan_size(5_000_000)
+        .chan_size(1_000)
         .build()
         .fuse();
 

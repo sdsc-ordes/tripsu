@@ -61,9 +61,9 @@ better understand how they operate.
 Given the following config:
 
 ```yaml
-subjects:
+nodes:
   of_type:
-  - "http://xmlns.com/foaf/0.1/Person"
+  - "<http://xmlns.com/foaf/0.1/Person>"
 ```
 
 The goal is to pseudonymize all instaces of `rdf:type` Person. The following
@@ -87,8 +87,8 @@ Given the following config:
 ```yaml
 objects:
   on_type_predicate:
-    "http://xmlns.com/foaf/0.1/Person":
-    - "http://schema.org/name"
+    "<http://xmlns.com/foaf/0.1/Person>":
+    - "<http://schema.org/name>"
 ```
 
 The goal is to pseudonymize only the instances of names when they're associated
@@ -118,7 +118,7 @@ Given the following config:
 ```yaml
 objects:
   on_predicate:
-  - "http://schema.org/name"
+  - "<http://schema.org/name>"
 ```
 
 The goal is to pseudonymize any values associated to name. The following input
