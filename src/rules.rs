@@ -1,7 +1,8 @@
 use crate::rdf_types::*;
 use ::std::collections::{HashMap, HashSet};
-use serde::{Deserialize, Serialize};
 use curie::{Curie, PrefixMapping};
+use serde::{Deserialize, Serialize};
+use sophia_iri::Iri;
 
 use crate::{index::TypeIndex, model::TripleMask};
 
@@ -45,7 +46,10 @@ pub struct Rules {
 impl Rules {
     pub fn is_empty(&self) -> bool {
         // Check if any rules are set
-        if self.nodes.of_type.len() > 0 || self.objects.on_predicate.len() > 0 || self.objects.on_type_predicate.len() > 0 {
+        if self.nodes.of_type.len() > 0
+            || self.objects.on_predicate.len() > 0
+            || self.objects.on_type_predicate.len() > 0
+        {
             return false;
         }
         return true;
@@ -53,7 +57,7 @@ impl Rules {
     pub fn has_valid_curies(&self) -> bool {
         match &self.prefixes {
             // If no prefixes are set, check each URI for validity
-            None => return self.check_uris(&self.nodes, &self.objects, None),
+            None => return self.check_uris(&self.nodes, &self.objects),
             // If some prefixes are set, check and expand each URI for validity
             Some(prefixes) => {
                 let mut prefix_map = PrefixMapping::default();
@@ -63,37 +67,50 @@ impl Rules {
                         Err(_) => return false,
                     }
                 }
-                return self.check_curies(&self.nodes, &self.objects, Some(prefix_map));
-                }
+                return self.check_curies(&self.nodes, &self.objects, prefix_map);
             }
         }
-    fn check_curies(&self, node_uris: &NodeRules, object_uris: &ObjectRules, prefixes: Option<PrefixMapping>) -> bool {
-        // Check if the URI is a valid CURIE
-        // If prefixes do not exist, create a default PrefixMapping
-        let prefix_map = match prefixes {
-            None => PrefixMapping::default(),
-            Some(prefixes) => prefixes,
-        };
-        for uri in node_uris.of_type.iter().chain(object_uris.on_predicate.iter()).chain(object_uris.on_type_predicate.iter().flat_map(|(k, v)| v.iter().chain(std::iter::once(k)))) {
+    }
+
+    fn to_curie<'a>(&self, uri: &'a str) -> Curie<'a> {
+        let separator_idx = uri
+            .chars()
+            .position(|c| c == ':')
+            .expect("No separator found in URI found in string");
+        let prefix = Some(&uri[..separator_idx]);
+        let reference = &uri[separator_idx + 1..];
+        return Curie::new(prefix, reference);
+    }
+
+    fn check_curies(
+        &self,
+        node_uris: &NodeRules,
+        object_uris: &ObjectRules,
+        prefixes: PrefixMapping,
+    ) -> bool {
+        // Check if the URIs are valid cURIEs
+        for uri in node_uris
+            .of_type
+            .iter()
+            .chain(object_uris.on_predicate.iter())
+            .chain(
+                object_uris
+                    .on_type_predicate
+                    .iter()
+                    .flat_map(|(k, v)| v.iter().chain(std::iter::once(k))),
+            )
+        {
             // If we have a separator, check if it's a curie or a full URI
-            let separator_idx = uri.chars().position(|c| c == ':').expect("No separator found in URI");
-            let prefix = Some(&uri[..separator_idx]);
-            let reference = &uri[separator_idx + 1..];
-            println!("Prefix: {:?}, Reference: {:?}", prefix, reference);
-            let curie = if prefix != Some("http") {
-                Curie::new(prefix, reference)
-            } else {
-                Curie::new(None, uri)
-            };
-            println!("Expanded CURIE: {:?}", prefix_map.expand_curie(&curie));
-            match prefix_map.expand_curie(&curie) {
-                Ok(_) => println!("{}", prefix_map.expand_curie(&curie).unwrap().to_string()),
+            // Implement function for curie object
+            // Try keep using iterators and avoid for loops
+            let curie = self.to_curie(uri);
+            match prefixes.expand_curie(&curie) {
+                Ok(_) => println!("{}", prefixes.expand_curie(&curie).unwrap().to_string()),
                 Err(_) => return false,
             };
         }
         return true;
-
-}
+    }
     pub fn expand_curie(&self) -> Rules {
         let prefix_map = match &self.prefixes {
             None => PrefixMapping::default(),
@@ -105,20 +122,16 @@ impl Rules {
                     }
                 }
                 prefix_map
-            },
+            }
         };
         return Rules {
             invert: self.invert,
             prefixes: self.prefixes.clone(),
             nodes: NodeRules {
-                of_type: {
-                    self.expand_hashset(&self.nodes.of_type, &prefix_map)
-                },
+                of_type: { self.expand_hashset(&self.nodes.of_type, &prefix_map) },
             },
             objects: ObjectRules {
-                on_predicate: {
-                    self.expand_hashset(&self.objects.on_predicate, &prefix_map)
-                },
+                on_predicate: { self.expand_hashset(&self.objects.on_predicate, &prefix_map) },
                 on_type_predicate: {
                     let mut expanded_type_predicate = HashMap::new();
                     for (k, v) in self.objects.on_type_predicate.iter() {
@@ -128,8 +141,8 @@ impl Rules {
                     }
                     expanded_type_predicate
                 },
-            }
-        }
+            },
+        };
     }
     fn expand_hashset(&self, set: &HashSet<String>, prefix_map: &PrefixMapping) -> HashSet<String> {
         let mut expanded_set = HashSet::new();
@@ -140,7 +153,10 @@ impl Rules {
         return expanded_set;
     }
     fn expand_string(&self, uri: &str, prefix_map: &PrefixMapping) -> String {
-        let separator_idx = uri.chars().position(|c| c == ':').expect("No separator found in URI");
+        let separator_idx = uri
+            .chars()
+            .position(|c| c == ':')
+            .expect("No separator found in URI");
         let prefix = Some(&uri[..separator_idx]);
         let reference = &uri[separator_idx + 1..];
         let curie = if prefix != Some("http") {
@@ -149,6 +165,28 @@ impl Rules {
             Curie::new(None, uri)
         };
         return prefix_map.expand_curie(&curie).unwrap().to_string();
+    }
+    fn check_uris(&self, nodes: &NodeRules, objects: &ObjectRules) -> bool {
+        // Check if the URIs are valid and there are no cURIEs
+        return nodes
+            .of_type
+            .clone()
+            .into_iter()
+            .all(|uri| self.check_string_iri(&uri))
+            && objects
+                .on_predicate
+                .clone()
+                .into_iter()
+                .all(|uri| self.check_string_iri(&uri))
+            && objects.on_type_predicate.clone().into_iter().all(|(k, v)| {
+                self.check_string_iri(&k) && v.into_iter().all(|uri| self.check_string_iri(&uri))
+            });
+    }
+    fn check_string_iri(&self, uri: &str) -> bool {
+        match Iri::new(uri) {
+            Ok(_) => return true,
+            Err(_) => return false,
+        }
     }
 }
 

@@ -50,8 +50,7 @@ pub fn parse_rules(path: &Path) -> Rules {
     };
     if rules.is_empty() {
         panic!("Rules file is empty.");
-    }
-    else if !rules.has_valid_uris() {
+    } else if !rules.has_valid_curies() {
         panic!("Rules file has invalid URIs.");
     } else {
         return rules.expand_curie();
