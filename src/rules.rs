@@ -1,7 +1,7 @@
 use crate::rdf_types::*;
 use ::std::collections::{HashMap, HashSet};
 use curie::{Curie, PrefixMapping};
-use serde::{Deserialize, Serialize};
+use serde::{de::value, Deserialize, Serialize};
 use sophia_iri::Iri;
 
 use crate::{index::TypeIndex, model::TripleMask};
@@ -54,7 +54,7 @@ impl Rules {
         }
         return true;
     }
-    pub fn has_valid_curies(&self) -> bool {
+    pub fn has_valid_curies_and_uris(&self) -> bool {
         match &self.prefixes {
             // If no prefixes are set, check each URI for validity
             None => return self.check_uris(&self.nodes, &self.objects),
@@ -88,29 +88,36 @@ impl Rules {
         object_uris: &ObjectRules,
         prefixes: PrefixMapping,
     ) -> bool {
-        // Check if the URIs are valid cURIEs
-        for uri in node_uris
-            .of_type
-            .iter()
-            .chain(object_uris.on_predicate.iter())
-            .chain(
-                object_uris
-                    .on_type_predicate
-                    .iter()
-                    .flat_map(|(k, v)| v.iter().chain(std::iter::once(k))),
-            )
-        {
-            // If we have a separator, check if it's a curie or a full URI
-            // Implement function for curie object
-            // Try keep using iterators and avoid for loops
+        // Use iterators to check if the cURIEs are valid
+        return node_uris.of_type.iter().all(|uri| {
             let curie = self.to_curie(uri);
             match prefixes.expand_curie(&curie) {
-                Ok(_) => println!("{}", prefixes.expand_curie(&curie).unwrap().to_string()),
+                Ok(_) => return true,
                 Err(_) => return false,
             };
-        }
-        return true;
+        }) && object_uris.on_predicate.iter().all(|uri| {
+            let curie = self.to_curie(uri);
+            match prefixes.expand_curie(&curie) {
+                Ok(_) => return true,
+                Err(_) => return false,
+            };
+        }) && object_uris.on_type_predicate.iter().all(|(k, v)| {
+            let expanded_key = self.to_curie(k);
+            let key_valid = match prefixes.expand_curie(&expanded_key) {
+                            Ok(_) => true,
+                            Err(_) => false,
+                        };
+            let value_valid = v.iter().all(|uri| {
+                let curie = self.to_curie(uri);
+                match prefixes.expand_curie(&curie) {
+                    Ok(_) => true,
+                    Err(_) => false,
+                }
+            });
+            return key_valid && value_valid;
+        });
     }
+
     pub fn expand_curie(&self) -> Rules {
         let prefix_map = match &self.prefixes {
             None => PrefixMapping::default(),
