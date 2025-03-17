@@ -1,6 +1,7 @@
 use crate::rdf_types::*;
 use ::std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
+use curie::{Curie, PrefixMapping};
 
 use crate::{index::TypeIndex, model::TripleMask};
 
@@ -38,6 +39,117 @@ pub struct Rules {
 
     #[serde(default)]
     pub objects: ObjectRules,
+}
+
+/// Check if rules are setup correctly
+impl Rules {
+    pub fn is_empty(&self) -> bool {
+        // Check if any rules are set
+        if self.nodes.of_type.len() > 0 || self.objects.on_predicate.len() > 0 || self.objects.on_type_predicate.len() > 0 {
+            return false;
+        }
+        return true;
+    }
+    pub fn has_valid_curies(&self) -> bool {
+        match &self.prefixes {
+            // If no prefixes are set, check each URI for validity
+            None => return self.check_uris(&self.nodes, &self.objects, None),
+            // If some prefixes are set, check and expand each URI for validity
+            Some(prefixes) => {
+                let mut prefix_map = PrefixMapping::default();
+                for prefix in prefixes {
+                    match prefix_map.add_prefix(prefix.0, prefix.1) {
+                        Ok(_) => continue,
+                        Err(_) => return false,
+                    }
+                }
+                return self.check_curies(&self.nodes, &self.objects, Some(prefix_map));
+                }
+            }
+        }
+    fn check_curies(&self, node_uris: &NodeRules, object_uris: &ObjectRules, prefixes: Option<PrefixMapping>) -> bool {
+        // Check if the URI is a valid CURIE
+        // If prefixes do not exist, create a default PrefixMapping
+        let prefix_map = match prefixes {
+            None => PrefixMapping::default(),
+            Some(prefixes) => prefixes,
+        };
+        for uri in node_uris.of_type.iter().chain(object_uris.on_predicate.iter()).chain(object_uris.on_type_predicate.iter().flat_map(|(k, v)| v.iter().chain(std::iter::once(k)))) {
+            // If we have a separator, check if it's a curie or a full URI
+            let separator_idx = uri.chars().position(|c| c == ':').expect("No separator found in URI");
+            let prefix = Some(&uri[..separator_idx]);
+            let reference = &uri[separator_idx + 1..];
+            println!("Prefix: {:?}, Reference: {:?}", prefix, reference);
+            let curie = if prefix != Some("http") {
+                Curie::new(prefix, reference)
+            } else {
+                Curie::new(None, uri)
+            };
+            println!("Expanded CURIE: {:?}", prefix_map.expand_curie(&curie));
+            match prefix_map.expand_curie(&curie) {
+                Ok(_) => println!("{}", prefix_map.expand_curie(&curie).unwrap().to_string()),
+                Err(_) => return false,
+            };
+        }
+        return true;
+
+}
+    pub fn expand_curie(&self) -> Rules {
+        let prefix_map = match &self.prefixes {
+            None => PrefixMapping::default(),
+            Some(prefixes) => {
+                let mut prefix_map = PrefixMapping::default();
+                for prefix in prefixes {
+                    if let Err(e) = prefix_map.add_prefix(&prefix.0, &prefix.1) {
+                        eprintln!("Failed to add prefix: {:?}", e);
+                    }
+                }
+                prefix_map
+            },
+        };
+        return Rules {
+            invert: self.invert,
+            prefixes: self.prefixes.clone(),
+            nodes: NodeRules {
+                of_type: {
+                    self.expand_hashset(&self.nodes.of_type, &prefix_map)
+                },
+            },
+            objects: ObjectRules {
+                on_predicate: {
+                    self.expand_hashset(&self.objects.on_predicate, &prefix_map)
+                },
+                on_type_predicate: {
+                    let mut expanded_type_predicate = HashMap::new();
+                    for (k, v) in self.objects.on_type_predicate.iter() {
+                        let expanded_key = self.expand_string(k, &prefix_map);
+                        let expanded_value = self.expand_hashset(v, &prefix_map);
+                        expanded_type_predicate.insert(expanded_key, expanded_value);
+                    }
+                    expanded_type_predicate
+                },
+            }
+        }
+    }
+    fn expand_hashset(&self, set: &HashSet<String>, prefix_map: &PrefixMapping) -> HashSet<String> {
+        let mut expanded_set = HashSet::new();
+        for uri in set.iter() {
+            let expanded_uri = self.expand_string(&uri, prefix_map);
+            expanded_set.insert(expanded_uri);
+        }
+        return expanded_set;
+    }
+    fn expand_string(&self, uri: &str, prefix_map: &PrefixMapping) -> String {
+        let separator_idx = uri.chars().position(|c| c == ':').expect("No separator found in URI");
+        let prefix = Some(&uri[..separator_idx]);
+        let reference = &uri[separator_idx + 1..];
+        let curie = if prefix != Some("http") {
+            Curie::new(prefix, reference)
+        } else {
+            Curie::new(None, uri)
+        };
+        return prefix_map.expand_curie(&curie).unwrap().to_string();
+    }
 }
 
 /// Check all parts of the triple against rules.
@@ -275,5 +387,32 @@ mod tests {
                 Ok(()) as Result<(), TurtleError>
             })
             .unwrap();
+    }
+    #[rstest]
+    fn empty_rules() {
+        let rules: Rules = parse_rules(
+            r#"
+            nodes:
+              of_type: 
+            objects:
+              on_predicate: 
+              on_type_predicate:
+            "#,
+        );
+        assert!(rules.is_empty());
+    }
+    #[rstest]
+    fn valid_full_uri() {
+        let rules: Rules = parse_rules(
+            r#"
+            nodes:
+              of_type: ["http:Person"]
+            objects:
+              on_predicate: ["http:hasLastName"]
+              on_type_predicate:
+                "http:Person": ["http:hasAge"]
+            "#,
+        );
+        rules.check_uri(&rules.nodes, &rules.objects, None);
     }
 }

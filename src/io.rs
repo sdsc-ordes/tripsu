@@ -44,10 +44,18 @@ pub fn parse_ntriples(reader: impl BufRead) -> NTriplesParser<impl BufRead> {
 
 // Parse yaml configuration file.
 pub fn parse_rules(path: &Path) -> Rules {
-    return match File::open(path) {
+    let rules: Rules = match File::open(path) {
         Ok(file) => serde_yml::from_reader(file).expect("Error parsing rules file."),
         Err(e) => panic!("Cannot open rules file '{:?}': '{}'.", path, e),
     };
+    if rules.is_empty() {
+        panic!("Rules file is empty.");
+    }
+    else if !rules.has_valid_uris() {
+        panic!("Rules file has invalid URIs.");
+    } else {
+        return rules.expand_curie();
+    }
 }
 
 // Parse yaml type index
