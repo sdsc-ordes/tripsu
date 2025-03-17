@@ -31,6 +31,9 @@ pub struct Rules {
     pub invert: bool,
 
     #[serde(default)]
+    prefixes: Option<HashMap<String, String>>,
+
+    #[serde(default)]
     pub nodes: NodeRules,
 
     #[serde(default)]
