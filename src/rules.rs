@@ -1,5 +1,7 @@
 use crate::rdf_types::*;
+use std::collections::hash_set;
 use ::std::collections::{HashMap, HashSet};
+use blake3::Hash;
 use curie::{Curie, PrefixMapping};
 use serde::{de::value, Deserialize, Serialize};
 use sophia_iri::Iri;
@@ -44,16 +46,6 @@ pub struct Rules {
 
 /// Check if rules are setup correctly
 impl Rules {
-    pub fn is_empty(&self) -> bool {
-        // Check if any rules are set
-        if self.nodes.of_type.len() > 0
-            || self.objects.on_predicate.len() > 0
-            || self.objects.on_type_predicate.len() > 0
-        {
-            return false;
-        }
-        return true;
-    }
     pub fn has_valid_curies_and_uris(&self) -> bool {
         match &self.prefixes {
             // If no prefixes are set, check each URI for validity
@@ -67,7 +59,7 @@ impl Rules {
                         Err(_) => return false,
                     }
                 }
-                return self.check_curies(&self.nodes, &self.objects, prefix_map);
+                return self.check_curies(&self.filter_nodes(&self.nodes), &self.filter_objects(&self.objects), prefix_map);
             }
         }
     }
@@ -190,11 +182,50 @@ impl Rules {
             });
     }
     fn check_string_iri(&self, uri: &str) -> bool {
-        match Iri::new(uri) {
+        // We assume that a full URI starts with "<" and ends with ">"
+        // We select the URI within the angle brackets
+        match Iri::new(&uri[1..uri.len() - 2]) {
             Ok(_) => return true,
             Err(_) => return false,
         }
     }
+
+    fn filter(&self, hash_set: &HashSet<String>) -> HashSet<String> {
+        let mut filtered = HashSet::new();
+        // Filter out full URIs
+        filtered = hash_set
+            .iter()
+            .filter(|uri| !self.is_full_uri(uri))
+            .cloned()
+            .collect();
+        return filtered;
+    }
+    fn is_full_uri(&self, uri: &str) -> bool {
+        // Ensure that full URI starts with "<" and ends with ">"
+        return uri.starts_with('<') && uri.ends_with('>');
+    }
+
+    fn filter_objects(&self, object_uris: &ObjectRules) -> ObjectRules {
+        let mut filtered = ObjectRules::default();
+        filtered.on_predicate = self.filter(&object_uris.on_predicate);
+        filtered.on_type_predicate = object_uris
+            .on_type_predicate
+            .iter()
+            .filter(|(k, _)| !self.is_full_uri(k))
+            .map(|(k, v)| {
+                let filtered_values = self.filter(v);
+                return (k.clone(), filtered_values);
+            })
+            .collect();
+        return filtered;
+    }
+
+    fn filter_nodes(&self, node_uris: &NodeRules) -> NodeRules {
+        let mut filtered = NodeRules::default();
+        filtered.of_type = self.filter(&node_uris.of_type);
+        return filtered;
+    }
+
 }
 
 /// Check all parts of the triple against rules.
@@ -434,30 +465,14 @@ mod tests {
             .unwrap();
     }
     #[rstest]
-    fn empty_rules() {
-        let rules: Rules = parse_rules(
-            r#"
-            nodes:
-              of_type: 
-            objects:
-              on_predicate: 
-              on_type_predicate:
-            "#,
-        );
-        assert!(rules.is_empty());
-    }
-    #[rstest]
     fn valid_full_uri() {
-        let rules: Rules = parse_rules(
-            r#"
-            nodes:
-              of_type: ["http:Person"]
-            objects:
-              on_predicate: ["http:hasLastName"]
-              on_type_predicate:
-                "http:Person": ["http:hasAge"]
-            "#,
-        );
-        rules.check_uri(&rules.nodes, &rules.objects, None);
+        let full_uri = "<http://example.com>";
+        let bad_uri = "http://example.com";
+        let bad_format_uri = "<http://example.com";
+
+    assert_eq!(Rules::default().check_string_iri(full_uri), true);
+    assert_eq!(Rules::default().check_string_iri(bad_uri), false);
+    assert_eq!(Rules::default().check_string_iri(bad_format_uri), false);
+
     }
 }
