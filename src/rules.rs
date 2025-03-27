@@ -1,9 +1,7 @@
 use crate::rdf_types::*;
-use std::collections::hash_set;
 use ::std::collections::{HashMap, HashSet};
-use blake3::Hash;
 use curie::{Curie, PrefixMapping};
-use serde::{de::value, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use sophia_iri::Iri;
 
 use crate::{index::TypeIndex, model::TripleMask};
@@ -35,7 +33,7 @@ pub struct Rules {
     pub invert: bool,
 
     #[serde(default)]
-    prefixes: Option<HashMap<String, String>>,
+    prefix: Option<HashMap<String, String>>,
 
     #[serde(default)]
     pub nodes: NodeRules,
@@ -47,19 +45,43 @@ pub struct Rules {
 /// Check if rules are setup correctly
 impl Rules {
     pub fn has_valid_curies_and_uris(&self) -> bool {
-        match &self.prefixes {
-            // If no prefixes are set, check each URI for validity
+        match &self.prefix {
+            // If no prefix are set, check each URI for validity
             None => return self.check_uris(&self.nodes, &self.objects),
-            // If some prefixes are set, check and expand each URI for validity
-            Some(prefixes) => {
+            // If some prefix are set, check and expand each URI for validity
+            Some(prefix) => {
                 let mut prefix_map = PrefixMapping::default();
-                for prefix in prefixes {
-                    match prefix_map.add_prefix(prefix.0, prefix.1) {
-                        Ok(_) => continue,
-                        Err(_) => return false,
+                for p in prefix {
+                    if self.is_full_uri(p.1) {
+                        match prefix_map.add_prefix(p.0, p.1) {
+                            Ok(_) => continue,
+                            Err(e) => {
+                                eprintln!("Failed to add prefix: {:?}", e);
+                                return false;
+                            }
+                        }
+                    } else {
+                        return false;
                     }
                 }
-                return self.check_curies(&self.filter_nodes(&self.nodes), &self.filter_objects(&self.objects), prefix_map);
+                // Need to return checks for both cURIEs and full URIs
+                return self.check_curies(
+                    &self.filter_nodes(&self.nodes),
+                    &self.filter_objects(&self.objects),
+                    prefix_map,
+                ) && self
+                    .nodes
+                    .of_type
+                    .iter()
+                    .all(|uri| self.check_string_iri(uri))
+                    && self
+                        .objects
+                        .on_predicate
+                        .iter()
+                        .all(|uri| self.check_string_iri(uri))
+                    && self.objects.on_type_predicate.iter().all(|(k, v)| {
+                        self.check_string_iri(k) && v.iter().all(|uri| self.check_string_iri(uri))
+                    });
             }
         }
     }
@@ -68,7 +90,7 @@ impl Rules {
         let separator_idx = uri
             .chars()
             .position(|c| c == ':')
-            .expect("No separator found in URI found in string");
+            .unwrap_or_else(|| panic!("No separator found in cURI string: {}", uri));
         let prefix = Some(&uri[..separator_idx]);
         let reference = &uri[separator_idx + 1..];
         return Curie::new(prefix, reference);
@@ -78,92 +100,129 @@ impl Rules {
         &self,
         node_uris: &NodeRules,
         object_uris: &ObjectRules,
-        prefixes: PrefixMapping,
+        prefix: PrefixMapping,
     ) -> bool {
         // Use iterators to check if the cURIEs are valid
-        return node_uris.of_type.iter().all(|uri| {
-            let curie = self.to_curie(uri);
-            match prefixes.expand_curie(&curie) {
-                Ok(_) => return true,
-                Err(_) => return false,
-            };
-        }) && object_uris.on_predicate.iter().all(|uri| {
-            let curie = self.to_curie(uri);
-            match prefixes.expand_curie(&curie) {
-                Ok(_) => return true,
-                Err(_) => return false,
-            };
-        }) && object_uris.on_type_predicate.iter().all(|(k, v)| {
-            let expanded_key = self.to_curie(k);
-            let key_valid = match prefixes.expand_curie(&expanded_key) {
-                            Ok(_) => true,
-                            Err(_) => false,
-                        };
-            let value_valid = v.iter().all(|uri| {
-                let curie = self.to_curie(uri);
-                match prefixes.expand_curie(&curie) {
-                    Ok(_) => true,
-                    Err(_) => false,
-                }
+        return node_uris
+            .of_type
+            .iter()
+            .all(|uri| self.try_expansion(uri, &prefix))
+            && object_uris
+                .on_predicate
+                .iter()
+                .all(|uri| self.try_expansion(uri, &prefix))
+            && object_uris.on_type_predicate.iter().all(|(k, v)| {
+                let key_valid = self.try_expansion(k, &prefix);
+                let value_valid = v.iter().all(|uri| self.try_expansion(uri, &prefix));
+                return key_valid && value_valid;
             });
-            return key_valid && value_valid;
-        });
     }
 
-    pub fn expand_curie(&self) -> Rules {
-        let prefix_map = match &self.prefixes {
+    fn try_expansion(&self, uri: &str, prefix_map: &PrefixMapping) -> bool {
+        let curie = self.to_curie(uri);
+        match prefix_map.expand_curie(&curie) {
+            Ok(_) => return true,
+            Err(e) => {
+                eprintln!("Failed to expand {:?} CURIE: {} ", e, uri);
+                return false;
+            }
+        }
+    }
+
+    pub fn expand_rules_curie(&self) -> Rules {
+        let prefix_map = match &self.prefix {
             None => PrefixMapping::default(),
-            Some(prefixes) => {
+            Some(prefix) => {
                 let mut prefix_map = PrefixMapping::default();
-                for prefix in prefixes {
-                    if let Err(e) = prefix_map.add_prefix(&prefix.0, &prefix.1) {
-                        eprintln!("Failed to add prefix: {:?}", e);
+                prefix.iter().for_each(|(k, v)| {
+                    if self.is_full_uri(v) {
+                        if let Err(e) = prefix_map.add_prefix(k, &v[1..v.len() - 1]) {
+                            eprintln!("Failed to add prefix: {:?}", e);
+                        }
                     }
-                }
+                });
                 prefix_map
             }
         };
+        // for all rules we combine the full URIs with the expanded URIs
+        let mut nodes_full_uris: HashSet<String> = self
+            .nodes
+            .of_type
+            .iter()
+            .filter(|uri| self.is_full_uri(uri))
+            .cloned()
+            .collect();
+        nodes_full_uris.extend(self.expand_hashset(&self.filter(&self.nodes.of_type), &prefix_map));
+
+        let mut objects_on_predicate_full_uris: HashSet<String> = self
+            .objects
+            .on_predicate
+            .iter()
+            .filter(|uri| self.is_full_uri(uri))
+            .cloned()
+            .collect();
+        objects_on_predicate_full_uris
+            .extend(self.expand_hashset(&self.filter(&self.objects.on_predicate), &prefix_map));
+
+        let mut objects_on_type_predicate_full_uris: HashMap<String, HashSet<String>> =
+            HashMap::new();
+        for (k, v) in self.objects.on_type_predicate.iter() {
+            let expanded_key = match self.is_full_uri(k) {
+                false => format!(
+                    "<{}>",
+                    prefix_map
+                        .expand_curie(&self.to_curie(k))
+                        .unwrap()
+                        .to_string()
+                ),
+                true => k.clone(),
+            };
+            let mut expanded_value: HashSet<String> = v
+                .iter()
+                .filter(|uri| self.is_full_uri(uri))
+                .cloned()
+                .collect();
+            expanded_value.extend(self.expand_hashset(&self.filter(v), &prefix_map));
+            objects_on_type_predicate_full_uris.insert(expanded_key, expanded_value);
+        }
+
         return Rules {
             invert: self.invert,
-            prefixes: self.prefixes.clone(),
+            prefix: self.prefix.clone(),
             nodes: NodeRules {
-                of_type: { self.expand_hashset(&self.nodes.of_type, &prefix_map) },
+                of_type: nodes_full_uris,
             },
             objects: ObjectRules {
-                on_predicate: { self.expand_hashset(&self.objects.on_predicate, &prefix_map) },
-                on_type_predicate: {
-                    let mut expanded_type_predicate = HashMap::new();
-                    for (k, v) in self.objects.on_type_predicate.iter() {
-                        let expanded_key = self.expand_string(k, &prefix_map);
-                        let expanded_value = self.expand_hashset(v, &prefix_map);
-                        expanded_type_predicate.insert(expanded_key, expanded_value);
-                    }
-                    expanded_type_predicate
-                },
+                on_predicate: objects_on_predicate_full_uris,
+                on_type_predicate: objects_on_type_predicate_full_uris,
             },
         };
     }
     fn expand_hashset(&self, set: &HashSet<String>, prefix_map: &PrefixMapping) -> HashSet<String> {
         let mut expanded_set = HashSet::new();
-        for uri in set.iter() {
+        set.iter().for_each(|uri| {
             let expanded_uri = self.expand_string(&uri, prefix_map);
             expanded_set.insert(expanded_uri);
-        }
+        });
         return expanded_set;
     }
     fn expand_string(&self, uri: &str, prefix_map: &PrefixMapping) -> String {
         let separator_idx = uri
             .chars()
             .position(|c| c == ':')
-            .expect("No separator found in URI");
+            .unwrap_or_else(|| panic!("No separator found in cURI string: {}", uri));
         let prefix = Some(&uri[..separator_idx]);
         let reference = &uri[separator_idx + 1..];
-        let curie = if prefix != Some("http") {
-            Curie::new(prefix, reference)
-        } else {
-            Curie::new(None, uri)
-        };
-        return prefix_map.expand_curie(&curie).unwrap().to_string();
+        let curie = Curie::new(prefix, reference);
+        match prefix_map.expand_curie(&curie) {
+            Ok(expanded) => {
+                format!("<{}>", expanded)
+            }
+            Err(e) => {
+                eprintln!("Failed to expand {:?} CURIE: {} ", e, uri);
+                uri.to_string()
+            }
+        }
     }
     fn check_uris(&self, nodes: &NodeRules, objects: &ObjectRules) -> bool {
         // Check if the URIs are valid and there are no cURIEs
@@ -191,9 +250,8 @@ impl Rules {
     }
 
     fn filter(&self, hash_set: &HashSet<String>) -> HashSet<String> {
-        let mut filtered = HashSet::new();
         // Filter out full URIs
-        filtered = hash_set
+        let filtered = hash_set
             .iter()
             .filter(|uri| !self.is_full_uri(uri))
             .cloned()
@@ -225,7 +283,6 @@ impl Rules {
         filtered.of_type = self.filter(&node_uris.of_type);
         return filtered;
     }
-
 }
 
 /// Check all parts of the triple against rules.
@@ -465,14 +522,74 @@ mod tests {
             .unwrap();
     }
     #[rstest]
-    fn valid_full_uri() {
-        let full_uri = "<http://example.com>";
-        let bad_uri = "http://example.com";
-        let bad_format_uri = "<http://example.com";
-
-    assert_eq!(Rules::default().check_string_iri(full_uri), true);
-    assert_eq!(Rules::default().check_string_iri(bad_uri), false);
-    assert_eq!(Rules::default().check_string_iri(bad_format_uri), false);
-
+    // Prefix provided with matching cURIes
+    #[case("ex", "<http://example.org/>", "ex:Person", "ex:hasName>", true)]
+    // Prefix provided with non-matching cURIes
+    #[case("ex", "<http://example.org/>", "foaf:Person", "foaf:hasAge>", false)]
+    // Prefix provided with full URIs in config
+    #[case("ex", "<http://example.org/>", "<http:Person>", "<http:hasName>", true)]
+    // Prefix badly defined
+    #[case("ex", "http://example.org/", "ex:Person", "ex:hasName>", false)]
+    // Bad full URIs provided
+    #[case("ex", "<http://example.org/>", "<Person>", "<http:hasName>", false)]
+    fn valid_curies(
+        #[case] prefix: &str,
+        #[case] prefix_uri: &str,
+        #[case] rule_type: &str,
+        #[case] rule_predicate: &str,
+        #[case] match_expected: bool,
+    ) {
+        let rules = parse_rules(&format!(
+            "
+            prefix:
+              {prefix}: {prefix_uri}
+            objects:
+              on_type_predicate:
+                {rule_type}:
+                - {rule_predicate}
+        "
+        ));
+        assert_eq!(rules.has_valid_curies_and_uris(), match_expected);
+    }
+    #[rstest]
+    // Prefix provided with matching cURIes
+    #[case(
+        "ex",
+        "<http://example.org/>",
+        "ex:Person",
+        "ex:hasName",
+        "<http://example.org/Person>",
+        "<http://example.org/hasName>"
+    )]
+    // Prefix provided with full URIs
+    #[case(
+        "ex",
+        "<http://example.org/>",
+        "<http://example.org/Person>",
+        "<http://example.org/hasName>",
+        "<http://example.org/Person>",
+        "<http://example.org/hasName>"
+    )]
+    fn expand_rules(
+        #[case] prefix: &str,
+        #[case] prefix_uri: &str,
+        #[case] rule_type: &str,
+        #[case] rule_predicate: &str,
+        #[case] expanded_rule_type: &str,
+        #[case] expanded_rule_predicate: &str,
+    ) {
+        let rules = parse_rules(&format!(
+            "
+            prefix:
+              {prefix}: {prefix_uri}
+            objects:
+              on_type_predicate:
+                {rule_type}:
+                - {rule_predicate}
+        "
+        ));
+        let expanded = rules.expand_rules_curie();
+        assert!(expanded.objects.on_type_predicate[expanded_rule_type]
+            .contains(expanded_rule_predicate));
     }
 }

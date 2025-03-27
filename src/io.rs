@@ -51,7 +51,7 @@ pub fn parse_rules(path: &Path) -> Rules {
     if !rules.has_valid_curies_and_uris() {
         panic!("Rules file has invalid cURIs or URIs.");
     } else {
-        return rules.expand_curie();
+        return rules.expand_rules_curie();
     }
 }
 
