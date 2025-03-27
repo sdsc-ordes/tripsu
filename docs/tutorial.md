@@ -53,7 +53,9 @@ secret information is hashed to protect privacy:
 ```
 
 The next subsections break down each of the three pseudonymization approaches to
-better understand how they operate.
+better understand how they operate.  
+
+**Important Note**: all the examples use full URIs, but the tripsu config supports prefixes too! [Click here](https://github.com/sdsc-ordes/tripsu/blob/main/tests/data/rules.yaml) for an example.
 
 ### 1. Pseudonymize the URI of nodes with `rdf:type`
 
