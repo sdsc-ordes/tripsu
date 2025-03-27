@@ -47,7 +47,7 @@ impl Rules {
     pub fn has_valid_curies_and_uris(&self) -> bool {
         match &self.prefix {
             // If no prefix are set, check each URI for validity
-            None => return self.check_uris(&self.nodes, &self.objects),
+            None => self.check_uris(&self.nodes, &self.objects),
             // If some prefix are set, check and expand each URI for validity
             Some(prefix) => {
                 let mut prefix_map = PrefixMapping::default();
@@ -114,17 +114,17 @@ impl Rules {
             && object_uris.on_type_predicate.iter().all(|(k, v)| {
                 let key_valid = self.try_expansion(k, &prefix);
                 let value_valid = v.iter().all(|uri| self.try_expansion(uri, &prefix));
-                return key_valid && value_valid;
+                key_valid && value_valid
             });
     }
 
     fn try_expansion(&self, uri: &str, prefix_map: &PrefixMapping) -> bool {
         let curie = self.to_curie(uri);
         match prefix_map.expand_curie(&curie) {
-            Ok(_) => return true,
+            Ok(_) => true,
             Err(e) => {
                 eprintln!("Failed to expand {:?} CURIE: {} ", e, uri);
-                return false;
+                false
             }
         }
     }
@@ -173,7 +173,6 @@ impl Rules {
                     prefix_map
                         .expand_curie(&self.to_curie(k))
                         .unwrap()
-                        .to_string()
                 ),
                 true => k.clone(),
             };
@@ -186,7 +185,7 @@ impl Rules {
             objects_on_type_predicate_full_uris.insert(expanded_key, expanded_value);
         }
 
-        return Rules {
+        Rules {
             invert: self.invert,
             prefix: self.prefix.clone(),
             nodes: NodeRules {
@@ -196,15 +195,15 @@ impl Rules {
                 on_predicate: objects_on_predicate_full_uris,
                 on_type_predicate: objects_on_type_predicate_full_uris,
             },
-        };
+        }
     }
     fn expand_hashset(&self, set: &HashSet<String>, prefix_map: &PrefixMapping) -> HashSet<String> {
         let mut expanded_set = HashSet::new();
         set.iter().for_each(|uri| {
-            let expanded_uri = self.expand_string(&uri, prefix_map);
+            let expanded_uri = self.expand_string(uri, prefix_map);
             expanded_set.insert(expanded_uri);
         });
-        return expanded_set;
+        expanded_set
     }
     fn expand_string(&self, uri: &str, prefix_map: &PrefixMapping) -> String {
         let separator_idx = uri
@@ -226,7 +225,7 @@ impl Rules {
     }
     fn check_uris(&self, nodes: &NodeRules, objects: &ObjectRules) -> bool {
         // Check if the URIs are valid and there are no cURIEs
-        return nodes
+        nodes
             .of_type
             .clone()
             .into_iter()
@@ -238,15 +237,12 @@ impl Rules {
                 .all(|uri| self.check_string_iri(&uri))
             && objects.on_type_predicate.clone().into_iter().all(|(k, v)| {
                 self.check_string_iri(&k) && v.into_iter().all(|uri| self.check_string_iri(&uri))
-            });
+            })
     }
     fn check_string_iri(&self, uri: &str) -> bool {
         // We assume that a full URI starts with "<" and ends with ">"
         // We select the URI within the angle brackets
-        match Iri::new(&uri[1..uri.len() - 2]) {
-            Ok(_) => return true,
-            Err(_) => return false,
-        }
+        Iri::new(&uri[1..uri.len() - 2]).is_ok()
     }
 
     fn filter(&self, hash_set: &HashSet<String>) -> HashSet<String> {
@@ -256,11 +252,11 @@ impl Rules {
             .filter(|uri| !self.is_full_uri(uri))
             .cloned()
             .collect();
-        return filtered;
+        filtered
     }
     fn is_full_uri(&self, uri: &str) -> bool {
         // Ensure that full URI starts with "<" and ends with ">"
-        return uri.starts_with('<') && uri.ends_with('>');
+        uri.starts_with('<') && uri.ends_with('>')
     }
 
     fn filter_objects(&self, object_uris: &ObjectRules) -> ObjectRules {
@@ -272,16 +268,16 @@ impl Rules {
             .filter(|(k, _)| !self.is_full_uri(k))
             .map(|(k, v)| {
                 let filtered_values = self.filter(v);
-                return (k.clone(), filtered_values);
+                (k.clone(), filtered_values)
             })
             .collect();
-        return filtered;
+        filtered
     }
 
     fn filter_nodes(&self, node_uris: &NodeRules) -> NodeRules {
         let mut filtered = NodeRules::default();
         filtered.of_type = self.filter(&node_uris.of_type);
-        return filtered;
+        filtered
     }
 }
 
@@ -294,7 +290,7 @@ pub fn match_rules(triple: &Triple, rules: &Rules, type_map: &mut TypeIndex) -> 
         mask = mask.invert();
     }
 
-    return mask;
+    mask
 }
 
 /// Check triple against node-pseudonymization rules.
@@ -317,7 +313,7 @@ pub fn match_node_rules(triple: &Triple, rules: &Rules, type_map: &mut TypeIndex
         mask |= TripleMask::OBJECT;
     };
 
-    return mask;
+    mask
 }
 
 /// Checks triple against object-pseudonymization rules
@@ -345,7 +341,7 @@ pub fn match_object_rules(triple: &Triple, rules: &Rules, type_map: &mut TypeInd
         return TripleMask::OBJECT;
     }
 
-    return TripleMask::default();
+    TripleMask::default()
 }
 
 /// Check if the type of input instance URI is in the rules.
@@ -380,7 +376,7 @@ fn match_type_predicate(
             }
         }
     }
-    return false;
+    false
 }
 
 #[cfg(test)]
@@ -389,7 +385,7 @@ mod tests {
     use rio_api::parser::TriplesParser;
     use rio_turtle::{TurtleError, TurtleParser};
     use rstest::rstest;
-    use serde_yml;
+    
 
     // Instance used in tests
     const NODE_IRI: &str = "<Alice>";

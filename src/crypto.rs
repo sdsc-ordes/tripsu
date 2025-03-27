@@ -5,7 +5,7 @@ use rand::Rng;
 /// Generate a cryptographic key of predetermined length
 pub(crate) fn generate_key(size: usize) -> Vec<u8> {
     let mut rng = rand::thread_rng();
-    return (0..size).map(|_| rng.gen::<u8>()).collect();
+    (0..size).map(|_| rng.gen::<u8>()).collect()
 }
 
 /// Provides a generic interface for pseudonymization of RDF data
@@ -29,11 +29,11 @@ pub trait Pseudonymize {
             &triple.object.clone().into()
         };
 
-        return Triple {
+        Triple {
             subject: Subject::from(pseudo_subject.clone()),
             predicate: triple.predicate.clone(),
             object: Term::from(pseudo_object.clone()),
-        };
+        }
     }
 
     /// Pseudonymize an entity (component of a triple) based on its type.
@@ -51,9 +51,9 @@ pub trait Pseudonymize {
         let prefix_end = t.iri.rfind(['#', '/']).unwrap();
         let prefix = &t.iri[0..=prefix_end];
         let crypted = self.pseudo(t.iri.as_bytes()).to_string();
-        return NamedNode {
+        NamedNode {
             iri: format!("{prefix}{crypted}"),
-        };
+        }
     }
 
     /// Pseudonymize a literal resulting in a simple literal (hash string).
@@ -64,34 +64,31 @@ pub trait Pseudonymize {
             Literal::Simple { value } => value,
         };
         let crypted = self.pseudo(value.as_bytes());
-        return Literal::Simple { value: crypted };
+        Literal::Simple { value: crypted }
     }
 
     /// Leave blank nodes unchanged.
     fn pseudo_blank_node(&self, u: &BlankNode) -> BlankNode {
-        return u.clone();
+        u.clone()
     }
 }
 
 /// Available pseudonymization algorithms.
+#[derive(Default)]
 pub enum Algorithm {
+    #[default]
     Blake3,
 }
 
-impl Default for Algorithm {
-    fn default() -> Self {
-        return Algorithm::Blake3;
-    }
-}
 
 /// Factory method for creating a pseudonymizer
 /// based on the selected algorithm and secret key.
 pub fn new_pseudonymizer(algo: Option<Algorithm>, secret: Option<Vec<u8>>) -> impl Pseudonymize {
-    let pseudonymizer = match algo.unwrap_or_default() {
-        Algorithm::Blake3 => Blake3Hasher::new(secret),
-    };
+    
 
-    return pseudonymizer;
+    match algo.unwrap_or_default() {
+        Algorithm::Blake3 => Blake3Hasher::new(secret),
+    }
 }
 
 /// BLAKE3-based pseudonymizer.
@@ -115,13 +112,13 @@ impl Blake3Hasher {
         };
         key.copy_from_slice(&key_vec[..32]);
 
-        return Self { key };
+        Self { key }
     }
 }
 
 impl Pseudonymize for Blake3Hasher {
     fn pseudo(&self, data: &[u8]) -> String {
-        return blake3::keyed_hash(&self.key, data).to_string();
+        blake3::keyed_hash(&self.key, data).to_string()
     }
 }
 
@@ -130,7 +127,7 @@ mod tests {
     use super::*;
 
     fn is_valid_hex(input: &str) -> bool {
-        input.chars().all(|c| c.is_digit(16))
+        input.chars().all(|c| c.is_ascii_hexdigit())
     }
 
     // Test the generation of a cryptographic key
@@ -148,7 +145,7 @@ mod tests {
         };
         let pseudo = hasher.pseudo_named_node(&named_node).iri;
         // test that output is prefix + hash
-        assert_eq!(pseudo.starts_with("http://example.com/"), true);
+        assert!(pseudo.starts_with("http://example.com/"));
         assert!(is_valid_hex(
             pseudo.strip_prefix("http://example.com/").unwrap()
         ));
@@ -162,6 +159,6 @@ mod tests {
         };
         let pseudo_literal = hasher.pseudo_literal(&literal);
         // test that output is quoted hash
-        assert!(is_valid_hex(&pseudo_literal.to_string().trim_matches('"')));
+        assert!(is_valid_hex(pseudo_literal.to_string().trim_matches('"')));
     }
 }

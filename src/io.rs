@@ -39,7 +39,7 @@ pub fn get_writer(path: &Path) -> Writer {
 // Parse RDF triples.
 // This function takes ownership of a generic type which implements `BufRead`.
 pub fn parse_ntriples(reader: impl BufRead) -> NTriplesParser<impl BufRead> {
-    return NTriplesParser::new(reader);
+    NTriplesParser::new(reader)
 }
 
 // Parse yaml configuration file.
@@ -51,16 +51,16 @@ pub fn parse_rules(path: &Path) -> Rules {
     if !rules.has_valid_curies_and_uris() {
         panic!("Rules file has invalid cURIs or URIs.");
     } else {
-        return rules.expand_rules_curie();
+        rules.expand_rules_curie()
     }
 }
 
 // Parse yaml type index
 pub fn parse_index(path: &Path) -> TypeIndex {
-    return match File::open(path) {
+    match File::open(path) {
         Ok(file) => serde_json::from_reader(file).expect("Error parsing index file."),
         Err(e) => panic!("Cannot open index file '{:?}': '{}'.", path, e),
-    };
+    }
 }
 
 // Read all file content as bytes.
@@ -70,7 +70,7 @@ pub fn read_bytes(path: &PathBuf) -> Vec<u8> {
     file.read_to_end(&mut data)
         .expect("Error reading key file.");
 
-    return data;
+    data
 }
 
 #[cfg(test)]
@@ -101,6 +101,6 @@ mod tests {
     #[test]
     fn rules_parsing() {
         let config_path = Path::new("tests/data/rules.yaml");
-        parse_rules(&config_path);
+        parse_rules(config_path);
     }
 }

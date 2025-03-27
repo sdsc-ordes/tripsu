@@ -35,7 +35,7 @@ impl TypeIndex {
 
         type_map.for_each(|(subject_uri, type_uri)| idx.insert(subject_uri, type_uri).unwrap());
 
-        return idx;
+        idx
     }
 
     pub fn new() -> Self {
@@ -119,8 +119,7 @@ mod tests {
             ("<urn:Alice>", "<urn:Employee>"),
             ("<urn:ACME>", "<urn:Organization>"),
         ]
-        .into_iter()
-        .map(|(a, b)| (a, b));
+        .into_iter();
 
         let idx = TypeIndex::from_iter(vals);
 
