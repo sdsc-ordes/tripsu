@@ -80,12 +80,9 @@ pub enum Algorithm {
     Blake3,
 }
 
-
 /// Factory method for creating a pseudonymizer
 /// based on the selected algorithm and secret key.
 pub fn new_pseudonymizer(algo: Option<Algorithm>, secret: Option<Vec<u8>>) -> impl Pseudonymize {
-    
-
     match algo.unwrap_or_default() {
         Algorithm::Blake3 => Blake3Hasher::new(secret),
     }

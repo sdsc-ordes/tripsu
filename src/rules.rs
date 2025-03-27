@@ -168,12 +168,7 @@ impl Rules {
             HashMap::new();
         for (k, v) in self.objects.on_type_predicate.iter() {
             let expanded_key = match self.is_full_uri(k) {
-                false => format!(
-                    "<{}>",
-                    prefix_map
-                        .expand_curie(&self.to_curie(k))
-                        .unwrap()
-                ),
+                false => format!("<{}>", prefix_map.expand_curie(&self.to_curie(k)).unwrap()),
                 true => k.clone(),
             };
             let mut expanded_value: HashSet<String> = v
@@ -260,24 +255,24 @@ impl Rules {
     }
 
     fn filter_objects(&self, object_uris: &ObjectRules) -> ObjectRules {
-        let mut filtered = ObjectRules::default();
-        filtered.on_predicate = self.filter(&object_uris.on_predicate);
-        filtered.on_type_predicate = object_uris
-            .on_type_predicate
-            .iter()
-            .filter(|(k, _)| !self.is_full_uri(k))
-            .map(|(k, v)| {
-                let filtered_values = self.filter(v);
-                (k.clone(), filtered_values)
-            })
-            .collect();
-        filtered
+        ObjectRules {
+            on_predicate: self.filter(&object_uris.on_predicate),
+            on_type_predicate: object_uris
+                .on_type_predicate
+                .iter()
+                .filter(|(k, _)| !self.is_full_uri(k))
+                .map(|(k, v)| {
+                    let filtered_values = self.filter(v);
+                    (k.clone(), filtered_values)
+                })
+                .collect(),
+        }
     }
 
     fn filter_nodes(&self, node_uris: &NodeRules) -> NodeRules {
-        let mut filtered = NodeRules::default();
-        filtered.of_type = self.filter(&node_uris.of_type);
-        filtered
+        NodeRules {
+            of_type: self.filter(&node_uris.of_type),
+        }
     }
 }
 
@@ -385,7 +380,6 @@ mod tests {
     use rio_api::parser::TriplesParser;
     use rio_turtle::{TurtleError, TurtleParser};
     use rstest::rstest;
-    
 
     // Instance used in tests
     const NODE_IRI: &str = "<Alice>";
