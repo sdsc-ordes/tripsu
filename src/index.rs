@@ -62,7 +62,7 @@ impl TypeIndex {
         match self.map.get_mut(&key) {
             Some(v) => {
                 // Push index value only when new
-                if !v.iter().any(|x| *x == type_idx ) {
+                if !v.iter().any(|x| *x == type_idx) {
                     v.push(type_idx);
                 }
             }
