@@ -61,7 +61,10 @@ impl TypeIndex {
         // Insert mapping into the index.
         match self.map.get_mut(&key) {
             Some(v) => {
-                v.push(type_idx);
+                // Push index value only when new
+                if !v.iter().any(|x| *x == type_idx ) {
+                    v.push(type_idx);
+                }
             }
             None => {
                 self.map.insert(key, smallvec![type_idx]);
