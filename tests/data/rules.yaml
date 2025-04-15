@@ -2,7 +2,7 @@
 invert: false
 
 # Define prefixes for the URIs used in the rules.
-prefix:
+prefixes:
   foaf: "<http://xmlns.com/foaf/0.1/>"
 
 # hash URIs of people and online accounts

@@ -33,7 +33,7 @@ pub struct Rules {
     pub invert: bool,
 
     #[serde(default)]
-    prefix: Option<HashMap<String, String>>,
+    prefixes: Option<HashMap<String, String>>,
 
     #[serde(default)]
     pub nodes: NodeRules,
@@ -45,13 +45,13 @@ pub struct Rules {
 /// Check if rules are setup correctly
 impl Rules {
     pub fn has_valid_curies_and_uris(&self) -> bool {
-        match &self.prefix {
+        match &self.prefixes {
             // If no prefix are set, check each URI for validity
             None => self.check_uris(&self.nodes, &self.objects),
             // If some prefix are set, check and expand each URI for validity
-            Some(prefix) => {
+            Some(prefixes) => {
                 let mut prefix_map = PrefixMapping::default();
-                for p in prefix {
+                for p in prefixes {
                     if self.is_full_uri(p.1) {
                         match prefix_map.add_prefix(p.0, p.1) {
                             Ok(_) => continue,
@@ -100,20 +100,20 @@ impl Rules {
         &self,
         node_uris: &NodeRules,
         object_uris: &ObjectRules,
-        prefix: PrefixMapping,
+        prefixes: PrefixMapping,
     ) -> bool {
         // Use iterators to check if the cURIEs are valid
         return node_uris
             .of_type
             .iter()
-            .all(|uri| self.try_expansion(uri, &prefix))
+            .all(|uri| self.try_expansion(uri, &prefixes))
             && object_uris
                 .on_predicate
                 .iter()
-                .all(|uri| self.try_expansion(uri, &prefix))
+                .all(|uri| self.try_expansion(uri, &prefixes))
             && object_uris.on_type_predicate.iter().all(|(k, v)| {
-                let key_valid = self.try_expansion(k, &prefix);
-                let value_valid = v.iter().all(|uri| self.try_expansion(uri, &prefix));
+                let key_valid = self.try_expansion(k, &prefixes);
+                let value_valid = v.iter().all(|uri| self.try_expansion(uri, &prefixes));
                 key_valid && value_valid
             });
     }
@@ -132,9 +132,9 @@ impl Rules {
     pub fn expand_rules_curie(&self) -> Rules {
         let prefix_map = match &self.prefix {
             None => PrefixMapping::default(),
-            Some(prefix) => {
+            Some(prefixes) => {
                 let mut prefix_map = PrefixMapping::default();
-                prefix.iter().for_each(|(k, v)| {
+                prefixes.iter().for_each(|(k, v)| {
                     if self.is_full_uri(v) {
                         if let Err(e) = prefix_map.add_prefix(k, &v[1..v.len() - 1]) {
                             eprintln!("Failed to add prefix: {:?}", e);
@@ -182,7 +182,7 @@ impl Rules {
 
         Rules {
             invert: self.invert,
-            prefix: self.prefix.clone(),
+            prefixes: self.prefixes.clone(),
             nodes: NodeRules {
                 of_type: nodes_full_uris,
             },
@@ -523,8 +523,8 @@ mod tests {
     // Bad full URIs provided
     #[case("ex", "<http://example.org/>", "<Person>", "<http:hasName>", false)]
     fn valid_curies(
-        #[case] prefix: &str,
-        #[case] prefix_uri: &str,
+        #[case] prefixes: &str,
+        #[case] prefixes_uri: &str,
         #[case] rule_type: &str,
         #[case] rule_predicate: &str,
         #[case] match_expected: bool,
@@ -532,7 +532,7 @@ mod tests {
         let rules = parse_rules(&format!(
             "
             prefix:
-              {prefix}: {prefix_uri}
+              {prefixes}: {prefixes_uri}
             objects:
               on_type_predicate:
                 {rule_type}:
@@ -561,8 +561,8 @@ mod tests {
         "<http://example.org/hasName>"
     )]
     fn expand_rules(
-        #[case] prefix: &str,
-        #[case] prefix_uri: &str,
+        #[case] prefixes: &str,
+        #[case] prefixes_uri: &str,
         #[case] rule_type: &str,
         #[case] rule_predicate: &str,
         #[case] expanded_rule_type: &str,
@@ -571,7 +571,7 @@ mod tests {
         let rules = parse_rules(&format!(
             "
             prefix:
-              {prefix}: {prefix_uri}
+              {prefixes}: {prefixes_uri}
             objects:
               on_type_predicate:
                 {rule_type}:
