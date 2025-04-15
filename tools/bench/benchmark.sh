@@ -149,8 +149,8 @@ HYPF_PSD_OUT=$(mktemp)
 cpu_prof "${BASE_BRANCH}" "${BASE_CMD_IDX}" \
          "${COMP_BRANCH}" "${COMP_CMD_IDX}" "${HYPF_IDX_OUT}"
 # pseudonymization
-cpu_prof "${BASE_BRANCH}" "${BASE_CMD_IDX}" \
-         "${COMP_BRANCH}" "${COMP_CMD_IDX}" "${HYPF_PSD_OUT}"
+cpu_prof "${BASE_BRANCH}" "${BASE_CMD_PSD}" \
+         "${COMP_BRANCH}" "${COMP_CMD_PSD}" "${HYPF_PSD_OUT}"
 
 ## Profile memory
 HEAP_IDX_OUT=$(mktemp)
