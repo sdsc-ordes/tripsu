@@ -7,6 +7,7 @@ mod model;
 mod pseudo;
 mod rdf_types;
 mod rules;
+mod uris;
 
 // Define the imports.
 use crate::{

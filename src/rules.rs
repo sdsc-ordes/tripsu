@@ -1,8 +1,8 @@
 use crate::rdf_types::*;
+use crate::uris::*;
 use ::std::collections::{HashMap, HashSet};
 use curie::{Curie, PrefixMapping};
 use serde::{Deserialize, Serialize};
-use sophia_iri::Iri;
 
 use crate::{index::TypeIndex, model::TripleMask};
 
@@ -52,7 +52,7 @@ impl Rules {
             Some(prefixes) => {
                 let mut prefix_map = PrefixMapping::default();
                 for p in prefixes {
-                    if self.is_full_uri(p.1) {
+                    if is_full_uri(p.1) {
                         match prefix_map.add_prefix(p.0, p.1) {
                             Ok(_) => continue,
                             Err(e) => {
@@ -73,14 +73,14 @@ impl Rules {
                     .nodes
                     .of_type
                     .iter()
-                    .all(|uri| self.check_string_iri(uri))
+                    .all(|uri| check_string_iri(uri))
                     && self
                         .objects
                         .on_predicate
                         .iter()
-                        .all(|uri| self.check_string_iri(uri))
+                        .all(|uri| check_string_iri(uri))
                     && self.objects.on_type_predicate.iter().all(|(k, v)| {
-                        self.check_string_iri(k) && v.iter().all(|uri| self.check_string_iri(uri))
+                        check_string_iri(k) && v.iter().all(|uri| check_string_iri(uri))
                     });
             }
         }
@@ -130,12 +130,12 @@ impl Rules {
     }
 
     pub fn expand_rules_curie(&self) -> Rules {
-        let prefix_map = match &self.prefix {
+        let prefix_map = match &self.prefixes {
             None => PrefixMapping::default(),
             Some(prefixes) => {
                 let mut prefix_map = PrefixMapping::default();
                 prefixes.iter().for_each(|(k, v)| {
-                    if self.is_full_uri(v) {
+                    if is_full_uri(v) {
                         if let Err(e) = prefix_map.add_prefix(k, &v[1..v.len() - 1]) {
                             eprintln!("Failed to add prefix: {:?}", e);
                         }
@@ -149,34 +149,37 @@ impl Rules {
             .nodes
             .of_type
             .iter()
-            .filter(|uri| self.is_full_uri(uri))
+            .filter(|uri| is_full_uri(uri))
             .cloned()
             .collect();
-        nodes_full_uris.extend(self.expand_hashset(&self.filter(&self.nodes.of_type), &prefix_map));
+        let filtered_nodes_uris = filter_out_full_uris(&self.nodes.of_type);
+        nodes_full_uris.extend(self.expand_hashset(&filtered_nodes_uris, &prefix_map));
 
         let mut objects_on_predicate_full_uris: HashSet<String> = self
             .objects
             .on_predicate
             .iter()
-            .filter(|uri| self.is_full_uri(uri))
+            .filter(|uri| is_full_uri(uri))
             .cloned()
             .collect();
+        let filtered_objects_predicate_uris = filter_out_full_uris(&self.objects.on_predicate);
         objects_on_predicate_full_uris
-            .extend(self.expand_hashset(&self.filter(&self.objects.on_predicate), &prefix_map));
+            .extend(self.expand_hashset(&filtered_objects_predicate_uris, &prefix_map));
 
         let mut objects_on_type_predicate_full_uris: HashMap<String, HashSet<String>> =
             HashMap::new();
         for (k, v) in self.objects.on_type_predicate.iter() {
-            let expanded_key = match self.is_full_uri(k) {
+            let expanded_key = match is_full_uri(k) {
                 false => format!("<{}>", prefix_map.expand_curie(&self.to_curie(k)).unwrap()),
                 true => k.clone(),
             };
             let mut expanded_value: HashSet<String> = v
                 .iter()
-                .filter(|uri| self.is_full_uri(uri))
+                .filter(|uri| is_full_uri(uri))
                 .cloned()
                 .collect();
-            expanded_value.extend(self.expand_hashset(&self.filter(v), &prefix_map));
+            let filtered_objects_type_predicate_uris = filter_out_full_uris(&v);
+            expanded_value.extend(self.expand_hashset(&filtered_objects_type_predicate_uris, &prefix_map));
             objects_on_type_predicate_full_uris.insert(expanded_key, expanded_value);
         }
 
@@ -224,43 +227,24 @@ impl Rules {
             .of_type
             .clone()
             .into_iter()
-            .all(|uri| self.check_string_iri(&uri))
+            .all(|uri| check_string_iri(&uri))
             && objects
                 .on_predicate
                 .clone()
                 .into_iter()
-                .all(|uri| self.check_string_iri(&uri))
+                .all(|uri| check_string_iri(&uri))
             && objects.on_type_predicate.clone().into_iter().all(|(k, v)| {
-                self.check_string_iri(&k) && v.into_iter().all(|uri| self.check_string_iri(&uri))
+                check_string_iri(&k) && v.into_iter().all(|uri| check_string_iri(&uri))
             })
-    }
-    fn check_string_iri(&self, uri: &str) -> bool {
-        // We assume that a full URI starts with "<" and ends with ">"
-        // We select the URI within the angle brackets
-        Iri::new(&uri[1..uri.len() - 2]).is_ok()
-    }
-
-    fn filter(&self, hash_set: &HashSet<String>) -> HashSet<String> {
-        // Filter out full URIs
-        let filtered = hash_set
-            .iter()
-            .filter(|uri| !self.is_full_uri(uri))
-            .cloned()
-            .collect();
-        filtered
-    }
-    fn is_full_uri(&self, uri: &str) -> bool {
-        // Ensure that full URI starts with "<" and ends with ">"
-        uri.starts_with('<') && uri.ends_with('>')
     }
 
     fn filter_objects(&self, object_uris: &ObjectRules) -> ObjectRules {
         ObjectRules {
-            on_predicate: self.filter(&object_uris.on_predicate),
+            on_predicate: filter_out_full_uris(&object_uris.on_predicate),
             on_type_predicate: object_uris
                 .on_type_predicate
                 .iter()
-                .filter(|(k, _)| !self.is_full_uri(k))
+                .filter(|(k, _)| !is_full_uri(k))
                 .map(|(k, v)| {
                     let filtered_values = self.filter(v);
                     (k.clone(), filtered_values)
