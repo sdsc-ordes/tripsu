@@ -1,5 +1,6 @@
-use crate::rdf_types::*;
+use crate::{rdf_types::*, uris::*};
 use ::std::collections::{HashMap, HashSet};
+use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 
 use crate::{index::TypeIndex, model::TripleMask};
@@ -10,6 +11,30 @@ pub struct NodeRules {
     // Replace values of nodes with a certain type.
     #[serde(default)]
     of_type: HashSet<String>,
+}
+
+impl NodeRules {
+    pub fn check_uris(&self) -> Result<(), sophia_iri::InvalidIri> {
+        let node_uris = keep_full_uris(&self.of_type);
+        check_uris(&node_uris)
+    }
+
+    pub fn check_curies(&self, prefixes: &PrefixMap) -> Result<(), curie::ExpansionError> {
+        check_curies_hashset(&self.of_type, prefixes)
+    }
+    pub fn expand_curies(&self, prefixes: &PrefixMap) -> NodeRules {
+        let mut nodes_full_uris: HashSet<String> = keep_full_uris(&self.of_type);
+        let nodes_curies = filter_out_full_uris(&self.of_type);
+        let mut nodes_curies_set = CompactUriSet::new();
+
+        nodes_curies_set.insert(&nodes_curies);
+
+        nodes_full_uris.extend(nodes_curies_set.expand_set(prefixes));
+
+        NodeRules {
+            of_type: nodes_full_uris,
+        }
+    }
 }
 
 /// Rules for pseudonymizing objects
@@ -23,6 +48,82 @@ pub struct ObjectRules {
     on_type_predicate: HashMap<String, HashSet<String>>,
 }
 
+impl ObjectRules {
+    pub fn check_uris(&self) -> Result<(), sophia_iri::InvalidIri> {
+        let on_predicate_uris = keep_full_uris(&self.on_predicate);
+        check_uris(&on_predicate_uris)?;
+        for (k, v) in self.on_type_predicate.iter() {
+            // Check if a string is a full URI and if it is check iri
+            if is_full_uri(k) {
+                check_string_iri(k)?;
+            }
+            let on_type_predicate_uris = keep_full_uris(v);
+            check_uris(&on_type_predicate_uris)?;
+        }
+        Ok::<(), sophia_iri::InvalidIri>(())
+    }
+
+    /// Validates the CURIEs in the `on_predicate` and `on_type_predicate` fields
+    /// against the provided prefix map, ensuring they can be expanded correctly.
+    pub fn check_curies(&self, prefixes: &PrefixMap) -> Result<(), curie::ExpansionError> {
+        check_curies_hashset(&self.on_predicate, prefixes)?;
+        for (k, v) in &self.on_type_predicate {
+            try_expansion(&k, prefixes)?;
+            check_curies_hashset(&v, prefixes)?;
+        }
+        Ok(())
+    }
+
+    pub fn keep_curies(&self) -> ObjectRules {
+        ObjectRules {
+            on_predicate: filter_out_full_uris(&self.on_predicate),
+            on_type_predicate: self
+                .on_type_predicate
+                .iter()
+                .filter(|(k, _)| !is_full_uri(k))
+                .map(|(k, v)| {
+                    let filtered_values = filter_out_full_uris(v);
+                    (k.clone(), filtered_values)
+                })
+                .collect(),
+        }
+    }
+
+    pub fn expand_curies(&self, prefixes: &PrefixMap) -> ObjectRules {
+        let mut objects_on_predicate_full_uris = keep_full_uris(&self.on_predicate);
+        let objects_predicate_curies = filter_out_full_uris(&self.on_predicate);
+        let mut objects_predicate_curies_set = CompactUriSet::new();
+
+        objects_predicate_curies_set.insert(&objects_predicate_curies);
+
+        objects_on_predicate_full_uris.extend(objects_predicate_curies_set.expand_set(prefixes));
+
+        let mut objects_on_type_predicate_full_uris: HashMap<String, HashSet<String>> =
+            HashMap::new();
+
+        for (k, v) in self.on_type_predicate.iter() {
+            let expanded_keys = match is_full_uri(k) {
+                false => format!("<{}>", prefixes.expand_curie(&to_curie(&k)).unwrap()),
+                true => k.clone(),
+            };
+
+            let mut expanded_values = keep_full_uris(v);
+            let objects_type_predicate_curies = filter_out_full_uris(&v);
+            let mut objects_type_predicate_curies_set = CompactUriSet::new();
+
+            objects_type_predicate_curies_set.insert(&objects_type_predicate_curies);
+
+            expanded_values.extend(objects_type_predicate_curies_set.expand_set(&prefixes));
+            objects_on_type_predicate_full_uris.insert(expanded_keys, expanded_values);
+        }
+
+        ObjectRules {
+            on_predicate: objects_on_predicate_full_uris,
+            on_type_predicate: objects_on_type_predicate_full_uris,
+        }
+    }
+}
+
 /// Rules for pseudonymizing triples
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Rules {
@@ -31,10 +132,73 @@ pub struct Rules {
     pub invert: bool,
 
     #[serde(default)]
+    prefixes: Option<HashMap<String, String>>,
+
+    #[serde(default)]
     pub nodes: NodeRules,
 
     #[serde(default)]
     pub objects: ObjectRules,
+}
+
+/// Check if rules are setup correctly
+impl Rules {
+    pub fn validate_uris(&self) -> Result<(), anyhow::Error> {
+        self.prefixes.as_ref().map_or_else(
+            // If no prefix are set, check each URI for validity
+            || {
+                check_uris(&self.nodes.of_type).map_err(Error::from)?;
+                check_uris(&self.objects.on_predicate).map_err(Error::from)?;
+                for (k, v) in &self.objects.on_type_predicate {
+                    check_string_iri(k).map_err(Error::from)?;
+                    check_uris(v).map_err(Error::from)?;
+                }
+                Ok::<(), anyhow::Error>(())
+            },
+            // If prefixes are set, build prefix map, try expanding
+            // and check both compact URIs and full URIs
+            |p| {
+                let mut prefix_map = PrefixMap::new();
+                prefix_map.import_hashmap(p);
+                self.nodes.check_curies(&prefix_map).map_err(|e| anyhow::anyhow!(format!("{:?}", e)))?;
+                self.objects.check_curies(&prefix_map).map_err(|e| anyhow::anyhow!(format!("{:?}", e)))?;
+                self.nodes.check_uris().map_err(Error::from)?;
+                self.objects.check_uris().map_err(Error::from)?;
+                Ok(())
+            },
+        )?;
+        Ok(())
+    }
+
+    pub fn expand_rules_curie(&self) -> Rules {
+        self.prefixes.as_ref().map_or_else(
+            // If there's no prefixes return Rules as they are
+            || {
+                return Rules {
+                    invert: self.invert,
+                    prefixes: self.prefixes.clone(),
+                    nodes: NodeRules {
+                        of_type: self.nodes.of_type.clone(),
+                    },
+                    objects: ObjectRules {
+                        on_predicate: self.objects.on_predicate.clone(),
+                        on_type_predicate: self.objects.on_type_predicate.clone(),
+                    },
+                };
+            },
+            // If there's prefixes, return expanded cURIs
+            |p| {
+                let mut prefix_map = PrefixMap::new();
+                prefix_map.import_hashmap(p);
+                return Rules {
+                    invert: self.invert,
+                    prefixes: self.prefixes.clone(),
+                    nodes: self.nodes.expand_curies(&prefix_map),
+                    objects: self.objects.expand_curies(&prefix_map),
+                };
+            },
+        )
+    }
 }
 
 /// Check all parts of the triple against rules.
@@ -46,7 +210,7 @@ pub fn match_rules(triple: &Triple, rules: &Rules, type_map: &mut TypeIndex) -> 
         mask = mask.invert();
     }
 
-    return mask;
+    mask
 }
 
 /// Check triple against node-pseudonymization rules.
@@ -69,7 +233,7 @@ pub fn match_node_rules(triple: &Triple, rules: &Rules, type_map: &mut TypeIndex
         mask |= TripleMask::OBJECT;
     };
 
-    return mask;
+    mask
 }
 
 /// Checks triple against object-pseudonymization rules
@@ -97,7 +261,7 @@ pub fn match_object_rules(triple: &Triple, rules: &Rules, type_map: &mut TypeInd
         return TripleMask::OBJECT;
     }
 
-    return TripleMask::default();
+    TripleMask::default()
 }
 
 /// Check if the type of input instance URI is in the rules.
@@ -132,7 +296,7 @@ fn match_type_predicate(
             }
         }
     }
-    return false;
+    false
 }
 
 #[cfg(test)]
@@ -141,7 +305,6 @@ mod tests {
     use rio_api::parser::TriplesParser;
     use rio_turtle::{TurtleError, TurtleParser};
     use rstest::rstest;
-    use serde_yml;
 
     // Instance used in tests
     const NODE_IRI: &str = "<Alice>";
@@ -272,5 +435,76 @@ mod tests {
                 Ok(()) as Result<(), TurtleError>
             })
             .unwrap();
+    }
+    #[rstest]
+    // Prefix provided with matching cURIes
+    #[case("ex", "<http://example.org/>", "ex:Person", "ex:hasName>", true)]
+    // Prefix provided with non-matching cURIes
+    #[case("ex", "<http://example.org/>", "foaf:Person", "foaf:hasAge>", false)]
+    // Prefix provided with full URIs in config
+    #[case("ex", "<http://example.org/>", "<http:Person>", "<http:hasName>", true)]
+    // Prefix badly defined
+    #[case("ex", "http://example.org/", "ex:Person", "ex:hasName>", false)]
+    // Bad full URIs provided
+    #[case("ex", "<http://example.org/>", "<Person>", "<http:hasName>", false)]
+    fn valid_curies(
+        #[case] prefixes: &str,
+        #[case] prefixes_uri: &str,
+        #[case] rule_type: &str,
+        #[case] rule_predicate: &str,
+        #[case] match_expected: bool,
+    ) {
+        let rules = parse_rules(&format!(
+            "
+            prefix:
+              {prefixes}: {prefixes_uri}
+            objects:
+              on_type_predicate:
+                {rule_type}:
+                - {rule_predicate}
+        "
+        ));
+        assert_eq!(rules.validate_uris().is_ok(), match_expected);
+    }
+    #[rstest]
+    // Prefix provided with matching cURIes
+    #[case(
+        "ex",
+        "<http://example.org/>",
+        "ex:Person",
+        "ex:hasName",
+        "<http://example.org/Person>",
+        "<http://example.org/hasName>"
+    )]
+    // Prefix provided with full URIs
+    #[case(
+        "ex",
+        "<http://example.org/>",
+        "<http://example.org/Person>",
+        "<http://example.org/hasName>",
+        "<http://example.org/Person>",
+        "<http://example.org/hasName>"
+    )]
+    fn expand_rules(
+        #[case] prefixes: &str,
+        #[case] prefixes_uri: &str,
+        #[case] rule_type: &str,
+        #[case] rule_predicate: &str,
+        #[case] expanded_rule_type: &str,
+        #[case] expanded_rule_predicate: &str,
+    ) {
+        let rules = parse_rules(&format!(
+            "
+            prefix:
+              {prefixes}: {prefixes_uri}
+            objects:
+              on_type_predicate:
+                {rule_type}:
+                - {rule_predicate}
+        "
+        ));
+        let expanded = rules.expand_rules_curie();
+        assert!(expanded.objects.on_type_predicate[expanded_rule_type]
+            .contains(expanded_rule_predicate));
     }
 }
