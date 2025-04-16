@@ -1,4 +1,5 @@
 [dependencies]
+anyhow = "1.0.98"
   bitflags = '2.5.0'
   blake3 = '1.5.1'
 curie = "0.1.3"

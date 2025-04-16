@@ -1,7 +1,6 @@
-use crate::rdf_types::*;
-use crate::uris::*;
+use crate::{rdf_types::*, uris::*};
 use ::std::collections::{HashMap, HashSet};
-use curie::{Curie, PrefixMapping};
+use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 
 use crate::{index::TypeIndex, model::TripleMask};
@@ -14,6 +13,30 @@ pub struct NodeRules {
     of_type: HashSet<String>,
 }
 
+impl NodeRules {
+    pub fn check_uris(&self) -> Result<(), sophia_iri::InvalidIri> {
+        let node_uris = keep_full_uris(&self.of_type);
+        check_uris(&node_uris)
+    }
+
+    pub fn check_curies(&self, prefixes: &PrefixMap) -> Result<(), curie::ExpansionError> {
+        check_curies_hashset(&self.of_type, prefixes)
+    }
+    pub fn expand_curies(&self, prefixes: &PrefixMap) -> NodeRules {
+        let mut nodes_full_uris: HashSet<String> = keep_full_uris(&self.of_type);
+        let nodes_curies = filter_out_full_uris(&self.of_type);
+        let mut nodes_curies_set = CompactUriSet::new();
+
+        nodes_curies_set.insert(&nodes_curies);
+
+        nodes_full_uris.extend(nodes_curies_set.expand_set(prefixes));
+
+        NodeRules {
+            of_type: nodes_full_uris,
+        }
+    }
+}
+
 /// Rules for pseudonymizing objects
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct ObjectRules {
@@ -23,6 +46,82 @@ pub struct ObjectRules {
     // Replace values of predicates for specific types
     #[serde(default)]
     on_type_predicate: HashMap<String, HashSet<String>>,
+}
+
+impl ObjectRules {
+    pub fn check_uris(&self) -> Result<(), sophia_iri::InvalidIri> {
+        let on_predicate_uris = keep_full_uris(&self.on_predicate);
+        check_uris(&on_predicate_uris)?;
+        for (k, v) in self.on_type_predicate.iter() {
+            // Check if a string is a full URI and if it is check iri
+            if is_full_uri(k) {
+                check_string_iri(k)?;
+            }
+            let on_type_predicate_uris = keep_full_uris(v);
+            check_uris(&on_type_predicate_uris)?;
+        }
+        Ok::<(), sophia_iri::InvalidIri>(())
+    }
+
+    /// Validates the CURIEs in the `on_predicate` and `on_type_predicate` fields
+    /// against the provided prefix map, ensuring they can be expanded correctly.
+    pub fn check_curies(&self, prefixes: &PrefixMap) -> Result<(), curie::ExpansionError> {
+        check_curies_hashset(&self.on_predicate, prefixes)?;
+        for (k, v) in &self.on_type_predicate {
+            try_expansion(&k, prefixes)?;
+            check_curies_hashset(&v, prefixes)?;
+        }
+        Ok(())
+    }
+
+    pub fn keep_curies(&self) -> ObjectRules {
+        ObjectRules {
+            on_predicate: filter_out_full_uris(&self.on_predicate),
+            on_type_predicate: self
+                .on_type_predicate
+                .iter()
+                .filter(|(k, _)| !is_full_uri(k))
+                .map(|(k, v)| {
+                    let filtered_values = filter_out_full_uris(v);
+                    (k.clone(), filtered_values)
+                })
+                .collect(),
+        }
+    }
+
+    pub fn expand_curies(&self, prefixes: &PrefixMap) -> ObjectRules {
+        let mut objects_on_predicate_full_uris = keep_full_uris(&self.on_predicate);
+        let objects_predicate_curies = filter_out_full_uris(&self.on_predicate);
+        let mut objects_predicate_curies_set = CompactUriSet::new();
+
+        objects_predicate_curies_set.insert(&objects_predicate_curies);
+
+        objects_on_predicate_full_uris.extend(objects_predicate_curies_set.expand_set(prefixes));
+
+        let mut objects_on_type_predicate_full_uris: HashMap<String, HashSet<String>> =
+            HashMap::new();
+
+        for (k, v) in self.on_type_predicate.iter() {
+            let expanded_keys = match is_full_uri(k) {
+                false => format!("<{}>", prefixes.expand_curie(&to_curie(&k)).unwrap()),
+                true => k.clone(),
+            };
+
+            let mut expanded_values = keep_full_uris(v);
+            let objects_type_predicate_curies = filter_out_full_uris(&v);
+            let mut objects_type_predicate_curies_set = CompactUriSet::new();
+
+            objects_type_predicate_curies_set.insert(&objects_type_predicate_curies);
+
+            expanded_values.extend(objects_type_predicate_curies_set.expand_set(&prefixes));
+            objects_on_type_predicate_full_uris.insert(expanded_keys, expanded_values);
+        }
+
+        ObjectRules {
+            on_predicate: objects_on_predicate_full_uris,
+            on_type_predicate: objects_on_type_predicate_full_uris,
+        }
+    }
 }
 
 /// Rules for pseudonymizing triples
@@ -44,219 +143,61 @@ pub struct Rules {
 
 /// Check if rules are setup correctly
 impl Rules {
-    pub fn has_valid_curies_and_uris(&self) -> bool {
-        match &self.prefixes {
+    pub fn validate_uris(&self) -> Result<(), anyhow::Error> {
+        self.prefixes.as_ref().map_or_else(
             // If no prefix are set, check each URI for validity
-            None => self.check_uris(&self.nodes, &self.objects),
-            // If some prefix are set, check and expand each URI for validity
-            Some(prefixes) => {
-                let mut prefix_map = PrefixMapping::default();
-                for p in prefixes {
-                    if is_full_uri(p.1) {
-                        match prefix_map.add_prefix(p.0, p.1) {
-                            Ok(_) => continue,
-                            Err(e) => {
-                                eprintln!("Failed to add prefix: {:?}", e);
-                                return false;
-                            }
-                        }
-                    } else {
-                        return false;
-                    }
+            || {
+                check_uris(&self.nodes.of_type).map_err(Error::from)?;
+                check_uris(&self.objects.on_predicate).map_err(Error::from)?;
+                for (k, v) in &self.objects.on_type_predicate {
+                    check_string_iri(k).map_err(Error::from)?;
+                    check_uris(v).map_err(Error::from)?;
                 }
-                // Need to return checks for both cURIEs and full URIs
-                return self.check_curies(
-                    &self.filter_nodes(&self.nodes),
-                    &self.filter_objects(&self.objects),
-                    prefix_map,
-                ) && self
-                    .nodes
-                    .of_type
-                    .iter()
-                    .all(|uri| check_string_iri(uri))
-                    && self
-                        .objects
-                        .on_predicate
-                        .iter()
-                        .all(|uri| check_string_iri(uri))
-                    && self.objects.on_type_predicate.iter().all(|(k, v)| {
-                        check_string_iri(k) && v.iter().all(|uri| check_string_iri(uri))
-                    });
-            }
-        }
-    }
-
-    fn to_curie<'a>(&self, uri: &'a str) -> Curie<'a> {
-        let separator_idx = uri
-            .chars()
-            .position(|c| c == ':')
-            .unwrap_or_else(|| panic!("No separator found in cURI string: {}", uri));
-        let prefix = Some(&uri[..separator_idx]);
-        let reference = &uri[separator_idx + 1..];
-        return Curie::new(prefix, reference);
-    }
-
-    fn check_curies(
-        &self,
-        node_uris: &NodeRules,
-        object_uris: &ObjectRules,
-        prefixes: PrefixMapping,
-    ) -> bool {
-        // Use iterators to check if the cURIEs are valid
-        return node_uris
-            .of_type
-            .iter()
-            .all(|uri| self.try_expansion(uri, &prefixes))
-            && object_uris
-                .on_predicate
-                .iter()
-                .all(|uri| self.try_expansion(uri, &prefixes))
-            && object_uris.on_type_predicate.iter().all(|(k, v)| {
-                let key_valid = self.try_expansion(k, &prefixes);
-                let value_valid = v.iter().all(|uri| self.try_expansion(uri, &prefixes));
-                key_valid && value_valid
-            });
-    }
-
-    fn try_expansion(&self, uri: &str, prefix_map: &PrefixMapping) -> bool {
-        let curie = self.to_curie(uri);
-        match prefix_map.expand_curie(&curie) {
-            Ok(_) => true,
-            Err(e) => {
-                eprintln!("Failed to expand {:?} CURIE: {} ", e, uri);
-                false
-            }
-        }
+                Ok::<(), anyhow::Error>(())
+            },
+            // If prefixes are set, build prefix map, try expanding
+            // and check both compact URIs and full URIs
+            |p| {
+                let mut prefix_map = PrefixMap::new();
+                prefix_map.import_hashmap(p);
+                self.nodes.check_curies(&prefix_map).map_err(|e| anyhow::anyhow!(format!("{:?}", e)))?;
+                self.objects.check_curies(&prefix_map).map_err(|e| anyhow::anyhow!(format!("{:?}", e)))?;
+                self.nodes.check_uris().map_err(Error::from)?;
+                self.objects.check_uris().map_err(Error::from)?;
+                Ok(())
+            },
+        )?;
+        Ok(())
     }
 
     pub fn expand_rules_curie(&self) -> Rules {
-        let prefix_map = match &self.prefixes {
-            None => PrefixMapping::default(),
-            Some(prefixes) => {
-                let mut prefix_map = PrefixMapping::default();
-                prefixes.iter().for_each(|(k, v)| {
-                    if is_full_uri(v) {
-                        if let Err(e) = prefix_map.add_prefix(k, &v[1..v.len() - 1]) {
-                            eprintln!("Failed to add prefix: {:?}", e);
-                        }
-                    }
-                });
-                prefix_map
-            }
-        };
-        // for all rules we combine the full URIs with the expanded URIs
-        let mut nodes_full_uris: HashSet<String> = self
-            .nodes
-            .of_type
-            .iter()
-            .filter(|uri| is_full_uri(uri))
-            .cloned()
-            .collect();
-        let filtered_nodes_uris = filter_out_full_uris(&self.nodes.of_type);
-        nodes_full_uris.extend(self.expand_hashset(&filtered_nodes_uris, &prefix_map));
-
-        let mut objects_on_predicate_full_uris: HashSet<String> = self
-            .objects
-            .on_predicate
-            .iter()
-            .filter(|uri| is_full_uri(uri))
-            .cloned()
-            .collect();
-        let filtered_objects_predicate_uris = filter_out_full_uris(&self.objects.on_predicate);
-        objects_on_predicate_full_uris
-            .extend(self.expand_hashset(&filtered_objects_predicate_uris, &prefix_map));
-
-        let mut objects_on_type_predicate_full_uris: HashMap<String, HashSet<String>> =
-            HashMap::new();
-        for (k, v) in self.objects.on_type_predicate.iter() {
-            let expanded_key = match is_full_uri(k) {
-                false => format!("<{}>", prefix_map.expand_curie(&self.to_curie(k)).unwrap()),
-                true => k.clone(),
-            };
-            let mut expanded_value: HashSet<String> = v
-                .iter()
-                .filter(|uri| is_full_uri(uri))
-                .cloned()
-                .collect();
-            let filtered_objects_type_predicate_uris = filter_out_full_uris(&v);
-            expanded_value.extend(self.expand_hashset(&filtered_objects_type_predicate_uris, &prefix_map));
-            objects_on_type_predicate_full_uris.insert(expanded_key, expanded_value);
-        }
-
-        Rules {
-            invert: self.invert,
-            prefixes: self.prefixes.clone(),
-            nodes: NodeRules {
-                of_type: nodes_full_uris,
+        self.prefixes.as_ref().map_or_else(
+            // If there's no prefixes return Rules as they are
+            || {
+                return Rules {
+                    invert: self.invert,
+                    prefixes: self.prefixes.clone(),
+                    nodes: NodeRules {
+                        of_type: self.nodes.of_type.clone(),
+                    },
+                    objects: ObjectRules {
+                        on_predicate: self.objects.on_predicate.clone(),
+                        on_type_predicate: self.objects.on_type_predicate.clone(),
+                    },
+                };
             },
-            objects: ObjectRules {
-                on_predicate: objects_on_predicate_full_uris,
-                on_type_predicate: objects_on_type_predicate_full_uris,
+            // If there's prefixes, return expanded cURIs
+            |p| {
+                let mut prefix_map = PrefixMap::new();
+                prefix_map.import_hashmap(p);
+                return Rules {
+                    invert: self.invert,
+                    prefixes: self.prefixes.clone(),
+                    nodes: self.nodes.expand_curies(&prefix_map),
+                    objects: self.objects.expand_curies(&prefix_map),
+                };
             },
-        }
-    }
-    fn expand_hashset(&self, set: &HashSet<String>, prefix_map: &PrefixMapping) -> HashSet<String> {
-        let mut expanded_set = HashSet::new();
-        set.iter().for_each(|uri| {
-            let expanded_uri = self.expand_string(uri, prefix_map);
-            expanded_set.insert(expanded_uri);
-        });
-        expanded_set
-    }
-    fn expand_string(&self, uri: &str, prefix_map: &PrefixMapping) -> String {
-        let separator_idx = uri
-            .chars()
-            .position(|c| c == ':')
-            .unwrap_or_else(|| panic!("No separator found in cURI string: {}", uri));
-        let prefix = Some(&uri[..separator_idx]);
-        let reference = &uri[separator_idx + 1..];
-        let curie = Curie::new(prefix, reference);
-        match prefix_map.expand_curie(&curie) {
-            Ok(expanded) => {
-                format!("<{}>", expanded)
-            }
-            Err(e) => {
-                eprintln!("Failed to expand {:?} CURIE: {} ", e, uri);
-                uri.to_string()
-            }
-        }
-    }
-    fn check_uris(&self, nodes: &NodeRules, objects: &ObjectRules) -> bool {
-        // Check if the URIs are valid and there are no cURIEs
-        nodes
-            .of_type
-            .clone()
-            .into_iter()
-            .all(|uri| check_string_iri(&uri))
-            && objects
-                .on_predicate
-                .clone()
-                .into_iter()
-                .all(|uri| check_string_iri(&uri))
-            && objects.on_type_predicate.clone().into_iter().all(|(k, v)| {
-                check_string_iri(&k) && v.into_iter().all(|uri| check_string_iri(&uri))
-            })
-    }
-
-    fn filter_objects(&self, object_uris: &ObjectRules) -> ObjectRules {
-        ObjectRules {
-            on_predicate: filter_out_full_uris(&object_uris.on_predicate),
-            on_type_predicate: object_uris
-                .on_type_predicate
-                .iter()
-                .filter(|(k, _)| !is_full_uri(k))
-                .map(|(k, v)| {
-                    let filtered_values = self.filter(v);
-                    (k.clone(), filtered_values)
-                })
-                .collect(),
-        }
-    }
-
-    fn filter_nodes(&self, node_uris: &NodeRules) -> NodeRules {
-        NodeRules {
-            of_type: self.filter(&node_uris.of_type),
-        }
+        )
     }
 }
 
@@ -523,7 +464,7 @@ mod tests {
                 - {rule_predicate}
         "
         ));
-        assert_eq!(rules.has_valid_curies_and_uris(), match_expected);
+        assert_eq!(rules.validate_uris().is_ok(), match_expected);
     }
     #[rstest]
     // Prefix provided with matching cURIes

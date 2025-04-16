@@ -20,7 +20,7 @@ pub enum Writer {
     File(BufWriter<File>),
 }
 
-// Get a reader based on input path, either from stdin or a file.
+/// Get a reader based on input path, either from stdin or a file.
 pub fn get_reader(path: &Path) -> Reader {
     return match path.to_str().unwrap() {
         "-" => Reader::Stdio(BufReader::new(stdin())),
@@ -28,7 +28,7 @@ pub fn get_reader(path: &Path) -> Reader {
     };
 }
 
-// Get a writer based on input path, either to stdout or a file.
+/// Get a writer based on input path, either to stdout or a file.
 pub fn get_writer(path: &Path) -> Writer {
     return match path.to_str().unwrap() {
         "-" => Writer::Stdio(BufWriter::new(stdout())),
@@ -36,26 +36,23 @@ pub fn get_writer(path: &Path) -> Writer {
     };
 }
 
-// Parse RDF triples.
-// This function takes ownership of a generic type which implements `BufRead`.
+/// Parse RDF triples.
+/// This function takes ownership of a generic type which implements `BufRead`.
 pub fn parse_ntriples(reader: impl BufRead) -> NTriplesParser<impl BufRead> {
     NTriplesParser::new(reader)
 }
 
-// Parse yaml configuration file.
+/// Parse yaml configuration file.
 pub fn parse_rules(path: &Path) -> Rules {
     let rules: Rules = match File::open(path) {
         Ok(file) => serde_yml::from_reader(file).expect("Error parsing rules file."),
         Err(e) => panic!("Cannot open rules file '{:?}': '{}'.", path, e),
     };
-    if !rules.has_valid_curies_and_uris() {
-        panic!("Rules file has invalid cURIs or URIs.");
-    } else {
-        rules.expand_rules_curie()
-    }
+    rules.validate_uris().unwrap();
+    rules.expand_rules_curie()
 }
 
-// Parse yaml type index
+/// Parse yaml type index
 pub fn parse_index(path: &Path) -> TypeIndex {
     match File::open(path) {
         Ok(file) => serde_json::from_reader(file).expect("Error parsing index file."),
@@ -63,7 +60,7 @@ pub fn parse_index(path: &Path) -> TypeIndex {
     }
 }
 
-// Read all file content as bytes.
+/// Read all file content as bytes.
 pub fn read_bytes(path: &PathBuf) -> Vec<u8> {
     let mut file = File::open(path).expect("Error opening key file.");
     let mut data = Vec::new();
