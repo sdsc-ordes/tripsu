@@ -1,1 +1,14 @@
-{"types":["<http://xmlns.com/foaf/0.1/Person>","<http://xmlns.com/foaf/OnlineAccount>","<http://xmlns.com/foaf/0.1/Organization>"],"map":{"15212815035200482759":[1],"130358124972442050":[0],"9932096721503705860":[1],"10729855068363610633":[2],"8283467020653172379":[0]}}
+{
+  "types": [
+    "<http://xmlns.com/foaf/0.1/Person>",
+    "<http://xmlns.com/foaf/OnlineAccount>",
+    "<http://xmlns.com/foaf/0.1/Organization>"
+  ],
+  "map": {
+    "15212815035200482759": [1],
+    "130358124972442050": [0],
+    "9932096721503705860": [1],
+    "10729855068363610633": [2],
+    "8283467020653172379": [0]
+  }
+}

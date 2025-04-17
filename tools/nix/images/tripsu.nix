@@ -1,12 +1,9 @@
-{
-  pkgs,
-  tripsu,
-}:
+{ pkgs, tripsu }:
 pkgs.dockerTools.buildLayeredImage {
   name = "ghcr.io/sdsc-ordes/tripsu";
   tag = tripsu.version;
 
-  contents = [tripsu];
+  contents = [ tripsu ];
 
   fakeRootCommands = ''
     ${pkgs.dockerTools.shadowSetup}
@@ -18,7 +15,7 @@ pkgs.dockerTools.buildLayeredImage {
   enableFakechroot = true;
 
   config = {
-    Entrypoint = ["tripsu"];
+    Entrypoint = [ "tripsu" ];
     WorkingDir = "/workspace";
     Labels = {
       "org.opencontainers.image.source" = "https://github.com/sdsc-ordes/tripsu";

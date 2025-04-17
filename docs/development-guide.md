@@ -113,7 +113,8 @@ also when `--amend`ing on the current commit)**
 
 ## Benchmarking performances
 
-A benchmarking script is provided in `tools/bench/benchmark.sh`, along with a nix devshell. To run the benchmark in the isolated environment, run:
+A benchmarking script is provided in `tools/bench/benchmark.sh`, along with a
+nix devshell. To run the benchmark in the isolated environment, run:
 
 ```shell
 just nix-develop-bench bash ./tools/bench/benchmark.sh
