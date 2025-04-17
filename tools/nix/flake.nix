@@ -2,9 +2,7 @@
   description = "tripsu";
 
   nixConfig = {
-    substituters = [
-      "https://cache.nixos.org"
-    ];
+    substituters = [ "https://cache.nixos.org" ];
     extra-substituters = [
       "https://tripsu.cachix.org"
       # Nix community's cache server
@@ -56,9 +54,7 @@
 
           # Import nixpkgs and load it into pkgs.
           # Overlay the rust toolchain
-          pkgs = import inputs.nixpkgs {
-            inherit system overlays;
-          };
+          pkgs = import inputs.nixpkgs { inherit system overlays; };
 
           # Set the rust toolchain from the `rust-toolchain.toml`.
           rustToolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile ../../rust-toolchain.toml;
@@ -172,9 +168,7 @@
                 devShellDrv = devShells.default;
               };
 
-              tripsu = (import ./images/tripsu.nix) {
-                inherit pkgs tripsu;
-              };
+              tripsu = (import ./images/tripsu.nix) { inherit pkgs tripsu; };
             };
           };
         }

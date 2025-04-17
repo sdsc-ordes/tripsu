@@ -1,8 +1,4 @@
-{
-  pkgs,
-  lib,
-  ...
-}:
+{ pkgs, lib, ... }:
 # The bootstrap packages with all tools
 # to install over `nix profile install` before
 # using `nix develop` which is the primary

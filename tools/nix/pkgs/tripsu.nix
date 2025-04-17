@@ -4,7 +4,8 @@
   rustToolchain,
   rootDir,
   ...
-}: let
+}:
+let
   rustPlatform = pkgs.makeRustPlatform {
     cargo = rustToolchain;
     rustc = rustToolchain;
@@ -13,20 +14,23 @@
   cargoFile = rootDir + "/Cargo.toml";
   lockFile = rootDir + "/Cargo.lock";
 in
-  rustPlatform.buildRustPackage {
-    name = "tripsu";
-    src = rootDir;
+rustPlatform.buildRustPackage {
+  name = "tripsu";
+  src = rootDir;
 
-    version = (lib.importTOML cargoFile).package.version;
+  version = (lib.importTOML cargoFile).package.version;
 
-    cargoLock = {
-      inherit lockFile;
-    };
+  cargoLock = {
+    inherit lockFile;
+  };
 
-    meta = {
-      description = "A simple Rust CLI tool to protect sensitive values in RDF triples through pseudonymization";
-      homepage = "https://github.com/sdsc-ordes/tripsu";
-      license = lib.licenses.asl20;
-      maintainers = ["gabyx" "cmdoret"];
-    };
-  }
+  meta = {
+    description = "A simple Rust CLI tool to protect sensitive values in RDF triples through pseudonymization";
+    homepage = "https://github.com/sdsc-ordes/tripsu";
+    license = lib.licenses.asl20;
+    maintainers = [
+      "gabyx"
+      "cmdoret"
+    ];
+  };
+}
