@@ -24,8 +24,4 @@ if [ "${#FILES[@]}" = "0" ]; then
 fi
 
 ci::print_info "Running 'treefmt'..."
-for f in "${FILES[@]}"; do
-    echo "-- '$f'"
-done
-
 nix run "./tools/nix#treefmt" -- "${FILES[@]}"

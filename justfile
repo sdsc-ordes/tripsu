@@ -85,31 +85,4 @@ nix-package *args:
 nix-image *args:
     cd "{{root_dir}}" && \
        "./tools/build-image.sh" "$@"
-
-
-# Upload the dev shell to the Nix cache.
-nix-cache-upload-shell:
-    #!/usr/bin/env bash
-    set -eu
-    cd "{{root_dir}}"
-
-    profile=./dev-profile
-    mkdir -p "$profile"
-
-    # Cache development shell.
-    nix develop --profile "$profile/dev" {{flake_dir}}#ci --command true
-    cachix push "$CACHIX_CACHE_NAME" "$profile/dev"
-    rm -rf "$profile"
-
-    # Cache flake inputs.
-    nix flake archive {{flake_dir}} --json \
-      | jq -r '.path,(.inputs|to_entries[].value.path)' \
-      | cachix push "$CACHIX_CACHE_NAME"
-
-
-# Upload all images for CI (local machine)
-upload-ci-images:
-    cd "{{root_dir}}" && \
-        CONTAINER_MGR="{{container_mgr}}" \
-        tools/ci/upload-ci-images.sh
 ## ============================================================================
