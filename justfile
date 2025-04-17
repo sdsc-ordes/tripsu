@@ -1,6 +1,7 @@
 set positional-arguments
 set shell := ["bash", "-cue"]
 root_dir := `git rev-parse --show-toplevel`
+flake_dir := root_dir / "tools/nix"
 
 # General Variables:
 # You can chose either "podman" or "docker".
@@ -10,32 +11,34 @@ container_mgr := "podman"
 default:
   just --list
 
-# Enter a Nix development shell.
-nix-develop *args:
-    cd "{{root_dir}}" && \
-    cmd=("$@") && \
-    { [ -n "${cmd:-}" ] || cmd=("zsh"); } && \
-    nix develop ./tools/nix#default --accept-flake-config --command "${cmd[@]}"
+# Enter the default Nix development shell.
+develop *args:
+    just nix-develop default "$@"
 
-nix-develop-ci *args:
+# Enter the CI Nix development shell for benchmarking.
+develop-bench *args:
+    just nix-develop bench "$@"
+
+# Enter the CI Nix development shell.
+ci *args:
+    just nix-develop ci "$@"
+
+# Enter a Nix development shell.
+[private]
+nix-develop *args:
     #!/usr/bin/env bash
     set -eu
     cd "{{root_dir}}"
-    cachix watch-exec "$CACHIX_CACHE_NAME" -- \
-        nix develop ./tools/nix#ci --accept-flake-config --command "$@"
-
-# Enter nix development shell for benchmarking.
-nix-develop-bench *args:
-    cd "{{root_dir}}" && \
-    cmd=("$@") && \
-    { [ -n "${cmd:-}" ] || cmd=("zsh"); } && \
-    nix develop ./tools/nix#bench --command "${cmd[@]}"
+    shell="$1"; shift 1;
+    args=("$@") && [ "${#args[@]}" != 0 ] || args="$SHELL"
+    nix develop --accept-flake-config \
+        "{{flake_dir}}#$shell" \
+        --command "${args[@]}"
 
 ## Standard stuff =============================================================
 # Format the code.
 format *args:
-    cd "{{root_dir}}" && \
-        "{{root_dir}}/tools/format-rust.sh" {{args}}
+    nix run --accept-flake-config {{flake_dir}}#treefmt -- "$@"
 
 # Lint all code.
 lint *args:
@@ -49,7 +52,6 @@ build *args:
 # Run the tests.
 test:
     cd "{{root_dir}}" && cargo test "${@:1}"
-
 
 ## Development functionality ==================================================
 # Watch source and continuously build the executable.
@@ -95,12 +97,12 @@ nix-cache-upload-shell:
     mkdir -p "$profile"
 
     # Cache development shell.
-    nix develop --profile "$profile/dev" ./tools/nix#ci --command true
+    nix develop --profile "$profile/dev" {{flake_dir}}#ci --command true
     cachix push "$CACHIX_CACHE_NAME" "$profile/dev"
     rm -rf "$profile"
 
     # Cache flake inputs.
-    nix flake archive ./tools/nix --json \
+    nix flake archive {{flake_dir}} --json \
       | jq -r '.path,(.inputs|to_entries[].value.path)' \
       | cachix push "$CACHIX_CACHE_NAME"
 

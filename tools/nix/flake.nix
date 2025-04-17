@@ -23,12 +23,6 @@
   inputs = {
     # Nixpkgs
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-
-    # You can access packages and modules from different nixpkgs revs
-    # at the same time. Here's an working example:
-    nixpkgsStable.url = "github:nixos/nixpkgs/nixos-23.11";
-    # Also see the 'stable-packages' overlay at 'overlays/default.nix'.
-
     flake-utils.url = "github:numtide/flake-utils";
 
     # The Rust overlay to include the latest toolchain.
@@ -38,78 +32,95 @@
         nixpkgs.follows = "nixpkgs";
       };
     };
+
+    # Format the repo with nix-treefmt.
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = {
-    self,
-    nixpkgs,
-    flake-utils,
-    rust-overlay,
-    ...
-  }: let
-    lib = nixpkgs.lib;
-    rootDir = ./../..;
-  in
-    flake-utils.lib.eachDefaultSystem
-    # Creates an attribute map `{ devShells.<system>.default = ...}`
-    # by calling this function:
-    (
-      system: let
-        overlays = [(import rust-overlay)];
+  outputs =
+    inputs:
+    let
+      lib = inputs.nixpkgs.lib;
+      rootDir = ./../..;
+    in
+    inputs.flake-utils.lib.eachDefaultSystem
+      # Creates an attribute map `{ devShells.<system>.default = ...}`
+      # by calling this function:
+      (
+        system:
+        let
+          overlays = [ (import inputs.rust-overlay) ];
 
-        # Import nixpkgs and load it into pkgs.
-        # Overlay the rust toolchain
-        pkgs = import nixpkgs {
-          inherit system overlays;
-        };
+          # Import nixpkgs and load it into pkgs.
+          # Overlay the rust toolchain
+          pkgs = import inputs.nixpkgs {
+            inherit system overlays;
+          };
 
-        # Set the rust toolchain from the `rust-toolchain.toml`.
-        rustToolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile ../../rust-toolchain.toml;
+          # Set the rust toolchain from the `rust-toolchain.toml`.
+          rustToolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile ../../rust-toolchain.toml;
 
-        # Basic Packages.
-        nativeBuildInputsBasic = with pkgs; [
-          procps
-          findutils
-          coreutils
-          gnugrep
-          bash
-          curl
-          git
-          git-lfs
-          jq
-          just
+          # Basic Packages.
+          nativeBuildInputsBasic = [
+            pkgs.procps
+            pkgs.findutils
+            pkgs.coreutils
+            pkgs.gnugrep
+            pkgs.bash
+            pkgs.curl
+            pkgs.git
+            pkgs.git-lfs
+            pkgs.jq
+            pkgs.just
 
-          # Nix binary cache.
-          cachix
-        ];
+            # Nix binary cache.
+            pkgs.cachix
+          ];
 
-        # Packges for development.
-        nativeBuildInputsDev = with pkgs; [
-          # General build tooling.
-          rustToolchain
-          cargo-watch
+          # Packages for development.
+          nativeBuildInputsDev = [
+            # General build tooling.
+            rustToolchain
+            pkgs.cargo-watch
 
-          # Uploading images.
-          skopeo
+            # Uploading images.
+            pkgs.skopeo
 
-          # Modifying toml files.
-          dasel
-        ];
+            # Modifying toml files.
+            pkgs.dasel
 
-        benchInputs = with pkgs; [
-          hyperfine
-          heaptrack
-        ];
+            # Formatting.
+            treefmt
+          ];
 
-        # Things needed at runtime.
-        buildInputs = [];
+          benchInputs = [
+            pkgs.hyperfine
+            pkgs.heaptrack
+          ];
 
-        # The package of this CLI tool.
-        tripsu = (import ./pkgs/tripsu.nix) {
-          inherit rootDir rustToolchain pkgs lib;
-        };
-      in
-        with pkgs; rec {
+          # Things needed at runtime.
+          buildInputs = [ ];
+
+          # The package of this CLI tool.
+          tripsu = (import ./pkgs/tripsu.nix) {
+            inherit
+              rootDir
+              rustToolchain
+              pkgs
+              lib
+              ;
+          };
+
+          treefmt = import ./pkgs/treefmt {
+            inherit inputs;
+            inherit pkgs;
+          };
+        in
+        with pkgs;
+        rec {
           devShells = {
             # Local development environment.
             default = mkShell {
@@ -118,9 +129,7 @@
             };
             bench = mkShell {
               inherit buildInputs;
-              nativeBuildInputs = nativeBuildInputsBasic 
-                ++ nativeBuildInputsDev
-                ++ benchInputs;
+              nativeBuildInputs = nativeBuildInputsBasic ++ nativeBuildInputsDev ++ benchInputs;
             };
 
             # CI environment.
@@ -138,8 +147,13 @@
           };
 
           packages = {
+            bootstrap = import ./pkgs/bootstrap { inherit pkgs lib; };
+
+            # Formatter.
+            inherit treefmt;
+
             # Package of this repo.
-            tripsu = tripsu;
+            inherit tripsu;
 
             # Packages for CI.
             ci = {
@@ -164,5 +178,5 @@
             };
           };
         }
-    );
+      );
 }
