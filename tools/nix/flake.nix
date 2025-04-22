@@ -103,18 +103,11 @@
 
           # The package of this CLI tool.
           tripsu = (import ./pkgs/tripsu.nix) {
-            inherit
-              rootDir
-              rustToolchainRelease
-              pkgs
-              lib
-              ;
+            inherit rootDir pkgs lib;
+            rustToolchain = rustToolchainRelease;
           };
 
-          treefmt = import ./pkgs/treefmt {
-            inherit inputs;
-            inherit pkgs;
-          };
+          treefmt = import ./pkgs/treefmt { inherit inputs pkgs; };
         in
         with pkgs;
         rec {
