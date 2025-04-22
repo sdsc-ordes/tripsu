@@ -14,14 +14,19 @@ pub struct NodeRules {
 }
 
 impl NodeRules {
+    /// Validate each full URI specified in the rules for nodes
     pub fn check_uris(&self) -> Result<(), sophia_iri::InvalidIri> {
         let node_uris = keep_full_uris(&self.of_type);
         check_uris(&node_uris)
     }
 
+    /// Validates the CURIEs in the `of_type` fields
+    /// against the provided prefix map, ensuring they can be expanded correctly.
     pub fn check_curies(&self, prefixes: &PrefixMap) -> Result<(), PrefixError> {
         check_curies(&self.of_type, prefixes)
     }
+
+    /// Checks if the provided cURIs for nodes can be expanded given the prefixes provided
     pub fn expand_curies(&self, prefixes: &PrefixMap) -> Result<NodeRules, PrefixError> {
         let mut nodes_full_uris: HashSet<String> = keep_full_uris(&self.of_type);
         let nodes_curies = filter_out_full_uris(&self.of_type);
@@ -41,15 +46,16 @@ impl NodeRules {
 /// Rules for pseudonymizing objects
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct ObjectRules {
-    // Replace values in matched `predicates`.
+    /// Replace values in matched `predicates`.
     #[serde(default)]
     on_predicate: HashSet<String>,
-    // Replace values of predicates for specific types
+    /// Replace values of predicates for specific types
     #[serde(default)]
     on_type_predicate: HashMap<String, HashSet<String>>,
 }
 
 impl ObjectRules {
+    /// Validate each full URI specified in the rules for objects
     pub fn check_uris(&self) -> Result<(), sophia_iri::InvalidIri> {
         let on_predicate_uris = keep_full_uris(&self.on_predicate);
         check_uris(&on_predicate_uris)?;
@@ -76,7 +82,7 @@ impl ObjectRules {
         }
         Ok(())
     }
-
+    /// Takes an object rule and extracts all compact URIs
     pub fn keep_curies(&self) -> ObjectRules {
         ObjectRules {
             on_predicate: filter_out_full_uris(&self.on_predicate),
@@ -92,6 +98,7 @@ impl ObjectRules {
         }
     }
 
+    /// Checks if the provided cURIs for objects can be expanded given the prefixes provided
     pub fn expand_curies(&self, prefixes: &PrefixMap) -> Result<ObjectRules, anyhow::Error> {
         let mut objects_on_predicate_full_uris = keep_full_uris(&self.on_predicate);
         let objects_predicate_curies = filter_out_full_uris(&self.on_predicate);
@@ -190,10 +197,9 @@ impl Rules {
 
     pub fn expand_rules_curie(&self) -> Result<Rules, anyhow::Error> {
         self.validate_uris()?;
-        // change to match or if let
-        self.prefixes.as_ref().map_or_else(
+        match self.prefixes.as_ref() {
             // If there's no prefixes return Rules as they are
-            || {
+            None => {
                 return Ok(Rules {
                     invert: self.invert,
                     prefixes: self.prefixes.clone(),
@@ -205,9 +211,9 @@ impl Rules {
                         on_type_predicate: self.objects.on_type_predicate.clone(),
                     },
                 });
-            },
+            }
             // If there's prefixes, return expanded cURIs and full URIs
-            |p| {
+            Some(p) => {
                 let mut prefix_map = PrefixMap::new();
                 prefix_map.import_hashmap(p);
                 return Ok(Rules {
@@ -216,8 +222,8 @@ impl Rules {
                     nodes: self.nodes.expand_curies(&prefix_map)?,
                     objects: self.objects.expand_curies(&prefix_map)?,
                 });
-            },
-        )
+            }
+        }
     }
 }
 
