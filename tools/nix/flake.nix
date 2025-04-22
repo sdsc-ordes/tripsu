@@ -57,7 +57,7 @@
           pkgs = import inputs.nixpkgs { inherit system overlays; };
 
           # Set the rust toolchain from the `rust-toolchain.toml`.
-          rustToolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile ../../rust-toolchain.toml;
+          rustToolchain = pkgs.pkgsBuildHost.rust-bin.fromRustupToolchainFile ../configs/rust/toolchain-release.toml;
 
           # Basic Packages.
           nativeBuildInputsBasic = [
