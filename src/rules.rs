@@ -19,21 +19,22 @@ impl NodeRules {
         check_uris(&node_uris)
     }
 
-    pub fn check_curies(&self, prefixes: &PrefixMap) -> Result<(), curie::ExpansionError> {
-        check_curies_hashset(&self.of_type, prefixes)
+    pub fn check_curies(&self, prefixes: &PrefixMap) -> Result<(), PrefixError> {
+        check_curies(&self.of_type, prefixes)
     }
-    pub fn expand_curies(&self, prefixes: &PrefixMap) -> NodeRules {
+    pub fn expand_curies(&self, prefixes: &PrefixMap) -> Result<NodeRules, PrefixError> {
         let mut nodes_full_uris: HashSet<String> = keep_full_uris(&self.of_type);
         let nodes_curies = filter_out_full_uris(&self.of_type);
         let mut nodes_curies_set = CompactUriSet::new();
 
         nodes_curies_set.insert(&nodes_curies);
 
-        nodes_full_uris.extend(nodes_curies_set.expand_set(prefixes));
+        let valid_nodes_curies = nodes_curies_set.expand_set(prefixes)?;
+        nodes_full_uris.extend(valid_nodes_curies);
 
-        NodeRules {
+        Ok(NodeRules {
             of_type: nodes_full_uris,
-        }
+        })
     }
 }
 
@@ -55,7 +56,7 @@ impl ObjectRules {
         for (k, v) in self.on_type_predicate.iter() {
             // Check if a string is a full URI and if it is check iri
             if is_full_uri(k) {
-                check_string_iri(k)?;
+                check_uri(k)?;
             }
             let on_type_predicate_uris = keep_full_uris(v);
             check_uris(&on_type_predicate_uris)?;
@@ -65,13 +66,13 @@ impl ObjectRules {
 
     /// Validates the CURIEs in the `on_predicate` and `on_type_predicate` fields
     /// against the provided prefix map, ensuring they can be expanded correctly.
-    pub fn check_curies(&self, prefixes: &PrefixMap) -> Result<(), curie::ExpansionError> {
-        check_curies_hashset(&self.on_predicate, prefixes)?;
+    pub fn check_curies(&self, prefixes: &PrefixMap) -> Result<(), PrefixError> {
+        check_curies(&self.on_predicate, prefixes)?;
         for (k, v) in &self.on_type_predicate {
             if !is_full_uri(k) {
                 try_expansion(k, prefixes)?;
             }
-            check_curies_hashset(v, prefixes)?;
+            check_curies(v, prefixes)?;
         }
         Ok(())
     }
@@ -98,24 +99,19 @@ impl ObjectRules {
 
         objects_predicate_curies_set.insert(&objects_predicate_curies);
 
-        objects_on_predicate_full_uris.extend(objects_predicate_curies_set.expand_set(prefixes));
+        let valid_object_predicate_curies = objects_predicate_curies_set.expand_set(prefixes)?;
+
+        objects_on_predicate_full_uris.extend(valid_object_predicate_curies);
 
         let mut objects_on_type_predicate_full_uris: HashMap<String, HashSet<String>> =
             HashMap::new();
 
         for (k, v) in self.on_type_predicate.iter() {
-            let expanded_keys = match is_full_uri(k) {
-                false => prefixes.expand_curie(&to_curie(k)).map_or_else(
-                    |err| match err {
-                        curie::ExpansionError::Invalid => {
-                            Err(format!("Prefix not found for cURI: {}", k))
-                        }
-                        curie::ExpansionError::MissingDefault => {
-                            Err(format!("Missing default prefix for {}", k))
-                        }
-                    },
-                    |expanded| Ok(format!("<{}>", expanded)),
-                ),
+            let expanded_keys: Result<String, PrefixError> = match is_full_uri(k) {
+                false => {
+                    let valid_key = prefixes.expand_curie(k)?;
+                    Ok(format!("<{}>", valid_key))
+                }
                 true => Ok(k.clone()),
             };
 
@@ -125,7 +121,10 @@ impl ObjectRules {
 
             objects_type_predicate_curies_set.insert(&objects_type_predicate_curies);
 
-            expanded_values.extend(objects_type_predicate_curies_set.expand_set(prefixes));
+            let valid_objects_type_predicate_curies =
+                objects_type_predicate_curies_set.expand_set(prefixes)?;
+
+            expanded_values.extend(valid_objects_type_predicate_curies);
             if let Ok(expanded_key) = expanded_keys {
                 objects_on_type_predicate_full_uris.insert(expanded_key, expanded_values);
             } else {
@@ -166,7 +165,7 @@ impl Rules {
                 check_uris(&self.nodes.of_type).map_err(Error::from)?;
                 check_uris(&self.objects.on_predicate).map_err(Error::from)?;
                 for (k, v) in &self.objects.on_type_predicate {
-                    check_string_iri(k).map_err(Error::from)?;
+                    check_uri(k).map_err(Error::from)?;
                     check_uris(v).map_err(Error::from)?;
                 }
                 Ok::<(), anyhow::Error>(())
@@ -176,13 +175,11 @@ impl Rules {
             |p| {
                 let mut prefix_map = PrefixMap::new();
                 prefix_map.import_hashmap(p);
-                self.nodes
-                    .check_curies(&prefix_map)
-                    .map_err(|e| anyhow::anyhow!(format!("{:?}", e)))?;
+                self.nodes.check_curies(&prefix_map).map_err(Error::from)?;
                 self.objects
                     .keep_curies()
                     .check_curies(&prefix_map)
-                    .map_err(|e| anyhow::anyhow!(format!("{:?}", e)))?;
+                    .map_err(Error::from)?;
                 self.nodes.check_uris().map_err(Error::from)?;
                 self.objects.check_uris().map_err(Error::from)?;
                 Ok(())
@@ -216,7 +213,7 @@ impl Rules {
                 return Ok(Rules {
                     invert: self.invert,
                     prefixes: self.prefixes.clone(),
-                    nodes: self.nodes.expand_curies(&prefix_map),
+                    nodes: self.nodes.expand_curies(&prefix_map)?,
                     objects: self.objects.expand_curies(&prefix_map)?,
                 });
             },
@@ -470,6 +467,10 @@ mod tests {
     #[case("ex", "http://example.org/", "ex:Person", "ex:hasName>", false)]
     // Bad full URIs provided
     #[case("ex", "<http://example.org/>", "<Person>", "<http:hasName>", false)]
+    // No default prefix provided
+    #[case("ex", "<http://example.org/>", "Person", "<http:hasName>", false)]
+    // Valid default provided
+    #[case("default", "<http://example.org/>", "Person", "<http:hasName>", true)]
     fn valid_curies(
         #[case] prefixes: &str,
         #[case] prefixes_uri: &str,

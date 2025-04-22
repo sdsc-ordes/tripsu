@@ -50,7 +50,7 @@ pub fn parse_rules(path: &Path) -> Rules {
     };
     match rules.expand_rules_curie() {
         Ok(expanded_rules) => expanded_rules,
-        Err(e) => panic!("Error expanding rules curie: {}", e),
+        Err(e) => panic!("Error expanding rules curie. {}", e),
     }
 }
 

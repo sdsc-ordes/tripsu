@@ -3,6 +3,7 @@ invert: false
 
 # Define prefixes for the URIs used in the rules.
 prefixes:
+  default: "<http://example.org/>"
   foaf: "<http://xmlns.com/foaf/0.1/>"
 
 # hash URIs of people and online accounts
@@ -16,11 +17,10 @@ objects:
   on_predicate:
   # Full URIs are also supported
   - "<http://schema.org/accessCode>"
-  #on_type:  # NOTE: not currently supported
-  #- "http://example.org/UserAccount"
   # hash name only for instances of person and online account
   on_type_predicate:
-    "foaf:OnlineAccount":
+    # No brackets is assumed to be a compact URI
+    "OnlineAccount":
     - "<http://schema.org/name>"
     "foaf:Person":
     - "<http://schema.org/name>"

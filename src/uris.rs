@@ -1,9 +1,32 @@
-use ::std::collections::{HashMap, HashSet};
-use curie::{Curie, ExpansionError, PrefixMapping};
+use curie::{ExpansionError, PrefixMapping};
 use sophia_iri::Iri;
+use std::{
+    collections::{HashMap, HashSet},
+    error::Error,
+    fmt,
+};
 
 #[derive(Debug)]
 pub struct PrefixMap(PrefixMapping);
+
+#[derive(Debug)]
+pub enum PrefixError {
+    InvalidPrefix(String),
+    MissingDefault(String),
+}
+
+impl fmt::Display for PrefixError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidPrefix(curie) => {
+                write!(f, "Invalid prefix: {curie}")
+            }
+            Self::MissingDefault(curie) => write!(f, "No default prefix provided for: {curie}"),
+        }
+    }
+}
+
+impl Error for PrefixError {}
 
 impl Default for PrefixMap {
     fn default() -> Self {
@@ -20,21 +43,29 @@ impl PrefixMap {
         for (key, value) in hashmap {
             if is_full_uri(value) {
                 // We add prefixes full URIs without the brackets
-                match self.0.add_prefix(key, &value[1..value.len() - 1]) {
-                    Ok(_) => continue,
-                    Err(e) => {
-                        eprintln!("Failed to add prefix: {:?}", e);
+                if key != "default" {
+                    match self.0.add_prefix(key, &value[1..value.len() - 1]) {
+                        Ok(_) => continue,
+                        Err(e) => {
+                            eprintln!("Failed to add prefix: {:?}", e);
+                        }
                     }
+                } else {
+                    self.0.set_default(&value[1..value.len() - 1])
                 }
-            } else {
-                eprintln!("Invalid URI: {}", value);
             }
         }
         self
     }
 
-    pub fn expand_curie(&self, curie: &Curie) -> Result<String, curie::ExpansionError> {
-        self.0.expand_curie(curie)
+    pub fn expand_curie(&self, curie: &String) -> Result<String, PrefixError> {
+        match self.0.expand_curie_string(curie) {
+            Err(ExpansionError::Invalid) => Err(PrefixError::InvalidPrefix(curie.to_string())),
+            Err(ExpansionError::MissingDefault) => {
+                Err(PrefixError::MissingDefault(curie.to_string()))
+            }
+            Ok(s) => Ok(s),
+        }
     }
 }
 
@@ -75,26 +106,32 @@ impl CompactUriSet {
             self.0.insert(c.clone());
         }
     }
-
-    pub fn expand_set(&self, prefix_map: &PrefixMap) -> HashSet<String> {
+    // Return result instead of HashSet
+    pub fn expand_set(&self, prefix_map: &PrefixMap) -> Result<HashSet<String>, PrefixError> {
         let mut expanded_set = HashSet::new();
-        self.0.iter().for_each(|uri| {
-            let expanded_uri = self.expand_uri(uri, prefix_map).map_or_else(
-                |_| format!("Failed to unwrap cURI: {}", uri),
-                |expanded| format!("<{}>", expanded),
-            );
-            // Once formatted we need to add brackets for full URIs
-            expanded_set.insert(expanded_uri);
-        });
-        expanded_set
+        for uri in &self.0 {
+            match self.expand_uri(uri, prefix_map) {
+                Ok(expanded_uri) => {
+                    expanded_set.insert(format!("<{}>", expanded_uri));
+                }
+                Err(e) => return Err(e),
+            }
+        }
+        Ok(expanded_set)
     }
 
-    fn expand_uri(&self, uri: &str, prefix_map: &PrefixMap) -> Result<String, ExpansionError> {
-        prefix_map.0.expand_curie_string(uri)
+    fn expand_uri(&self, uri: &str, prefix_map: &PrefixMap) -> Result<String, PrefixError> {
+        match prefix_map.0.expand_curie_string(uri) {
+            Err(ExpansionError::Invalid) => Err(PrefixError::InvalidPrefix(uri.to_string())),
+            Err(ExpansionError::MissingDefault) => {
+                Err(PrefixError::MissingDefault(uri.to_string()))
+            }
+            Ok(s) => Ok(s),
+        }
     }
 }
 
-pub fn check_string_iri(uri: &str) -> Result<Iri<&str>, sophia_iri::InvalidIri> {
+pub fn check_uri(uri: &str) -> Result<Iri<&str>, sophia_iri::InvalidIri> {
     // We assume that a full URI starts with "<" and ends with ">"
     // We select the URI within the angle brackets
     Iri::new(&uri[1..uri.len() - 2])
@@ -128,15 +165,12 @@ pub fn check_uris(hash_set: &HashSet<String>) -> Result<(), sophia_iri::InvalidI
     // Check if the URIs in the HashSet are valid
 
     for uri in hash_set {
-        check_string_iri(uri)?;
+        check_uri(uri)?;
     }
     Ok(())
 }
 
-pub fn check_curies_hashset(
-    hash_set: &HashSet<String>,
-    prefixes: &PrefixMap,
-) -> Result<(), curie::ExpansionError> {
+pub fn check_curies(hash_set: &HashSet<String>, prefixes: &PrefixMap) -> Result<(), PrefixError> {
     for uri in hash_set {
         if !is_full_uri(uri) {
             try_expansion(uri, prefixes)?;
@@ -145,17 +179,6 @@ pub fn check_curies_hashset(
     Ok(())
 }
 
-pub fn try_expansion(uri: &str, prefix_map: &PrefixMap) -> Result<String, curie::ExpansionError> {
-    let curie = to_curie(uri);
-    prefix_map.expand_curie(&curie)
-}
-
-pub fn to_curie(uri: &str) -> Curie<'_> {
-    let separator_idx = uri
-        .chars()
-        .position(|c| c == ':')
-        .unwrap_or_else(|| panic!("No separator found in cURI string: {}", uri));
-    let prefix = Some(&uri[..separator_idx]);
-    let reference = &uri[separator_idx + 1..];
-    return Curie::new(prefix, reference);
+pub fn try_expansion(uri: &str, prefix_map: &PrefixMap) -> Result<String, PrefixError> {
+    prefix_map.expand_curie(&uri.to_string())
 }
