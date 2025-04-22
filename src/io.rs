@@ -48,8 +48,10 @@ pub fn parse_rules(path: &Path) -> Rules {
         Ok(file) => serde_yml::from_reader(file).expect("Error parsing rules file."),
         Err(e) => panic!("Cannot open rules file '{:?}': '{}'.", path, e),
     };
-    rules.validate_uris().unwrap();
-    rules.expand_rules_curie()
+    match rules.expand_rules_curie() {
+        Ok(expanded_rules) => expanded_rules,
+        Err(e) => panic!("Error expanding rules curie: {}", e),
+    }
 }
 
 /// Parse yaml type index

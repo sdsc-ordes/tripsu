@@ -1,9 +1,15 @@
 use ::std::collections::{HashMap, HashSet};
-use curie::{Curie, PrefixMapping, ExpansionError};
+use curie::{Curie, ExpansionError, PrefixMapping};
 use sophia_iri::Iri;
 
 #[derive(Debug)]
 pub struct PrefixMap(PrefixMapping);
+
+impl Default for PrefixMap {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl PrefixMap {
     pub fn new() -> Self {
@@ -12,8 +18,9 @@ impl PrefixMap {
 
     pub fn import_hashmap(&mut self, hashmap: &HashMap<String, String>) -> &mut Self {
         for (key, value) in hashmap {
-            if is_full_uri(&value) {
-                match self.0.add_prefix(&key, &value) {
+            if is_full_uri(value) {
+                // We add prefixes full URIs without the brackets
+                match self.0.add_prefix(key, &value[1..value.len() - 1]) {
                     Ok(_) => continue,
                     Err(e) => {
                         eprintln!("Failed to add prefix: {:?}", e);
@@ -52,6 +59,12 @@ impl<'a> IntoIterator for &'a CompactUriSet {
     }
 }
 
+impl Default for CompactUriSet {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CompactUriSet {
     pub fn new() -> Self {
         CompactUriSet(HashSet::new())
@@ -66,7 +79,11 @@ impl CompactUriSet {
     pub fn expand_set(&self, prefix_map: &PrefixMap) -> HashSet<String> {
         let mut expanded_set = HashSet::new();
         self.0.iter().for_each(|uri| {
-            let expanded_uri = self.expand_uri(uri, prefix_map).unwrap();
+            let expanded_uri = self.expand_uri(uri, prefix_map).map_or_else(
+                |_| format!("Failed to unwrap cURI: {}", uri),
+                |expanded| format!("<{}>", expanded),
+            );
+            // Once formatted we need to add brackets for full URIs
             expanded_set.insert(expanded_uri);
         });
         expanded_set
@@ -111,7 +128,7 @@ pub fn check_uris(hash_set: &HashSet<String>) -> Result<(), sophia_iri::InvalidI
     // Check if the URIs in the HashSet are valid
 
     for uri in hash_set {
-        check_string_iri(&uri)?;
+        check_string_iri(uri)?;
     }
     Ok(())
 }
@@ -121,7 +138,9 @@ pub fn check_curies_hashset(
     prefixes: &PrefixMap,
 ) -> Result<(), curie::ExpansionError> {
     for uri in hash_set {
-        try_expansion(uri, prefixes)?;
+        if !is_full_uri(uri) {
+            try_expansion(uri, prefixes)?;
+        }
     }
     Ok(())
 }
@@ -131,7 +150,7 @@ pub fn try_expansion(uri: &str, prefix_map: &PrefixMap) -> Result<String, curie:
     prefix_map.expand_curie(&curie)
 }
 
-pub fn to_curie<'a>(uri: &'a str) -> Curie<'a> {
+pub fn to_curie(uri: &str) -> Curie<'_> {
     let separator_idx = uri
         .chars()
         .position(|c| c == ':')

@@ -60,7 +60,7 @@ impl ObjectRules {
             let on_type_predicate_uris = keep_full_uris(v);
             check_uris(&on_type_predicate_uris)?;
         }
-        Ok::<(), sophia_iri::InvalidIri>(())
+        Ok(())
     }
 
     /// Validates the CURIEs in the `on_predicate` and `on_type_predicate` fields
@@ -68,8 +68,10 @@ impl ObjectRules {
     pub fn check_curies(&self, prefixes: &PrefixMap) -> Result<(), curie::ExpansionError> {
         check_curies_hashset(&self.on_predicate, prefixes)?;
         for (k, v) in &self.on_type_predicate {
-            try_expansion(&k, prefixes)?;
-            check_curies_hashset(&v, prefixes)?;
+            if !is_full_uri(k) {
+                try_expansion(k, prefixes)?;
+            }
+            check_curies_hashset(v, prefixes)?;
         }
         Ok(())
     }
@@ -89,7 +91,7 @@ impl ObjectRules {
         }
     }
 
-    pub fn expand_curies(&self, prefixes: &PrefixMap) -> ObjectRules {
+    pub fn expand_curies(&self, prefixes: &PrefixMap) -> Result<ObjectRules, anyhow::Error> {
         let mut objects_on_predicate_full_uris = keep_full_uris(&self.on_predicate);
         let objects_predicate_curies = filter_out_full_uris(&self.on_predicate);
         let mut objects_predicate_curies_set = CompactUriSet::new();
@@ -103,24 +105,38 @@ impl ObjectRules {
 
         for (k, v) in self.on_type_predicate.iter() {
             let expanded_keys = match is_full_uri(k) {
-                false => format!("<{}>", prefixes.expand_curie(&to_curie(&k)).unwrap()),
-                true => k.clone(),
+                false => prefixes.expand_curie(&to_curie(k)).map_or_else(
+                    |err| match err {
+                        curie::ExpansionError::Invalid => {
+                            Err(format!("Prefix not found for cURI: {}", k))
+                        }
+                        curie::ExpansionError::MissingDefault => {
+                            Err(format!("Missing default prefix for {}", k))
+                        }
+                    },
+                    |expanded| Ok(format!("<{}>", expanded)),
+                ),
+                true => Ok(k.clone()),
             };
 
             let mut expanded_values = keep_full_uris(v);
-            let objects_type_predicate_curies = filter_out_full_uris(&v);
+            let objects_type_predicate_curies = filter_out_full_uris(v);
             let mut objects_type_predicate_curies_set = CompactUriSet::new();
 
             objects_type_predicate_curies_set.insert(&objects_type_predicate_curies);
 
-            expanded_values.extend(objects_type_predicate_curies_set.expand_set(&prefixes));
-            objects_on_type_predicate_full_uris.insert(expanded_keys, expanded_values);
+            expanded_values.extend(objects_type_predicate_curies_set.expand_set(prefixes));
+            if let Ok(expanded_key) = expanded_keys {
+                objects_on_type_predicate_full_uris.insert(expanded_key, expanded_values);
+            } else {
+                return Err(anyhow::anyhow!("Failed to expand key: {:?}", expanded_keys));
+            }
         }
 
-        ObjectRules {
+        Ok(ObjectRules {
             on_predicate: objects_on_predicate_full_uris,
             on_type_predicate: objects_on_type_predicate_full_uris,
-        }
+        })
     }
 }
 
@@ -160,8 +176,13 @@ impl Rules {
             |p| {
                 let mut prefix_map = PrefixMap::new();
                 prefix_map.import_hashmap(p);
-                self.nodes.check_curies(&prefix_map).map_err(|e| anyhow::anyhow!(format!("{:?}", e)))?;
-                self.objects.check_curies(&prefix_map).map_err(|e| anyhow::anyhow!(format!("{:?}", e)))?;
+                self.nodes
+                    .check_curies(&prefix_map)
+                    .map_err(|e| anyhow::anyhow!(format!("{:?}", e)))?;
+                self.objects
+                    .keep_curies()
+                    .check_curies(&prefix_map)
+                    .map_err(|e| anyhow::anyhow!(format!("{:?}", e)))?;
                 self.nodes.check_uris().map_err(Error::from)?;
                 self.objects.check_uris().map_err(Error::from)?;
                 Ok(())
@@ -170,11 +191,13 @@ impl Rules {
         Ok(())
     }
 
-    pub fn expand_rules_curie(&self) -> Rules {
+    pub fn expand_rules_curie(&self) -> Result<Rules, anyhow::Error> {
+        self.validate_uris()?;
+        // change to match or if let
         self.prefixes.as_ref().map_or_else(
             // If there's no prefixes return Rules as they are
             || {
-                return Rules {
+                return Ok(Rules {
                     invert: self.invert,
                     prefixes: self.prefixes.clone(),
                     nodes: NodeRules {
@@ -184,18 +207,18 @@ impl Rules {
                         on_predicate: self.objects.on_predicate.clone(),
                         on_type_predicate: self.objects.on_type_predicate.clone(),
                     },
-                };
+                });
             },
-            // If there's prefixes, return expanded cURIs
+            // If there's prefixes, return expanded cURIs and full URIs
             |p| {
                 let mut prefix_map = PrefixMap::new();
                 prefix_map.import_hashmap(p);
-                return Rules {
+                return Ok(Rules {
                     invert: self.invert,
                     prefixes: self.prefixes.clone(),
                     nodes: self.nodes.expand_curies(&prefix_map),
-                    objects: self.objects.expand_curies(&prefix_map),
-                };
+                    objects: self.objects.expand_curies(&prefix_map)?,
+                });
             },
         )
     }
@@ -456,7 +479,7 @@ mod tests {
     ) {
         let rules = parse_rules(&format!(
             "
-            prefix:
+            prefixes:
               {prefixes}: {prefixes_uri}
             objects:
               on_type_predicate:
@@ -495,7 +518,7 @@ mod tests {
     ) {
         let rules = parse_rules(&format!(
             "
-            prefix:
+            prefixes:
               {prefixes}: {prefixes_uri}
             objects:
               on_type_predicate:
@@ -504,7 +527,10 @@ mod tests {
         "
         ));
         let expanded = rules.expand_rules_curie();
-        assert!(expanded.objects.on_type_predicate[expanded_rule_type]
-            .contains(expanded_rule_predicate));
+        println!("Expanded rules: {:?} ", expanded.as_ref().unwrap());
+        assert!(
+            expanded.unwrap().objects.on_type_predicate[expanded_rule_type]
+                .contains(expanded_rule_predicate)
+        );
     }
 }
