@@ -180,8 +180,7 @@ impl Rules {
             // If prefixes are set, build prefix map, try expanding
             // and check both compact URIs and full URIs
             |p| {
-                let mut prefix_map = PrefixMap::new();
-                prefix_map.import_hashmap(p);
+                let prefix_map = PrefixMap::from_hashmap(p)?;
                 self.nodes.check_curies(&prefix_map).map_err(Error::from)?;
                 self.objects
                     .keep_curies()
@@ -214,8 +213,7 @@ impl Rules {
             }
             // If there's prefixes, return expanded cURIs and full URIs
             Some(p) => {
-                let mut prefix_map = PrefixMap::new();
-                prefix_map.import_hashmap(p);
+                let prefix_map = PrefixMap::from_hashmap(p)?;
                 return Ok(Rules {
                     invert: self.invert,
                     prefixes: self.prefixes.clone(),

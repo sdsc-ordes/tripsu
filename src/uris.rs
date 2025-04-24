@@ -1,18 +1,19 @@
-use curie::{ExpansionError, PrefixMapping};
+use curie::{ExpansionError, InvalidPrefixError, PrefixMapping};
 use sophia_iri::Iri;
 use std::{
     collections::{HashMap, HashSet},
     error::Error,
-    fmt,
+    fmt::{self},
 };
 
-#[derive(Debug)]
 pub struct PrefixMap(PrefixMapping);
 
 #[derive(Debug)]
 pub enum PrefixError {
     InvalidPrefix(String),
     MissingDefault(String),
+    PrefixNotAllowed(String),
+    InvalidPrefixURI(String),
 }
 
 impl fmt::Display for PrefixError {
@@ -22,11 +23,19 @@ impl fmt::Display for PrefixError {
                 write!(f, "Invalid prefix: {curie}")
             }
             Self::MissingDefault(curie) => write!(f, "No default prefix provided for: {curie}"),
+            Self::PrefixNotAllowed(uri) => write!(f, "Prefix \"_\" not allowed: {uri}"),
+            Self::InvalidPrefixURI(uri) => write!(f, "Invalid URI provided for prefix: {uri}"),
         }
     }
 }
 
 impl Error for PrefixError {}
+
+impl From<InvalidPrefixError> for PrefixError {
+    fn from(err: InvalidPrefixError) -> Self {
+        PrefixError::PrefixNotAllowed(format!("{:?}", err))
+    }
+}
 
 impl Default for PrefixMap {
     fn default() -> Self {
@@ -39,22 +48,26 @@ impl PrefixMap {
         PrefixMap(PrefixMapping::default())
     }
 
-    pub fn import_hashmap(&mut self, hashmap: &HashMap<Option<String>, String>) -> &mut Self {
+    pub fn from_hashmap(
+        hashmap: &HashMap<Option<String>, String>,
+    ) -> Result<PrefixMap, PrefixError> {
+        let mut prefix_map = PrefixMap::new();
         for (key, value) in hashmap {
             if is_full_uri(value) {
                 // We add prefixes full URIs without the brackets
                 if let Some(prefix) = key.as_deref() {
-                    if let Err(e) = self.0.add_prefix(prefix, &value[1..value.len() - 1]) {
-                        eprintln!("Failed to add prefix: {:?}", e);
-                    }
+                    prefix_map
+                        .0
+                        .add_prefix(prefix, &value[1..value.len() - 1])
+                        .map_err(PrefixError::from)?
                 } else {
-                    self.0.set_default(&value[1..value.len() - 1])
+                    prefix_map.0.set_default(&value[1..value.len() - 1])
                 }
             } else {
-                eprintln!("The prefix value provided is not a full URI: {}", value)
+                return Err(PrefixError::InvalidPrefixURI(value.to_string()));
             }
         }
-        self
+        Ok(prefix_map)
     }
 
     pub fn expand_curie(&self, curie: &String) -> Result<String, PrefixError> {
