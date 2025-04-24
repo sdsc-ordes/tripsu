@@ -51,6 +51,9 @@ impl PrefixMap {
                     self.0.set_default(&value[1..value.len() - 1])
                 }
             }
+            else {
+                eprintln!("The prefix value provided is not a full URI: {}", value)
+            }
         }
         self
     }
