@@ -154,7 +154,7 @@ pub struct Rules {
     pub invert: bool,
 
     #[serde(default)]
-    prefixes: Option<HashMap<String, String>>,
+    prefixes: Option<HashMap<Option<String>, String>>,
 
     #[serde(default)]
     pub nodes: NodeRules,
@@ -476,7 +476,7 @@ mod tests {
     // No default prefix provided
     #[case("ex", "<http://example.org/>", "Person", "<http:hasName>", false)]
     // Valid default provided
-    #[case("default", "<http://example.org/>", "Person", "<http:hasName>", true)]
+    #[case("\"\"", "<http://example.org/>", ":Person", "<http:hasName>", true)]
     fn valid_curies(
         #[case] prefixes: &str,
         #[case] prefixes_uri: &str,

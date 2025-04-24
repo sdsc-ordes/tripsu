@@ -39,16 +39,13 @@ impl PrefixMap {
         PrefixMap(PrefixMapping::default())
     }
 
-    pub fn import_hashmap(&mut self, hashmap: &HashMap<String, String>) -> &mut Self {
+    pub fn import_hashmap(&mut self, hashmap: &HashMap<Option<String>, String>) -> &mut Self {
         for (key, value) in hashmap {
             if is_full_uri(value) {
                 // We add prefixes full URIs without the brackets
-                if key != "default" {
-                    match self.0.add_prefix(key, &value[1..value.len() - 1]) {
-                        Ok(_) => continue,
-                        Err(e) => {
-                            eprintln!("Failed to add prefix: {:?}", e);
-                        }
+                if let Some(prefix) = key.as_deref() {
+                    if let Err(e) = self.0.add_prefix(prefix, &value[1..value.len() - 1]) {
+                        eprintln!("Failed to add prefix: {:?}", e);
                     }
                 } else {
                     self.0.set_default(&value[1..value.len() - 1])
