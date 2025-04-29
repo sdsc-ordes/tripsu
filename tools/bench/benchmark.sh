@@ -8,8 +8,8 @@ set -euo pipefail
 ### Final output path
 OUTPUT="profiling.md"
 PROFILE='release'
-BUILD_ARGS=( )
-[[ "${PROFILE}" == 'release' ]] && BUILD_ARGS+=( '--release' )
+BUILD_ARGS=()
+[[ ${PROFILE} == 'release' ]] && BUILD_ARGS+=('--release')
 ### setup binaries
 
 # baseline binary
@@ -19,12 +19,12 @@ BASE_DIR=$(mktemp -d)
 BASE_URL="$(git config --get remote.origin.url)"
 (
     GIT_CLONE_PROTECTION_ACTIVE=false \
-    git clone \
+        git clone \
         --branch "${BASE_BRANCH}" \
         "${BASE_URL}" \
-        "${BASE_DIR}" \
-    && cd "${BASE_DIR}" \
-    && just build "${BUILD_ARGS[@]}"
+        "${BASE_DIR}" &&
+        cd "${BASE_DIR}" &&
+        just build "${BUILD_ARGS[@]}"
 )
 BASE_BIN="${BASE_DIR}/target/${PROFILE}/tripsu"
 
@@ -39,10 +39,10 @@ INPUT="/tmp/proteomes.nt"
 
 # Download data if needed
 if [ ! -f ${INPUT} ]; then
-    curl "${DATA_URL}" \
-    | xz -dc -  \
-    | rdfpipe-rs -i rdf-xml -o nt - \
-    > "${INPUT}" || rm "${INPUT}"
+    curl "${DATA_URL}" |
+        xz -dc - |
+        rdfpipe-rs -i rdf-xml -o nt - \
+            >"${INPUT}" || rm "${INPUT}"
 fi
 
 # setup config
@@ -50,7 +50,7 @@ RULES=$(mktemp)
 BASE_IDX=$(mktemp)
 COMP_IDX=$(mktemp)
 
-cat << EOF > "${RULES}"
+cat <<EOF >"${RULES}"
 
 nodes:
   of_type:
@@ -94,8 +94,8 @@ mem_prof() {
     echo -n "$name: "
     # shellcheck disable=SC2086
     heaptrack -o "${heap_out}" ${cmd} >/dev/null
-    heaptrack_print "${heap_out}.zst" \
-    | grep '^peak heap memory'
+    heaptrack_print "${heap_out}.zst" |
+        grep '^peak heap memory'
 }
 
 make_report() {
@@ -138,7 +138,6 @@ make_report() {
 	MD
 }
 
-
 ###  Run profiling
 
 ## Profile cpu time
@@ -147,25 +146,24 @@ HYPF_PSD_OUT=$(mktemp)
 
 # indexing
 cpu_prof "${BASE_BRANCH}" "${BASE_CMD_IDX}" \
-         "${COMP_BRANCH}" "${COMP_CMD_IDX}" "${HYPF_IDX_OUT}"
+    "${COMP_BRANCH}" "${COMP_CMD_IDX}" "${HYPF_IDX_OUT}"
 # pseudonymization
 cpu_prof "${BASE_BRANCH}" "${BASE_CMD_PSD}" \
-         "${COMP_BRANCH}" "${COMP_CMD_PSD}" "${HYPF_PSD_OUT}"
+    "${COMP_BRANCH}" "${COMP_CMD_PSD}" "${HYPF_PSD_OUT}"
 
 ## Profile memory
 HEAP_IDX_OUT=$(mktemp)
 HEAP_PSD_OUT=$(mktemp)
 
 # indexing
-mem_prof "${BASE_BRANCH}" "${BASE_CMD_IDX}" >  "${HEAP_IDX_OUT}"
-mem_prof "${COMP_BRANCH}" "${COMP_CMD_IDX}" >> "${HEAP_IDX_OUT}"
+mem_prof "${BASE_BRANCH}" "${BASE_CMD_IDX}" >"${HEAP_IDX_OUT}"
+mem_prof "${COMP_BRANCH}" "${COMP_CMD_IDX}" >>"${HEAP_IDX_OUT}"
 # pseudonymization
-mem_prof "${BASE_BRANCH}" "${BASE_CMD_PSD}" >  "${HEAP_PSD_OUT}"
-mem_prof "${COMP_BRANCH}" "${COMP_CMD_PSD}" >> "${HEAP_PSD_OUT}"
-
+mem_prof "${BASE_BRANCH}" "${BASE_CMD_PSD}" >"${HEAP_PSD_OUT}"
+mem_prof "${COMP_BRANCH}" "${COMP_CMD_PSD}" >>"${HEAP_PSD_OUT}"
 
 ### Reporting
 make_report \
     "${HYPF_IDX_OUT}" "${HYPF_PSD_OUT}" \
     "${HEAP_IDX_OUT}" "${HEAP_PSD_OUT}" \
-    "${BASE_BRANCH}" > "${OUTPUT}"
+    "${BASE_BRANCH}" >"${OUTPUT}"
