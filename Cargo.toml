@@ -1,6 +1,8 @@
 [dependencies]
+anyhow = "1.0.98"
   bitflags = '2.5.0'
   blake3 = '1.5.1'
+curie = "0.1.3"
   io-enum = '1.1.3'
   rand = '0.8.5'
   rio_api = '0.8.4'
@@ -11,6 +13,7 @@
   slog = '2.7.0'
   slog-async = '2.8.0'
   slog-term = '2.9.0'
+sophia_iri = "0.9.0"
   tempfile = '3.10.1'
 
   [dependencies.clap]

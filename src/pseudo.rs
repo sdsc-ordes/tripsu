@@ -94,10 +94,10 @@ mod tests {
         let key = None;
         pseudonymize_graph(
             &logger,
-            &input_path,
-            &rules_path,
+            input_path,
+            rules_path,
             &output_path,
-            &type_map_path,
+            type_map_path,
             &key,
         );
     }

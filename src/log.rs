@@ -5,7 +5,7 @@ pub type Logger = slog::Logger;
 
 #[allow(dead_code)]
 fn no_out(_io: &mut dyn io::Write) -> io::Result<()> {
-    return Ok(());
+    Ok(())
 }
 
 pub fn create_logger(use_stdout: bool) -> Arc<Logger> {
@@ -24,7 +24,7 @@ pub fn create_logger(use_stdout: bool) -> Arc<Logger> {
         .build()
         .fuse();
 
-    return Arc::new(slog::Logger::root(drain, o!()));
+    Arc::new(slog::Logger::root(drain, o!()))
 }
 
 /// Log trace level record
