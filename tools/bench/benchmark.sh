@@ -54,16 +54,16 @@ cat <<EOF >"${RULES}"
 
 nodes:
   of_type:
-    - "http://purl.uniprot.org/core/Proteome"
-    - "http://purl.uniprot.org/core/Strain"
+    - "<http://purl.uniprot.org/core/Proteome>"
+    - "<http://purl.uniprot.org/core/Strain>"
 
 objects:
   on_type_predicate:
-    "http://purl.uniprot.org/core/Submission_Citation":
-      - "http://purl.uniprot.org/core/author"
+    "<http://purl.uniprot.org/core/Submission_Citation>":
+      - "<http://purl.uniprot.org/core/author>"
   
   on_predicate:
-    - "http://purl.org/dc/terms/identifier"
+    - "<http://purl.org/dc/terms/identifier>"
 
 EOF
 
