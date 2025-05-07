@@ -16,8 +16,9 @@ develop *args:
     just nix-develop default "$@"
 
 # Enter the CI Nix development shell for benchmarking.
-develop-bench *args:
-    just nix-develop bench "$@"
+benchmark *args:
+    cd {{root_dir}} && \
+        just nix-develop bench bash ./tools/bench/benchmark.sh {{args}}
 
 # Enter the CI Nix development shell.
 ci *args:
