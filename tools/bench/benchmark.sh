@@ -3,7 +3,7 @@
 # Benchmark runtime and memory usage of tripsu
 # Compares the working directory version against a baseline branch (main by default)
 
-set -euo pipefail
+set -eu
 
 ### Final output path
 OUTPUT="profiling.md"
@@ -34,15 +34,15 @@ just build "${BUILD_ARGS[@]}"
 COMP_BIN="./target/${PROFILE}/tripsu"
 
 # setup data
-DATA_URL="https://ftp.uniprot.org/pub/databases/uniprot/current_release/rdf/proteomes.rdf.xz"
-INPUT="/tmp/proteomes.nt"
+DATA_URL="https://zenodo.org/records/7638511/files/dblp.nt.gz?download=1"
+INPUT="/tmp/dblp-sample.nt"
 
 # Download data if needed
 if [ ! -f ${INPUT} ]; then
-    curl "${DATA_URL}" |
-        xz -dc - |
-        rdfpipe-rs -i rdf-xml -o nt - \
-            >"${INPUT}" || rm "${INPUT}"
+    curl -sNL "${DATA_URL}" |
+        gzip -dc |
+        head -n 1000000 \
+            > "${INPUT}" || rm "${INPUT}"
 fi
 
 # setup config
@@ -54,16 +54,15 @@ cat <<EOF >"${RULES}"
 
 nodes:
   of_type:
-    - "<http://purl.uniprot.org/core/Proteome>"
-    - "<http://purl.uniprot.org/core/Strain>"
+    - "<https://dblp.org/rdf/schema#Informal>"
 
 objects:
   on_type_predicate:
-    "<http://purl.uniprot.org/core/Submission_Citation>":
-      - "<http://purl.uniprot.org/core/author>"
+    "<https://dblp.org/rdf/schema#Book>":
+      - "<https://dblp.org/rdf/schema#isbn>"
   
   on_predicate:
-    - "<http://purl.org/dc/terms/identifier>"
+    - "<https://dblp.org/rdf/schema#authoredBy>"
 
 EOF
 
