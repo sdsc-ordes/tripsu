@@ -1,9 +1,8 @@
-use crate::{rdf_types::*, uris::*};
+use crate::{index::TypeIndex, model::TripleMask, uris::*};
 use ::std::collections::{HashMap, HashSet};
 use anyhow::{Error, Result};
+use rio_api::model::*;
 use serde::{Deserialize, Serialize};
-
-use crate::{index::TypeIndex, model::TripleMask};
 
 /// Rules for pseudonymizing nodes
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -242,11 +241,13 @@ pub fn match_node_rules(triple: &Triple, rules: &Rules, type_map: &mut TypeIndex
     let pseudo_subject = match &triple.subject {
         Subject::NamedNode(n) => match_type(&n.to_string(), rules, type_map),
         Subject::BlankNode(_) => false,
+        Subject::Triple(_) => false,
     };
     let pseudo_object = match &triple.object {
         Term::NamedNode(n) => match_type(&n.to_string(), rules, type_map),
         Term::BlankNode(_) => false,
         Term::Literal(_) => false,
+        Term::Triple(_) => false,
     };
 
     let mut mask = TripleMask::default();
@@ -276,6 +277,12 @@ pub fn match_object_rules(triple: &Triple, rules: &Rules, type_map: &mut TypeInd
         Subject::BlankNode(b) => match_type_predicate(
             &b.to_string(),
             &triple.predicate.to_string(),
+            type_map,
+            rules,
+        ),
+        Subject::Triple(t) => match_type_predicate(
+            &t.subject.to_string(),
+            &t.predicate.to_string(),
             type_map,
             rules,
         ),
