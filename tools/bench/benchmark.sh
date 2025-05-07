@@ -93,7 +93,7 @@ mem_prof() {
     heap_out=$(mktemp)
     echo -n "$name: "
     # shellcheck disable=SC2086
-    heaptrack -o "${heap_out}" ${cmd} >/dev/null
+    heaptrack --record-only -o "${heap_out}" ${cmd} >/dev/null
     heaptrack_print "${heap_out}.zst" |
         grep '^peak heap memory'
 }
