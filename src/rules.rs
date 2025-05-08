@@ -241,13 +241,13 @@ pub fn match_node_rules(triple: &Triple, rules: &Rules, type_map: &mut TypeIndex
     let pseudo_subject = match &triple.subject {
         Subject::NamedNode(n) => match_type(&n.to_string(), rules, type_map),
         Subject::BlankNode(_) => false,
-        Subject::Triple(_) => false,
+        Subject::Triple(_) => panic!("RDF-star data not supported"),
     };
     let pseudo_object = match &triple.object {
         Term::NamedNode(n) => match_type(&n.to_string(), rules, type_map),
         Term::BlankNode(_) => false,
         Term::Literal(_) => false,
-        Term::Triple(_) => false,
+        Term::Triple(_) => panic!("RDF-star data not supported"),
     };
 
     let mut mask = TripleMask::default();
@@ -280,12 +280,7 @@ pub fn match_object_rules(triple: &Triple, rules: &Rules, type_map: &mut TypeInd
             type_map,
             rules,
         ),
-        Subject::Triple(t) => match_type_predicate(
-            &t.subject.to_string(),
-            &t.predicate.to_string(),
-            type_map,
-            rules,
-        ),
+        Subject::Triple(_) => panic!("RDF-star data not supported")
     };
 
     if pseudo_object {
