@@ -10,7 +10,7 @@ defaults:
 
 on:
   pull_request:
-    types: opened
+    types: [opened, synchronize]
   workflow_dispatch:
 
 
@@ -20,11 +20,21 @@ jobs:
     environment: ci
     runs-on: ubuntu-latest
     steps:
+
       - uses: actions/checkout@v4
+
       - uses: ./.github/actions/setup-nix
         with:
           cachix_cache_name: "${{ secrets.CACHIX_CACHE_NAME }}"
           cachix_auth_token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+
       - name: Run benchmark
         run: |
-          just benchmark
+          just benchmark > profiling.md
+
+      - name: Post report as PR comment
+        if: success()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} --body-file profiling.md
