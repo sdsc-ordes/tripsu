@@ -194,7 +194,7 @@ pub fn check_uris(hash_set: &HashSet<String>) -> Result<(), anyhow::Error> {
 
 pub fn check_curies(hash_set: &HashSet<String>, prefixes: &PrefixMap) -> Result<(), PrefixError> {
     for uri in hash_set {
-        if !is_full_uri(uri) {
+        if get_uri(uri).is_err() {
             try_expansion(uri, prefixes)?;
         }
     }
