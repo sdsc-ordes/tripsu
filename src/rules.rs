@@ -61,9 +61,7 @@ impl ObjectRules {
         check_uris(&on_predicate_uris)?;
         for (k, v) in self.on_type_predicate.iter() {
             // Check if a string is a full URI and if it is check iri
-            if is_full_uri(k) {
-                check_uri(k)?;
-            }
+            get_uri(k)?;
             let on_type_predicate_uris = keep_full_uris(v);
             check_uris(&on_type_predicate_uris)?;
         }
@@ -75,10 +73,11 @@ impl ObjectRules {
     pub fn check_curies(&self, prefixes: &PrefixMap) -> Result<(), PrefixError> {
         check_curies(&self.on_predicate, prefixes)?;
         for (k, v) in &self.on_type_predicate {
-            if !is_full_uri(k) {
+            // type should be a valid URI or CURIE
+            if get_uri(k).is_err() {
                 try_expansion(k, prefixes)?;
             }
-            check_curies(v, prefixes)?;
+            check_curies(v, prefixes)?
         }
         Ok(())
     }
@@ -89,7 +88,7 @@ impl ObjectRules {
             on_type_predicate: self
                 .on_type_predicate
                 .iter()
-                .filter(|(k, _)| !is_full_uri(k))
+                .filter(|(k, _)| get_uri(k).is_err())
                 .map(|(k, v)| {
                     let filtered_values = filter_out_full_uris(v);
                     (k.clone(), filtered_values)
@@ -114,12 +113,12 @@ impl ObjectRules {
             HashMap::new();
 
         for (k, v) in self.on_type_predicate.iter() {
-            let expanded_keys: Result<String, PrefixError> = match is_full_uri(k) {
-                false => {
+            let expanded_keys: Result<String, PrefixError> = match get_uri(k) {
+                Err(_) => {
                     let valid_key = prefixes.expand_curie(k)?;
                     Ok(format!("<{}>", valid_key))
                 }
-                true => Ok(k.clone()),
+                Ok(_) => Ok(k.clone()),
             };
 
             let mut expanded_values = keep_full_uris(v);
@@ -172,7 +171,7 @@ impl Rules {
                 check_uris(&self.nodes.of_type).map_err(Error::from)?;
                 check_uris(&self.objects.on_predicate).map_err(Error::from)?;
                 for (k, v) in &self.objects.on_type_predicate {
-                    check_uri(k).map_err(Error::from)?;
+                    get_uri(k).map_err(Error::from)?;
                     check_uris(v).map_err(Error::from)?;
                 }
                 Ok::<(), anyhow::Error>(())

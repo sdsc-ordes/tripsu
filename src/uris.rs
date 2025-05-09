@@ -162,7 +162,7 @@ pub fn filter_out_full_uris(hash_set: &HashSet<String>) -> HashSet<String> {
     // Filter out full URIs
     let filtered = hash_set
         .iter()
-        .filter(|uri| !is_full_uri(uri))
+        .filter(|uri| !get_uri(uri).is_ok())
         .cloned()
         .collect();
     filtered
@@ -172,7 +172,7 @@ pub fn keep_full_uris(hash_set: &HashSet<String>) -> HashSet<String> {
     // Filter out compact URIs
     return hash_set
         .iter()
-        .filter(|uri| is_full_uri(uri))
+        .filter(|uri| get_uri(uri).is_ok())
         .cloned()
         .collect();
 }
