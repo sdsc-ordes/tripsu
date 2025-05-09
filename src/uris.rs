@@ -31,6 +31,12 @@ impl fmt::Display for PrefixError {
 
 impl Error for PrefixError {}
 
+impl From<sophia_iri::InvalidIri> for PrefixError {
+    fn from(err: sophia_iri::InvalidIri) -> Self {
+        PrefixError::InvalidPrefixURI(err.to_string())
+    }
+}
+
 impl From<InvalidPrefixError> for PrefixError {
     fn from(err: InvalidPrefixError) -> Self {
         PrefixError::PrefixNotAllowed(format!("{:?}", err))
@@ -53,18 +59,15 @@ impl PrefixMap {
     ) -> Result<PrefixMap, PrefixError> {
         let mut prefix_map = PrefixMap::new();
         for (key, value) in hashmap {
-            if is_full_uri(value) {
-                // We add prefixes full URIs without the brackets
-                if let Some(prefix) = key.as_deref() {
-                    prefix_map
-                        .0
-                        .add_prefix(prefix, &value[1..value.len() - 1])
-                        .map_err(PrefixError::from)?
-                } else {
-                    prefix_map.0.set_default(&value[1..value.len() - 1])
-                }
+            let uri = get_uri(value)?;
+            // We add prefixes full URIs without the brackets
+            if let Some(prefix) = key.as_deref() {
+                prefix_map
+                    .0
+                    .add_prefix(prefix, &uri)
+                    .map_err(PrefixError::from)?
             } else {
-                return Err(PrefixError::InvalidPrefixURI(value.to_string()));
+                prefix_map.0.set_default(&uri)
             }
         }
         Ok(prefix_map)
