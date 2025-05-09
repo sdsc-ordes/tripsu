@@ -143,15 +143,16 @@ impl CompactUriSet {
     }
 }
 
-pub fn check_uri(uri: &str) -> Result<Iri<&str>, sophia_iri::InvalidIri> {
-    // We assume that a full URI starts with "<" and ends with ">"
-    // We select the URI within the angle brackets
-    Iri::new(&uri[1..uri.len() - 2])
-}
-
-pub fn is_full_uri(uri: &str) -> bool {
-    // Ensure that full URI starts with "<" and ends with ">"
-    uri.starts_with('<') && uri.ends_with('>')
+/// Extract a URI from input string.
+/// URI strings are expected to be enclosed in angle brackets (<...>).
+pub fn get_uri(uri: &str) -> Result<Iri<&str>, sophia_iri::InvalidIri> {
+    if uri.starts_with('<') && uri.ends_with('>') {
+        Iri::new(&uri[1..uri.len() - 2])
+    } else {
+        Err(sophia_iri::InvalidIri(
+            "URI not surrounded in angle brackets".to_string(),
+        ))
+    }
 }
 
 pub fn filter_out_full_uris(hash_set: &HashSet<String>) -> HashSet<String> {
@@ -177,14 +178,14 @@ pub fn check_uris(hash_set: &HashSet<String>) -> Result<(), sophia_iri::InvalidI
     // Check if the URIs in the HashSet are valid
 
     for uri in hash_set {
-        check_uri(uri)?;
+        get_uri(uri)?;
     }
     Ok(())
 }
 
 pub fn check_curies(hash_set: &HashSet<String>, prefixes: &PrefixMap) -> Result<(), PrefixError> {
     for uri in hash_set {
-        if !is_full_uri(uri) {
+        if get_uri(uri).is_err() {
             try_expansion(uri, prefixes)?;
         }
     }
