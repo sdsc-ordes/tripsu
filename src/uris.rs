@@ -150,11 +150,10 @@ pub fn check_uri(uri: &str) -> Result<Iri<&str>, sophia_iri::InvalidIri> {
     Iri::new(&uri[1..uri.len() - 2])
 }
 
-
 pub fn check_full_uri(uri: &str) -> Result<(), anyhow::Error> {
     // Ensure that full URI starts with "<" and ends with ">"
     if !(uri.starts_with('<') && uri.ends_with('>')) {
-        return Err(anyhow!("Full URI in rules must start and end with angle brackets <...>. Please format {} into <{}>", uri, uri))
+        return Err(anyhow!("Full URI in rules must start and end with angle brackets <...>. Please format {} into <{}>", uri, uri));
     }
     Ok(())
 }

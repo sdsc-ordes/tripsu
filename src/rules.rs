@@ -280,7 +280,7 @@ pub fn match_object_rules(triple: &Triple, rules: &Rules, type_map: &mut TypeInd
             type_map,
             rules,
         ),
-        Subject::Triple(_) => panic!("RDF-star data not supported")
+        Subject::Triple(_) => panic!("RDF-star data not supported"),
     };
 
     if pseudo_object {
