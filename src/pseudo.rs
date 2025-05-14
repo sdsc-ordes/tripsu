@@ -10,6 +10,7 @@ use crate::{
     index::TypeIndex,
     io,
     log::Logger,
+    model::TripleMask,
     rdf_types::*,
     rules::{match_rules, Rules},
 };
@@ -17,7 +18,7 @@ use crate::{
 // mask and encode input triple
 // NOTE: This will need the type-map to perform masking
 fn process_triple(
-    triple: Triple,
+    triple: TripleView,
     rules_config: &Rules,
     node_to_type: &mut TypeIndex,
     out: &mut impl Write,
@@ -26,8 +27,16 @@ fn process_triple(
     let mask = match_rules(&triple, rules_config, node_to_type);
 
     let r = || -> std::io::Result<()> {
-        out.write_all(hasher.pseudo_triple(&triple, mask).to_string().as_bytes())?;
-        out.write_all(b" .\n")
+        // If nothing needs to be pseudonymized, directly return triple
+        if !mask.is_set(&TripleMask::SUBJECT) & !mask.is_set(&TripleMask::OBJECT) {
+            out.write_all(triple.to_string().as_bytes())?;
+            out.write_all(b" .\n")?;
+        } else {
+            let pseudo_triple = hasher.pseudo_triple(&triple.into(), mask);
+            out.write_all(pseudo_triple.to_string().as_bytes())?;
+            out.write_all(b" .\n")?;
+        }
+        Ok(())
     }();
 
     if let Err(e) = r {
@@ -58,13 +67,7 @@ pub fn pseudonymize_graph(
     while !triples.is_end() {
         triples
             .parse_step(&mut |t: TripleView| {
-                process_triple(
-                    t.into(),
-                    &rules,
-                    &mut type_index,
-                    &mut buf_output,
-                    &pseudonymizer,
-                );
+                process_triple(t, &rules, &mut type_index, &mut buf_output, &pseudonymizer);
                 Result::<(), TurtleError>::Ok(())
             })
             .inspect_err(|e| {

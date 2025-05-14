@@ -1,9 +1,8 @@
-use crate::{rdf_types::*, uris::*};
+use crate::{index::TypeIndex, model::TripleMask, uris::*};
 use ::std::collections::{HashMap, HashSet};
 use anyhow::{Error, Result};
+use rio_api::model::*;
 use serde::{Deserialize, Serialize};
-
-use crate::{index::TypeIndex, model::TripleMask};
 
 /// Rules for pseudonymizing nodes
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -15,7 +14,7 @@ pub struct NodeRules {
 
 impl NodeRules {
     /// Validate each full URI specified in the rules for nodes
-    pub fn check_uris(&self) -> Result<(), sophia_iri::InvalidIri> {
+    pub fn check_uris(&self) -> Result<(), anyhow::Error> {
         let node_uris = keep_full_uris(&self.of_type);
         check_uris(&node_uris)
     }
@@ -56,7 +55,7 @@ pub struct ObjectRules {
 
 impl ObjectRules {
     /// Validate each full URI specified in the rules for objects
-    pub fn check_uris(&self) -> Result<(), sophia_iri::InvalidIri> {
+    pub fn check_uris(&self) -> Result<(), anyhow::Error> {
         let on_predicate_uris = keep_full_uris(&self.on_predicate);
         check_uris(&on_predicate_uris)?;
         for (k, v) in self.on_type_predicate.iter() {
@@ -242,11 +241,13 @@ pub fn match_node_rules(triple: &Triple, rules: &Rules, type_map: &mut TypeIndex
     let pseudo_subject = match &triple.subject {
         Subject::NamedNode(n) => match_type(&n.to_string(), rules, type_map),
         Subject::BlankNode(_) => false,
+        Subject::Triple(_) => panic!("RDF-star data not supported"),
     };
     let pseudo_object = match &triple.object {
         Term::NamedNode(n) => match_type(&n.to_string(), rules, type_map),
         Term::BlankNode(_) => false,
         Term::Literal(_) => false,
+        Term::Triple(_) => panic!("RDF-star data not supported"),
     };
 
     let mut mask = TripleMask::default();
@@ -279,6 +280,7 @@ pub fn match_object_rules(triple: &Triple, rules: &Rules, type_map: &mut TypeInd
             type_map,
             rules,
         ),
+        Subject::Triple(_) => panic!("RDF-star data not supported"),
     };
 
     if pseudo_object {
@@ -532,7 +534,6 @@ mod tests {
         "
         ));
         let expanded = rules.expand_rules_curie();
-        println!("Expanded rules: {:?} ", expanded.as_ref().unwrap());
         assert!(
             expanded.unwrap().objects.on_type_predicate[expanded_rule_type]
                 .contains(expanded_rule_predicate)
