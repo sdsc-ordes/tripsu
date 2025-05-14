@@ -14,7 +14,7 @@ pub struct NodeRules {
 
 impl NodeRules {
     /// Validate each full URI specified in the rules for nodes
-    pub fn check_uris(&self) -> Result<(), sophia_iri::InvalidIri> {
+    pub fn check_uris(&self) -> Result<(), anyhow::Error> {
         let node_uris = keep_full_uris(&self.of_type);
         check_uris(&node_uris)
     }
@@ -55,7 +55,7 @@ pub struct ObjectRules {
 
 impl ObjectRules {
     /// Validate each full URI specified in the rules for objects
-    pub fn check_uris(&self) -> Result<(), sophia_iri::InvalidIri> {
+    pub fn check_uris(&self) -> Result<(), anyhow::Error> {
         let on_predicate_uris = keep_full_uris(&self.on_predicate);
         check_uris(&on_predicate_uris)?;
         for (k, v) in self.on_type_predicate.iter() {
@@ -280,7 +280,7 @@ pub fn match_object_rules(triple: &Triple, rules: &Rules, type_map: &mut TypeInd
             type_map,
             rules,
         ),
-        Subject::Triple(_) => panic!("RDF-star data not supported")
+        Subject::Triple(_) => panic!("RDF-star data not supported"),
     };
 
     if pseudo_object {
@@ -534,7 +534,6 @@ mod tests {
         "
         ));
         let expanded = rules.expand_rules_curie();
-        println!("Expanded rules: {:?} ", expanded.as_ref().unwrap());
         assert!(
             expanded.unwrap().objects.on_type_predicate[expanded_rule_type]
                 .contains(expanded_rule_predicate)
