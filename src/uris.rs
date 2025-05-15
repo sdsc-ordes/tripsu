@@ -1,14 +1,104 @@
 use anyhow::anyhow;
 use curie::{ExpansionError, InvalidPrefixError, PrefixMapping};
+use regex::Regex;
 use sophia_iri::Iri;
 use std::{
     collections::{HashMap, HashSet},
     error::Error,
-    fmt::{self},
+    fmt::{Display, self},
 };
 
-pub struct PrefixMap(PrefixMapping);
+#[derive(Debug, Clone, Eq, Hash, PartialEq)]
+pub enum Uri {
+    FullUri(String),
+    CompactUri(String),
+}
 
+impl Uri {
+    pub fn is_full(&self) -> bool {
+        match self {
+            Uri::FullUri(_) => true,
+            Uri::CompactUri(_) => false,
+        }
+    }
+    pub fn is_compact(&self) -> bool {
+        match self {
+            Uri::FullUri(_) => false,
+            Uri::CompactUri(_) => true,
+        }
+    }
+
+    pub fn expand(&self, prefix_map: &PrefixMap) -> Result<Self, PrefixError> {
+
+        let uri = if let Uri::CompactUri(uri) = self {
+            uri
+        } else {
+            return Ok(self.clone());
+        };
+
+        match prefix_map.0.expand_curie_string(uri) {
+            Err(ExpansionError::Invalid) => Err(PrefixError::InvalidPrefix(uri.to_string())),
+            Err(ExpansionError::MissingDefault) => {
+                Err(PrefixError::MissingDefault(uri.to_string()))
+            }
+            Ok(s) => Ok(Self::FullUri(s)),
+        }
+    }
+}
+
+impl Display for Uri {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Uri::FullUri(uri) => write!(f, "<{}>", uri),
+            Uri::CompactUri(uri) => write!(f, "{}", uri),
+        }
+    }
+}
+
+impl TryFrom<&str> for Uri {
+    type Error = sophia_iri::InvalidIri;
+    fn try_from(uri: &str) -> Result<Self, Self::Error> {
+        let curie_re = Regex::new(r"([A-Za-z_][A-Za-z0-9_.\-]*)\:([^\s:/][^\s]*)").unwrap();
+
+        if uri.starts_with('<') && uri.ends_with('>') {
+            let trimmed = &uri[1..uri.len() - 2];
+            Iri::new(trimmed)?;
+            Ok(Self::FullUri(trimmed.to_string()))
+        } else if curie_re.is_match(uri) {
+            Ok(Self::CompactUri(uri.to_string()))
+        } else {
+            Err(sophia_iri::InvalidIri(
+                format!("Input should be either a URI enclosed in '<>' or a CURIE. Found: {}", uri
+            )))
+        }
+    }
+}
+
+/// Render URI as string with angle brackets
+impl Into<String> for Uri {
+    fn into(self) -> String {
+        match self {
+            Uri::CompactUri(uri) => uri.to_string(),
+            Uri::FullUri(uri) => format!("<{}>", uri),
+        }
+    }
+}
+
+impl TryInto<Iri<String>> for Uri {
+    type Error = anyhow::Error;
+    fn try_into(self) -> Result<Iri<String>, Self::Error> {
+        match self {
+            Uri::FullUri(uri) => Iri::new(uri.clone()).map_err(|_| anyhow!("Invalid URI: {}", uri)),
+            Uri::CompactUri(uri) => Err(anyhow!(
+                "Cannot convert CURIE to IRI: {}",
+                uri
+            )),
+        }
+    }
+}
+
+
+/// Errors related to CURIE prefixes
 #[derive(Debug)]
 pub enum PrefixError {
     InvalidPrefix(String),
@@ -44,6 +134,9 @@ impl From<InvalidPrefixError> for PrefixError {
     }
 }
 
+/// A mapping of prefixes to URIs
+pub struct PrefixMap(PrefixMapping);
+
 impl Default for PrefixMap {
     fn default() -> Self {
         Self::new()
@@ -60,21 +153,21 @@ impl PrefixMap {
     ) -> Result<PrefixMap, PrefixError> {
         let mut prefix_map = PrefixMap::new();
         for (key, value) in hashmap {
-            let uri = get_uri(value)?;
+            Uri::try_from(value.as_str())?;
             // We add prefixes full URIs without the brackets
             if let Some(prefix) = key.as_deref() {
                 prefix_map
                     .0
-                    .add_prefix(prefix, &uri)
+                    .add_prefix(prefix, &value)
                     .map_err(PrefixError::from)?
             } else {
-                prefix_map.0.set_default(&uri)
+                prefix_map.0.set_default(&value)
             }
         }
         Ok(prefix_map)
     }
 
-    pub fn expand_curie(&self, curie: &String) -> Result<String, PrefixError> {
+    pub fn expand_curie(&self, curie: &str) -> Result<String, PrefixError> {
         match self.0.expand_curie_string(curie) {
             Err(ExpansionError::Invalid) => Err(PrefixError::InvalidPrefix(curie.to_string())),
             Err(ExpansionError::MissingDefault) => {
@@ -85,39 +178,32 @@ impl PrefixMap {
     }
 }
 
+/// A collection of distinct URIs
 #[derive(Debug, Clone)]
-pub struct CompactUriSet(HashSet<String>);
+pub struct UriSet(HashSet<Uri>);
 
-impl IntoIterator for CompactUriSet {
-    type Item = String;
-    type IntoIter = std::collections::hash_set::IntoIter<String>;
+impl IntoIterator for UriSet {
+    type Item = Uri;
+    type IntoIter = std::collections::hash_set::IntoIter<Uri>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
     }
 }
 
-impl<'a> IntoIterator for &'a CompactUriSet {
-    type Item = &'a String;
-    type IntoIter = std::collections::hash_set::Iter<'a, String>;
 
-    fn into_iter(self) -> Self::IntoIter {
-        self.0.iter()
-    }
-}
-
-impl Default for CompactUriSet {
+impl Default for UriSet {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl CompactUriSet {
+impl UriSet {
     pub fn new() -> Self {
-        CompactUriSet(HashSet::new())
+        UriSet(HashSet::new())
     }
 
-    pub fn insert(&mut self, hash_set: &HashSet<String>) {
+    pub fn insert(&mut self, hash_set: &HashSet<Uri>) {
         for c in hash_set {
             self.0.insert(c.clone());
         }
@@ -126,7 +212,7 @@ impl CompactUriSet {
     pub fn expand_set(&self, prefix_map: &PrefixMap) -> Result<HashSet<String>, PrefixError> {
         let mut expanded_set = HashSet::new();
         for uri in &self.0 {
-            match self.expand_uri(uri, prefix_map) {
+            match self.expand_uri(&uri.to_string(), prefix_map) {
                 Ok(expanded_uri) => {
                     expanded_set.insert(format!("<{}>", expanded_uri));
                 }
@@ -170,7 +256,7 @@ pub fn filter_out_full_uris(hash_set: &HashSet<String>) -> HashSet<String> {
     // Filter out full URIs
     let filtered = hash_set
         .iter()
-        .filter(|uri| !get_uri(uri).is_ok())
+        .filter(|uri| Uri::try_from(uri.as_str()).unwrap().is_full())
         .cloned()
         .collect();
     filtered
@@ -180,7 +266,7 @@ pub fn keep_full_uris(hash_set: &HashSet<String>) -> HashSet<String> {
     // Filter out compact URIs
     return hash_set
         .iter()
-        .filter(|uri| get_uri(uri).is_ok())
+        .filter(|uri| Uri::try_from(uri.as_str()).unwrap().is_full())
         .cloned()
         .collect();
 }
