@@ -988,6 +988,7 @@ dependencies = [
  "curie",
  "io-enum",
  "rand",
+ "regex",
  "rio_api",
  "rio_turtle",
  "rstest",

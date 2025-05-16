@@ -5,6 +5,7 @@ anyhow = "1.0.98"
 curie = "0.1.3"
   io-enum = '1.1.3'
   rand = '0.8.5'
+regex = "1.11.1"
   rio_api = '0.8.4'
   rio_turtle = '0.8.4'
   rstest = '0.21.0'
