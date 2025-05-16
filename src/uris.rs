@@ -1,7 +1,7 @@
 use anyhow::anyhow;
 use curie::{ExpansionError, InvalidPrefixError, PrefixMapping};
 use regex::Regex;
-use sophia_iri::Iri;
+use sophia_iri;
 use std::{
     collections::{HashMap, HashSet},
     error::Error,
@@ -63,7 +63,7 @@ impl TryFrom<&str> for Uri {
 
         if uri.starts_with('<') && uri.ends_with('>') {
             let trimmed = &uri[1..uri.len() - 2];
-            Iri::new(trimmed)?;
+            sophia_iri::Iri::new(trimmed)?;
             Ok(Self::FullUri(trimmed.to_string()))
         } else if curie_re.is_match(uri) {
             Ok(Self::CompactUri(uri.to_string()))
@@ -85,13 +85,13 @@ impl Into<String> for Uri {
     }
 }
 
-impl TryInto<Iri<String>> for Uri {
+impl TryInto<sophia_iri::Iri<String>> for Uri {
     type Error = anyhow::Error;
-    fn try_into(self) -> Result<Iri<String>, Self::Error> {
+    fn try_into(self) -> Result<sophia_iri::Iri<String>, Self::Error> {
         match self {
-            Uri::FullUri(uri) => Iri::new(uri.clone()).map_err(|_| anyhow!("Invalid URI: {}", uri)),
+            Uri::FullUri(uri) => sophia_iri::Iri::new(uri.clone()).map_err(|_| anyhow!("Invalid URI: {}", uri)),
             Uri::CompactUri(uri) => Err(anyhow!(
-                "Cannot convert CURIE to IRI: {}",
+                "CURIEs cannot be converted IRIs: {}",
                 uri
             )),
         }
