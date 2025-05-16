@@ -109,14 +109,14 @@ impl Rules {
         // and check both compact URIs and full URIs
         if self.prefixes.is_some() {
             // If prefixes are set, check if they are valid
-            let prefix_map = PrefixMap::from_hashmap(self.prefixes.clone().unwrap())?;
+            let prefix_map = PrefixMap::from_hashmap(&self.prefixes.clone().unwrap())?;
             self.nodes.check_uris(&prefix_map).map_err(Error::from)?;
             self.objects.check_uris(&prefix_map).map_err(Error::from)?;
 
         // If no prefix are set, check each URI for validity
         } else {
-            UriSet::try_from(self.nodes.of_type)?;
-            UriSet::try_from(self.objects.on_predicate)?;
+            UriSet::try_from(self.nodes.of_type.clone())?;
+            UriSet::try_from(self.objects.on_predicate.clone())?;
             for (k, v) in self.objects.on_type_predicate.iter() {
                 Uri::try_from(k.clone())?;
                 UriSet::try_from(v.clone())?;
@@ -126,7 +126,7 @@ impl Rules {
     }
 
     pub fn expand_rules_curie(&self) -> Result<Rules, anyhow::Error> {
-        self.validate_uris()?;
+        self.check_uris()?;
         match self.prefixes.as_ref() {
             // If there's no prefixes return Rules as they are
             None => {
@@ -426,7 +426,7 @@ mod tests {
                 - {rule_predicate}
         "
         ));
-        assert_eq!(rules.validate_uris().is_ok(), match_expected);
+        assert_eq!(rules.check_uris().is_ok(), match_expected);
     }
     #[rstest]
     // Prefix provided with matching cURIes
