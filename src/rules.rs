@@ -104,32 +104,24 @@ pub struct Rules {
 
 /// Check if rules are setup correctly
 impl Rules {
-    pub fn validate_uris(&self) -> Result<(), anyhow::Error> {
-        self.prefixes.as_ref().map_or_else(
-            // If no prefix are set, check each URI for validity
-            || {
-                check_uris(&self.nodes.of_type).map_err(Error::from)?;
-                check_uris(&self.objects.on_predicate).map_err(Error::from)?;
-                for (k, v) in &self.objects.on_type_predicate {
-                    get_uri(k).map_err(Error::from)?;
-                    check_uris(v).map_err(Error::from)?;
-                }
-                Ok::<(), anyhow::Error>(())
-            },
-            // If prefixes are set, build prefix map, try expanding
-            // and check both compact URIs and full URIs
-            |p| {
-                let prefix_map = PrefixMap::from_hashmap(p)?;
-                self.nodes.check_curies(&prefix_map).map_err(Error::from)?;
-                self.objects
-                    .keep_curies()
-                    .check_curies(&prefix_map)
-                    .map_err(Error::from)?;
-                self.nodes.check_uris().map_err(Error::from)?;
-                self.objects.check_uris().map_err(Error::from)?;
-                Ok(())
-            },
-        )?;
+    pub fn check_uris(&self) -> Result<(), anyhow::Error> {
+        // If prefixes are set, build prefix map, try expanding
+        // and check both compact URIs and full URIs
+        if self.prefixes.is_some() {
+            // If prefixes are set, check if they are valid
+            let prefix_map = PrefixMap::from_hashmap(self.prefixes.clone().unwrap())?;
+            self.nodes.check_uris(&prefix_map).map_err(Error::from)?;
+            self.objects.check_uris(&prefix_map).map_err(Error::from)?;
+
+        // If no prefix are set, check each URI for validity
+        } else {
+            UriSet::try_from(self.nodes.of_type)?;
+            UriSet::try_from(self.objects.on_predicate)?;
+            for (k, v) in self.objects.on_type_predicate.iter() {
+                Uri::try_from(k.clone())?;
+                UriSet::try_from(v.clone())?;
+            }
+        };
         Ok(())
     }
 
