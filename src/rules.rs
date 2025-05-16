@@ -54,7 +54,7 @@ impl ObjectRules {
         uris.expand(prefixes)?;
 
         for (k, v) in self.on_type_predicate.iter() {
-            Uri::try_from(k.clone())?.expand(prefixes);
+            Uri::try_from(k.clone())?.expand(prefixes)?;
             UriSet::try_from(v.clone())?.expand(prefixes)?;
         }
 
