@@ -13,31 +13,23 @@ pub struct NodeRules {
 }
 
 impl NodeRules {
-    /// Validate each full URI specified in the rules for nodes
-    pub fn check_uris(&self) -> Result<(), anyhow::Error> {
-        let node_uris = keep_full_uris(&self.of_type);
-        check_uris(&node_uris)
-    }
 
-    /// Validates the CURIEs in the `of_type` fields
-    /// against the provided prefix map, ensuring they can be expanded correctly.
-    pub fn check_curies(&self, prefixes: &PrefixMap) -> Result<(), PrefixError> {
-        check_curies(&self.of_type, prefixes)
+    /// Validate all URIs and CURIEs in node rules and ensure they can
+    /// be expanded with the provided prefix map.
+    pub fn check_uris(&self, prefixes: &PrefixMap) -> Result<(), anyhow::Error> {
+        let uris = UriSet::try_from(self.of_type.clone())?;
+        uris.expand(prefixes)?;
+        Ok(())
     }
 
     /// Checks if the provided cURIs for nodes can be expanded given the prefixes provided
     pub fn expand_curies(&self, prefixes: &PrefixMap) -> Result<NodeRules, PrefixError> {
-        let mut nodes_full_uris: HashSet<String> = keep_full_uris(&self.of_type);
-        let nodes_curies = filter_out_full_uris(&self.of_type);
-        let mut nodes_curies_set = CompactUriSet::new();
-
-        nodes_curies_set.insert(&nodes_curies);
-
-        let valid_nodes_curies = nodes_curies_set.expand_set(prefixes)?;
-        nodes_full_uris.extend(valid_nodes_curies);
+        let expanded = UriSet::try_from(self.of_type.clone())
+            .unwrap()
+            .expand(prefixes)?;
 
         Ok(NodeRules {
-            of_type: nodes_full_uris,
+            of_type: expanded.into(),
         })
     }
 }
@@ -54,92 +46,41 @@ pub struct ObjectRules {
 }
 
 impl ObjectRules {
-    /// Validate each full URI specified in the rules for objects
-    pub fn check_uris(&self) -> Result<(), anyhow::Error> {
-        let on_predicate_uris = keep_full_uris(&self.on_predicate);
-        check_uris(&on_predicate_uris)?;
+
+    /// Validate all URIs and CURIEs in node rules and ensure they can
+    /// be expanded with the provided prefix map.
+    pub fn check_uris(&self, prefixes: &PrefixMap) -> Result<(), anyhow::Error> {
+        let uris = UriSet::try_from(self.on_predicate.clone())?;
+        uris.expand(prefixes)?;
+
         for (k, v) in self.on_type_predicate.iter() {
-            // Check if a string is a full URI and if it is check iri
-            get_uri(k)?;
-            let on_type_predicate_uris = keep_full_uris(v);
-            check_uris(&on_type_predicate_uris)?;
+            Uri::try_from(k.clone())?.expand(prefixes);
+            UriSet::try_from(v.clone())?.expand(prefixes)?;
         }
+
         Ok(())
     }
 
-    /// Validates the CURIEs in the `on_predicate` and `on_type_predicate` fields
-    /// against the provided prefix map, ensuring they can be expanded correctly.
-    pub fn check_curies(&self, prefixes: &PrefixMap) -> Result<(), PrefixError> {
-        check_curies(&self.on_predicate, prefixes)?;
-        for (k, v) in &self.on_type_predicate {
-            // type should be a valid URI or CURIE
-            if get_uri(k).is_err() {
-                try_expansion(k, prefixes)?;
-            }
-            check_curies(v, prefixes)?
-        }
-        Ok(())
-    }
-    /// Takes an object rule and extracts all compact URIs
-    pub fn keep_curies(&self) -> ObjectRules {
-        ObjectRules {
-            on_predicate: filter_out_full_uris(&self.on_predicate),
-            on_type_predicate: self
-                .on_type_predicate
-                .iter()
-                .filter(|(k, _)| get_uri(k).is_err())
-                .map(|(k, v)| {
-                    let filtered_values = filter_out_full_uris(v);
-                    (k.clone(), filtered_values)
-                })
-                .collect(),
-        }
-    }
 
     /// Checks if the provided cURIs for objects can be expanded given the prefixes provided
     pub fn expand_curies(&self, prefixes: &PrefixMap) -> Result<ObjectRules, anyhow::Error> {
-        let mut objects_on_predicate_full_uris = keep_full_uris(&self.on_predicate);
-        let objects_predicate_curies = filter_out_full_uris(&self.on_predicate);
-        let mut objects_predicate_curies_set = CompactUriSet::new();
 
-        objects_predicate_curies_set.insert(&objects_predicate_curies);
+        let expanded_on_predicate = UriSet::try_from(self.on_predicate.clone())
+            .unwrap()
+            .expand(prefixes)?;
 
-        let valid_object_predicate_curies = objects_predicate_curies_set.expand_set(prefixes)?;
-
-        objects_on_predicate_full_uris.extend(valid_object_predicate_curies);
-
-        let mut objects_on_type_predicate_full_uris: HashMap<String, HashSet<String>> =
-            HashMap::new();
-
+        let mut expanded_on_type_predicate = HashMap::<String, HashSet<String>>::new();
         for (k, v) in self.on_type_predicate.iter() {
-            let expanded_keys: Result<String, PrefixError> = match get_uri(k) {
-                Err(_) => {
-                    let valid_key = prefixes.expand_curie(k)?;
-                    Ok(format!("<{}>", valid_key))
-                }
-                Ok(_) => Ok(k.clone()),
-            };
-
-            let mut expanded_values = keep_full_uris(v);
-            let objects_type_predicate_curies = filter_out_full_uris(v);
-            let mut objects_type_predicate_curies_set = CompactUriSet::new();
-
-            objects_type_predicate_curies_set.insert(&objects_type_predicate_curies);
-
-            let valid_objects_type_predicate_curies =
-                objects_type_predicate_curies_set.expand_set(prefixes)?;
-
-            expanded_values.extend(valid_objects_type_predicate_curies);
-            if let Ok(expanded_key) = expanded_keys {
-                objects_on_type_predicate_full_uris.insert(expanded_key, expanded_values);
-            } else {
-                return Err(anyhow::anyhow!("Failed to expand key: {:?}", expanded_keys));
-            }
+            let type_key = Uri::try_from(k.clone())?.expand(prefixes)?;
+            let pred_values = UriSet::try_from(v.clone())?.expand(prefixes)?;
+            expanded_on_type_predicate.insert(
+                type_key.to_string(), pred_values.into()
+            );
         }
 
-        Ok(ObjectRules {
-            on_predicate: objects_on_predicate_full_uris,
-            on_type_predicate: objects_on_type_predicate_full_uris,
+        Ok(ObjectRules{
+            on_predicate: expanded_on_predicate.into(),
+            on_type_predicate: expanded_on_type_predicate,
         })
     }
 }
