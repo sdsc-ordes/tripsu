@@ -31,19 +31,7 @@ impl Uri {
 
     pub fn expand(&self, prefix_map: &PrefixMap) -> Result<Self, PrefixError> {
 
-        let uri = if let Uri::CompactUri(uri) = self {
-            uri
-        } else {
-            return Ok(self.clone());
-        };
-
-        match prefix_map.0.expand_curie_string(uri) {
-            Err(ExpansionError::Invalid) => Err(PrefixError::InvalidPrefix(uri.to_string())),
-            Err(ExpansionError::MissingDefault) => {
-                Err(PrefixError::MissingDefault(uri.to_string()))
-            }
-            Ok(s) => Ok(Self::FullUri(s)),
-        }
+        prefix_map.expand_curie(self)
     }
 }
 
@@ -56,16 +44,16 @@ impl Display for Uri {
     }
 }
 
-impl TryFrom<&str> for Uri {
+impl TryFrom<String> for Uri {
     type Error = sophia_iri::InvalidIri;
-    fn try_from(uri: &str) -> Result<Self, Self::Error> {
+    fn try_from(uri: String) -> Result<Self, Self::Error> {
         let curie_re = Regex::new(r"([A-Za-z_][A-Za-z0-9_.\-]*)\:([^\s:/][^\s]*)").unwrap();
 
         if uri.starts_with('<') && uri.ends_with('>') {
             let trimmed = &uri[1..uri.len() - 2];
             sophia_iri::Iri::new(trimmed)?;
             Ok(Self::FullUri(trimmed.to_string()))
-        } else if curie_re.is_match(uri) {
+        } else if curie_re.is_match(&uri) {
             Ok(Self::CompactUri(uri.to_string()))
         } else {
             Err(sophia_iri::InvalidIri(
@@ -153,7 +141,7 @@ impl PrefixMap {
     ) -> Result<PrefixMap, PrefixError> {
         let mut prefix_map = PrefixMap::new();
         for (key, value) in hashmap {
-            Uri::try_from(value.as_str())?;
+            Uri::try_from(value.clone())?;
             // We add prefixes full URIs without the brackets
             if let Some(prefix) = key.as_deref() {
                 prefix_map
@@ -167,18 +155,25 @@ impl PrefixMap {
         Ok(prefix_map)
     }
 
-    pub fn expand_curie(&self, curie: &Uri) -> Result<String, PrefixError> {
-        match self.0.expand_curie_string(&curie.to_string()) {
+    /// Expand input curie into a full uri. If the input uri is already full,
+    /// it is returned a-is.
+    pub fn expand_curie(&self, uri: &Uri) -> Result<Uri, PrefixError> {
+        let curie = match uri {
+            Uri::CompactUri(uri) => uri,
+            _ => return Ok(uri.clone()),
+        };
+          
+        match self.0.expand_curie_string(&curie) {
             Err(ExpansionError::Invalid) => Err(PrefixError::InvalidPrefix(curie.to_string())),
             Err(ExpansionError::MissingDefault) => {
                 Err(PrefixError::MissingDefault(curie.to_string()))
             }
-            Ok(s) => Ok(s),
+            Ok(s) => Ok(Uri::FullUri(s)),
         }
     }
 
     pub fn expand_curies(&self, curies: &UriSet) -> Result<UriSet, PrefixError> {
-        let mut expanded_set = HashSet::new();
+        let mut expanded_set = UriSet::new();
 
         for curie in curies.clone() {
             match self.expand_curie(&curie) {
@@ -219,7 +214,7 @@ impl TryFrom <HashSet<String>> for UriSet {
     fn try_from(hash_set: HashSet<String>) -> Result<Self, Self::Error> {
         let mut uri_set = HashSet::new();
         for uri in hash_set {
-            let uri = Uri::try_from(uri.as_str())?;
+            let uri = Uri::try_from(uri)?;
             uri_set.insert(uri);
         }
         Ok(UriSet(uri_set))
@@ -270,13 +265,13 @@ impl UriSet {
         }
     }
 
-    // Return result instead of HashSet
-    pub fn expand_set(&self, prefix_map: &PrefixMap) -> Result<HashSet<String>, PrefixError> {
-        let mut expanded_set = HashSet::new();
-        for uri in &self.0 {
+    /// Returns a new UriSet containing the URIs expanded with the given prefix map
+    pub fn expand(&self, prefix_map: &PrefixMap) -> Result<UriSet, PrefixError> {
+        let mut expanded_set = UriSet::new();
+        for uri in self.compact_uris() {
             match prefix_map.expand_curie(&uri) {
                 Ok(expanded_uri) => {
-                    expanded_set.insert(format!("<{}>", expanded_uri));
+                    expanded_set.insert(Uri::FullUri(format!("<{}>", expanded_uri)));
                 }
                 Err(e) => return Err(e),
             }
