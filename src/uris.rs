@@ -23,10 +23,7 @@ impl Uri {
         }
     }
     pub fn is_compact(&self) -> bool {
-        match self {
-            Uri::FullUri(_) => false,
-            Uri::CompactUri(_) => true,
-        }
+        return !self.is_full();
     }
 
     pub fn expand(&self, prefix_map: &PrefixMap) -> Result<Self, PrefixError> {
