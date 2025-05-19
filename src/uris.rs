@@ -47,7 +47,7 @@ impl Display for Uri {
 impl TryFrom<String> for Uri {
     type Error = sophia_iri::InvalidIri;
     fn try_from(uri: String) -> Result<Self, Self::Error> {
-        let curie_re = Regex::new(r"([A-Za-z_][A-Za-z0-9_.\-]*)\:([^\s:/][^\s]*)").unwrap();
+        let curie_re = Regex::new(r"([A-Za-z_][A-Za-z0-9_.\-]*)?\:([^\s:/][^\s]*)").unwrap();
 
         if uri.starts_with('<') && uri.ends_with('>') {
             let trimmed = &uri[1..uri.len() - 2];
