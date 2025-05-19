@@ -147,7 +147,7 @@ impl PrefixMap {
             if let Some(prefix) = key.as_deref() {
                 prefix_map
                     .0
-                    .add_prefix(prefix, &value)
+                    .add_prefix(prefix, &value[1..&value.len()-1])
                     .map_err(PrefixError::from)?
             } else {
                 prefix_map.0.set_default(&value)
@@ -169,7 +169,7 @@ impl PrefixMap {
             Err(ExpansionError::MissingDefault) => {
                 Err(PrefixError::MissingDefault(curie.to_string()))
             }
-            Ok(s) => Ok(Uri::FullUri(format!("<{}>", s))),
+            Ok(s) => Ok(Uri::FullUri(s)),
         }
     }
 
