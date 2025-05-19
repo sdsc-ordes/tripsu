@@ -465,10 +465,9 @@ mod tests {
                 - {rule_predicate}
         "
         ));
-        let expanded = rules.expand_rules_curie();
-        assert!(
-            expanded.unwrap().objects.on_type_predicate[expanded_rule_type]
-                .contains(expanded_rule_predicate)
-        );
+        let expanded = rules.expand_rules_curie().unwrap();
+        let type_predicate = expanded.objects.on_type_predicate;
+        let predicates = type_predicate[expanded_rule_type].clone();
+        assert!(predicates.contains(expanded_rule_predicate));
     }
 }
