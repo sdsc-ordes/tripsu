@@ -50,7 +50,7 @@ impl TryFrom<String> for Uri {
         let curie_re = Regex::new(r"([A-Za-z_][A-Za-z0-9_.\-]*)?\:([^\s:/][^\s]*)").unwrap();
 
         if uri.starts_with('<') && uri.ends_with('>') {
-            let trimmed = &uri[1..uri.len() - 2];
+            let trimmed = &uri[1..uri.len() - 1];
             sophia_iri::Iri::new(trimmed)?;
             Ok(Self::FullUri(trimmed.to_string()))
         } else if curie_re.is_match(&uri) {
@@ -123,6 +123,7 @@ impl From<InvalidPrefixError> for PrefixError {
 }
 
 /// A mapping of prefixes to URIs
+#[derive(Debug)]
 pub struct PrefixMap(PrefixMapping);
 
 impl Default for PrefixMap {
@@ -159,7 +160,7 @@ impl PrefixMap {
     /// it is returned a-is.
     pub fn expand_curie(&self, uri: &Uri) -> Result<Uri, PrefixError> {
         let curie = match uri {
-            Uri::CompactUri(uri) => uri,
+            Uri::CompactUri(val) => val,
             _ => return Ok(uri.clone()),
         };
           
@@ -168,7 +169,7 @@ impl PrefixMap {
             Err(ExpansionError::MissingDefault) => {
                 Err(PrefixError::MissingDefault(curie.to_string()))
             }
-            Ok(s) => Ok(Uri::FullUri(s)),
+            Ok(s) => Ok(Uri::FullUri(format!("<{}>", s))),
         }
     }
 
@@ -202,19 +203,22 @@ impl PrefixMap {
 #[derive(Debug, Clone)]
 pub struct UriSet(HashSet<Uri>);
 
-impl Iterator for UriSet {
+impl IntoIterator for UriSet {
     type Item = Uri;
-    fn next(&mut self) -> Option<Self::Item> {
-        self.0.iter().next().cloned()
+    type IntoIter = std::collections::hash_set::IntoIter<Uri>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
     }
 }
+
 
 impl TryFrom <HashSet<String>> for UriSet {
     type Error = anyhow::Error;
     fn try_from(hash_set: HashSet<String>) -> Result<Self, Self::Error> {
         let mut uri_set = HashSet::new();
-        for uri in hash_set {
-            let uri = Uri::try_from(uri)?;
+        for str_uri in hash_set.clone() {
+            let uri = Uri::try_from(str_uri)?;
             uri_set.insert(uri);
         }
         Ok(UriSet(uri_set))
@@ -225,10 +229,7 @@ impl Into<HashSet<String>> for UriSet {
     fn into(self) -> HashSet<String> {
         let mut hash_set = HashSet::new();
         for uri in self.0 {
-            match uri {
-                Uri::FullUri(uri) => hash_set.insert(uri),
-                Uri::CompactUri(uri) => hash_set.insert(uri),
-            };
+            hash_set.insert(uri.to_string());
         }
         hash_set
     }
@@ -268,13 +269,9 @@ impl UriSet {
     /// Returns a new UriSet containing the URIs expanded with the given prefix map
     pub fn expand(&self, prefix_map: &PrefixMap) -> Result<UriSet, PrefixError> {
         let mut expanded_set = UriSet::new();
-        for uri in self.compact_uris() {
-            match prefix_map.expand_curie(&uri) {
-                Ok(expanded_uri) => {
-                    expanded_set.insert(Uri::FullUri(format!("<{}>", expanded_uri)));
-                }
-                Err(e) => return Err(e),
-            }
+        for uri in self.clone().into_iter() {
+            let expanded_uri = prefix_map.expand_curie(&uri)?;
+            expanded_set.insert(expanded_uri);
         }
         Ok(expanded_set)
     }
@@ -282,6 +279,7 @@ impl UriSet {
     /// Returns a new UriSet containing only full URIs
     pub fn full_uris(&self) -> Self {
         self.clone()
+            .into_iter()
             .filter(|uri| uri.is_full())
             .collect()
     }
@@ -289,6 +287,7 @@ impl UriSet {
     /// Returns a new UriSet containing only compact URIs
     pub fn compact_uris(&self) -> Self {
         self.clone()
+            .into_iter()
             .filter(|uri| uri.is_compact())
             .collect()
     }
