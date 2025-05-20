@@ -42,7 +42,7 @@ if [ ! -f ${INPUT} ]; then
     curl -sNL "${DATA_URL}" |
         gzip -dc |
         head -n 1000000 \
-            > "${INPUT}" || rm "${INPUT}"
+            >"${INPUT}" || rm "${INPUT}"
 fi
 
 # setup config
