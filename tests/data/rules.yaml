@@ -9,18 +9,18 @@ prefixes:
 # hash URIs of people and online accounts
 nodes:
   of_type:
-  - ":Person" # All nodes which are rdf:type Person
-  - "foaf:OnlineAccount" # "" OnlineAccount
+    - ":Person" # All nodes which are rdf:type Person
+    - "foaf:OnlineAccount" # "" OnlineAccount
 
 objects:
   # hash accesscode values for all nodes
   on_predicate:
-  # Full URIs are also supported
-  - "<http://schema.org/accessCode>"
+    # Full URIs are also supported
+    - "<http://schema.org/accessCode>"
   # hash name only for instances of person and online account
   on_type_predicate:
     # No brackets is assumed to be a compact URI
     ":OnlineAccount":
-    - "<http://schema.org/name>"
+      - "<http://schema.org/name>"
     "foaf:Person":
-    - "<http://schema.org/name>"
+      - "<http://schema.org/name>"

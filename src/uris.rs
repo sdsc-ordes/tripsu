@@ -1,12 +1,11 @@
 use anyhow::anyhow;
 use curie::{ExpansionError, InvalidPrefixError, PrefixMapping};
 use regex::Regex;
-use sophia_iri;
 use std::{
     collections::{HashMap, HashSet},
     error::Error,
+    fmt::{self, Display},
     iter::FromIterator,
-    fmt::{Display, self},
 };
 
 #[derive(Debug, Clone, Eq, Hash, PartialEq)]
@@ -27,7 +26,6 @@ impl Uri {
     }
 
     pub fn expand(&self, prefix_map: &PrefixMap) -> Result<Self, PrefixError> {
-
         prefix_map.expand_curie(self)
     }
 }
@@ -53,19 +51,20 @@ impl TryFrom<String> for Uri {
         } else if curie_re.is_match(&uri) {
             Ok(Self::CompactUri(uri.to_string()))
         } else {
-            Err(sophia_iri::InvalidIri(
-                format!("Input should be either a URI enclosed in '<>' or a CURIE. Found: {}", uri
+            Err(sophia_iri::InvalidIri(format!(
+                "Input should be either a URI enclosed in '<>' or a CURIE. Found: {}",
+                uri
             )))
         }
     }
 }
 
 /// Render URI as string with angle brackets
-impl Into<String> for Uri {
-    fn into(self) -> String {
-        match self {
-            Uri::CompactUri(uri) => uri.to_string(),
-            Uri::FullUri(uri) => format!("<{}>", uri),
+impl From<Uri> for String {
+    fn from(uri: Uri) -> String {
+        match uri {
+            Uri::CompactUri(val) => val,
+            Uri::FullUri(val) => format!("<{}>", val),
         }
     }
 }
@@ -74,11 +73,10 @@ impl TryInto<sophia_iri::Iri<String>> for Uri {
     type Error = anyhow::Error;
     fn try_into(self) -> Result<sophia_iri::Iri<String>, Self::Error> {
         match self {
-            Uri::FullUri(uri) => sophia_iri::Iri::new(uri.clone()).map_err(|_| anyhow!("Invalid URI: {}", uri)),
-            Uri::CompactUri(uri) => Err(anyhow!(
-                "CURIEs cannot be converted IRIs: {}",
-                uri
-            )),
+            Uri::FullUri(uri) => {
+                sophia_iri::Iri::new(uri.clone()).map_err(|_| anyhow!("Invalid URI: {}", uri))
+            }
+            Uri::CompactUri(uri) => Err(anyhow!("CURIEs cannot be converted IRIs: {}", uri)),
         }
     }
 }
@@ -144,10 +142,10 @@ impl PrefixMap {
             if let Some(prefix) = key.as_deref() {
                 prefix_map
                     .0
-                    .add_prefix(prefix, &value[1..&value.len()-1])
+                    .add_prefix(prefix, &value[1..&value.len() - 1])
                     .map_err(PrefixError::from)?
             } else {
-                prefix_map.0.set_default(&value)
+                prefix_map.0.set_default(value)
             }
         }
         Ok(prefix_map)
@@ -160,8 +158,8 @@ impl PrefixMap {
             Uri::CompactUri(val) => val,
             _ => return Ok(uri.clone()),
         };
-          
-        match self.0.expand_curie_string(&curie) {
+
+        match self.0.expand_curie_string(curie) {
             Err(ExpansionError::Invalid) => Err(PrefixError::InvalidPrefix(curie.to_string())),
             Err(ExpansionError::MissingDefault) => {
                 Err(PrefixError::MissingDefault(curie.to_string()))
@@ -182,13 +180,13 @@ impl PrefixMap {
             }
         }
 
-        Ok(expanded_set.try_into().unwrap())
+        Ok(expanded_set)
     }
 
     pub fn check_curies(&self, curies: &UriSet) -> Result<(), PrefixError> {
         for curie in curies.clone() {
             match self.expand_curie(&curie) {
-                Ok(_) => {},
+                Ok(_) => {}
                 Err(e) => return Err(e),
             }
         }
@@ -209,8 +207,7 @@ impl IntoIterator for UriSet {
     }
 }
 
-
-impl TryFrom <HashSet<String>> for UriSet {
+impl TryFrom<HashSet<String>> for UriSet {
     type Error = anyhow::Error;
     fn try_from(hash_set: HashSet<String>) -> Result<Self, Self::Error> {
         let mut uri_set = HashSet::new();
@@ -222,10 +219,10 @@ impl TryFrom <HashSet<String>> for UriSet {
     }
 }
 
-impl Into<HashSet<String>> for UriSet {
-    fn into(self) -> HashSet<String> {
+impl From<UriSet> for HashSet<String> {
+    fn from(uris: UriSet) -> Self {
         let mut hash_set = HashSet::new();
-        for uri in self.0 {
+        for uri in uris.0 {
             hash_set.insert(uri.to_string());
         }
         hash_set
@@ -233,7 +230,7 @@ impl Into<HashSet<String>> for UriSet {
 }
 
 impl FromIterator<Uri> for UriSet {
-    fn from_iter<I: IntoIterator<Item=Uri>>(iter: I) -> Self {
+    fn from_iter<I: IntoIterator<Item = Uri>>(iter: I) -> Self {
         let mut hash_set = HashSet::new();
         for item in iter {
             hash_set.insert(item);
@@ -289,4 +286,3 @@ impl UriSet {
             .collect()
     }
 }
-

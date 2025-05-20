@@ -13,7 +13,6 @@ pub struct NodeRules {
 }
 
 impl NodeRules {
-
     /// Validate all URIs and CURIEs in node rules and ensure they can
     /// be expanded with the provided prefix map.
     pub fn check_uris(&self, prefixes: &PrefixMap) -> Result<(), anyhow::Error> {
@@ -46,7 +45,6 @@ pub struct ObjectRules {
 }
 
 impl ObjectRules {
-
     /// Validate all URIs and CURIEs in node rules and ensure they can
     /// be expanded with the provided prefix map.
     pub fn check_uris(&self, prefixes: &PrefixMap) -> Result<(), anyhow::Error> {
@@ -61,10 +59,8 @@ impl ObjectRules {
         Ok(())
     }
 
-
     /// Checks if the provided cURIs for objects can be expanded given the prefixes provided
     pub fn expand_curies(&self, prefixes: &PrefixMap) -> Result<ObjectRules, anyhow::Error> {
-
         let expanded_on_predicate = UriSet::try_from(self.on_predicate.clone())
             .unwrap()
             .expand(prefixes)?;
@@ -73,12 +69,10 @@ impl ObjectRules {
         for (k, v) in self.on_type_predicate.iter() {
             let type_key = Uri::try_from(k.clone())?.expand(prefixes)?;
             let pred_values = UriSet::try_from(v.clone())?.expand(prefixes)?;
-            expanded_on_type_predicate.insert(
-                type_key.to_string(), pred_values.into()
-            );
+            expanded_on_type_predicate.insert(type_key.to_string(), pred_values.into());
         }
 
-        Ok(ObjectRules{
+        Ok(ObjectRules {
             on_predicate: expanded_on_predicate.into(),
             on_type_predicate: expanded_on_type_predicate,
         })
