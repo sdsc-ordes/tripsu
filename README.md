@@ -34,23 +34,7 @@ The tool works in two steps:
    graph via a human-readable configuration file and the previously generated
    index
 
-```mermaid
-flowchart LR
-  A[input.nt] --> B;
-  
-subgraph Step 1: Indexing
-  B([index]) --> C[index.json]
-end 
-
-A --> D
-C --> D
-E[rules.yaml] --> D
-subgraph Step 2: Pseudonymization
-  D([pseudo]) --> F[pseudo.nt]
-end 
-```
-
-{:toc}
+![tripsu flowchart](./docs/assets/diagram.png)
 
 ## Installation
 
