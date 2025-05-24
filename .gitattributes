@@ -20,17 +20,6 @@
 # Default attribute patterns for common binary files
 # which should be stored in Git LFS.
 # ==================================================
-# Images
-*.[Ii][Cc][Oo] filter=lfs diff=lfs merge=lfs -text
-*.[Jj][Pp][Gg] filter=lfs diff=lfs merge=lfs -text
-*.[Jj][Pp][Ee][Gg] filter=lfs diff=lfs merge=lfs -text
-*.[Pp][Nn][Gg] filter=lfs diff=lfs merge=lfs -text
-*.[Gg][Ii][Ff] filter=lfs diff=lfs merge=lfs -text
-*.[Tt][Ii][Ff] filter=lfs diff=lfs merge=lfs -text
-*.[Tt][Ii][Ff][Ff] filter=lfs diff=lfs merge=lfs -text
-*.[Pp][Ss][Dd] filter=lfs diff=lfs merge=lfs -text
-*.[Aa][Ii] filter=lfs diff=lfs merge=lfs -text
-
 # Media
 *.[Pp][Dd][Ff] filter=lfs diff=lfs merge=lfs -text
 
