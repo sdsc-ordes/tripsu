@@ -50,6 +50,8 @@ subgraph Step 2: Pseudonymization
 end 
 ```
 
+{:toc}
+
 ## Installation
 
 ### Container
