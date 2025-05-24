@@ -34,19 +34,7 @@ The tool works in two steps:
    graph via a human-readable configuration file and the previously generated
    index
 
-<details>
-    <summary>Table of Content</summary>
-
-<!--toc:start-->
-
-- [Installation](#installation)
-  - [Container](#container)
-  - [Source Build](#source-build)
-- [Usage](#usage)
-- [Development](#development)
-<!--toc:end-->
-
-</details>
+![tripsu flowchart](./docs/assets/diagram/diagram.png)
 
 ## Installation
 

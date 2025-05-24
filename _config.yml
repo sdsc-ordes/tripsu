@@ -1,0 +1,7 @@
+remote_theme: pages-themes/cayman@v0.2.0
+title: tripsu
+description: Pseudonymize specific triples in a knowledge graph, with speed and accuracy. 🥷
+markdown: GFM
+plugins:
+  - jemoji
+  - jekyll-remote-theme
