@@ -34,7 +34,7 @@ The tool works in two steps:
    graph via a human-readable configuration file and the previously generated
    index
 
-![tripsu flowchart](./docs/assets/diagram.png)
+![tripsu flowchart](./docs/assets/diagram/diagram.png)
 
 ## Installation
 
