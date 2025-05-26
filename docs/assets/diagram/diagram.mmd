@@ -1,0 +1,20 @@
+---
+config:
+  theme: redux
+  look: handDrawn
+  layout: elk
+---
+flowchart LR
+ subgraph subGraph0["Step 1: Indexing"]
+        C["index.json"]
+        B(["index"])
+  end
+ subgraph subGraph1["Step 2: Pseudonymization"]
+        F["pseudo.nt"]
+        D(["pseudo"])
+  end
+    A["input.nt"] --> B & D
+    B --> C
+    C --> D
+    E["rules.yaml"] --> D
+    D --> F
