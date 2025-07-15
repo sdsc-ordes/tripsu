@@ -95,7 +95,7 @@ fn index_triple(t: Triple, index: &mut TypeIndex) {
 pub fn create_type_index(input: &Path, output: &Path) {
     let buf_in = io::get_reader(input);
     let buf_out = io::get_writer(output);
-    let mut triples = io::parse_ntriples(buf_in);
+    let mut triples = io::parse_input(input, buf_in).expect("Error parsing input for index");
     let mut index = TypeIndex::new();
 
     while !triples.is_end() {

@@ -1,5 +1,6 @@
 use crate::{index::TypeIndex, rules::Rules};
-use rio_turtle::NTriplesParser;
+use rio_api::{formatter::TriplesFormatter, parser::TriplesParser};
+use rio_turtle::{NTriplesFormatter, NTriplesParser, TurtleParser};
 use std::{
     fs::File,
     io::{self, stdin, stdout, BufRead, BufReader, BufWriter, Read},
@@ -38,8 +39,45 @@ pub fn get_writer(path: &Path) -> Writer {
 
 /// Parse RDF triples.
 /// This function takes ownership of a generic type which implements `BufRead`.
-pub fn parse_ntriples(reader: impl BufRead) -> NTriplesParser<impl BufRead> {
-    NTriplesParser::new(reader)
+pub fn parse_ntriples<R: BufRead + 'static>(
+    reader: R,
+) -> Result<NTriplesParser<Box<dyn BufRead>>, anyhow::Error> {
+    let reader: Box<dyn BufRead> = Box::new(reader);
+    Ok(NTriplesParser::new(reader))
+}
+
+/// Parse turtle file and convert to Ntriples stream
+pub fn parse_turtle<R: BufRead>(
+    reader: R,
+) -> Result<NTriplesParser<Box<dyn BufRead>>, anyhow::Error> {
+    let mut formatter = NTriplesFormatter::new(Vec::default());
+    let mut turtle_parser = TurtleParser::new(reader, None);
+
+    turtle_parser
+        .parse_all(&mut |triple| formatter.format(&triple))
+        .map_err(|e| anyhow::Error::msg(e.to_string()))?;
+    let formatted_data = formatter
+        .finish()
+        .map_err(|e| anyhow::Error::msg(e.to_string()))?;
+    let reader: Box<dyn BufRead> = Box::new(BufReader::new(std::io::Cursor::new(formatted_data)));
+    Ok(NTriplesParser::new(reader))
+}
+
+/// Detect input format and parse accordingly.
+pub fn parse_input<R: BufRead + 'static>(
+    input: &Path,
+    buf_input: R,
+) -> Result<NTriplesParser<Box<dyn BufRead>>, anyhow::Error> {
+    match input.extension() {
+        Some(ext) if ext == std::ffi::OsStr::new("nt") => parse_ntriples(buf_input),
+        Some(ext) if ext == std::ffi::OsStr::new("ttl") => parse_turtle(buf_input),
+        Some(_) => Err(anyhow::Error::msg(
+            "Extension not supported as input. Please use '.nt' or '.ttl'",
+        )),
+        None => Err(anyhow::Error::msg(
+            "No input format detected. Please use '.nt' or '.ttl'",
+        )),
+    }
 }
 
 /// Parse yaml configuration file.
@@ -74,19 +112,33 @@ pub fn read_bytes(path: &PathBuf) -> Vec<u8> {
 
 #[cfg(test)]
 mod tests {
-    use super::{parse_ntriples, parse_rules};
+    use crate::io::parse_input;
+
+    use super::parse_rules;
     use rio_api::parser::TriplesParser;
     use std::{
         io::{BufRead, BufReader},
         path::Path,
     };
 
-    #[test]
-    // Test the parsing of a triple.
-    fn triple_parsing() {
-        let input: &[u8] = "<http://example.org/resource2> <http://example.org/relatedTo> <http://example.org/resource3> .\n".as_bytes();
-        let buffer_input: Box<dyn BufRead> = Box::new(BufReader::new(input));
-        let mut triples = parse_ntriples(buffer_input);
+    use rstest::rstest;
+
+    // Test the parsing of an input in a given format.
+    #[rstest]
+    // Ntriples input
+    #[case("test.nt", "ntriple")]
+    // Turtle input
+    #[case("test.ttl", "turtle")]
+    fn triple_parsing(#[case] input_filename: &str, #[case] mock_input_type: &str) {
+        let input_filename_string = input_filename.to_string();
+        let input_path = Path::new(&input_filename_string);
+        let mock_input: &[u8] = match mock_input_type {
+            "ntriple" => "<http://example.org/resource2> <http://example.org/relatedTo> <http://example.org/resource3> .\n".as_bytes(),
+            "turtle" => "@prefix : <http://example.org/> .\n\n :resource2 :relatedTo :resource3 .\n".as_bytes(),
+            _ => "".as_bytes()
+        };
+        let buffer_input: Box<dyn BufRead> = Box::new(BufReader::new(mock_input));
+        let mut triples = parse_input(input_path, buffer_input).expect("Error parsing input");
         triples
             .parse_all(&mut |t| -> Result<(), Box<dyn std::error::Error>> {
                 assert_eq!(t.subject.to_string(), "<http://example.org/resource2>");

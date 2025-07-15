@@ -61,7 +61,7 @@ pub fn pseudonymize_graph(
     let secret = secret_path.as_ref().map(io::read_bytes);
     let pseudonymizer = new_pseudonymizer(None, secret);
 
-    let mut triples = io::parse_ntriples(buf_input);
+    let mut triples = io::parse_input(input, buf_input).expect("Error parsing input");
 
     // Run the loop single-threaded.
     while !triples.is_end() {
