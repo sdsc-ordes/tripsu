@@ -126,10 +126,16 @@ mod tests {
     // Test the parsing of an input in a given format.
     #[rstest]
     // Ntriples input
-    #[case("test.nt", "ntriple")]
+    #[case("test.nt", "ntriple", true)]
     // Turtle input
-    #[case("test.ttl", "turtle")]
-    fn triple_parsing(#[case] input_filename: &str, #[case] mock_input_type: &str) {
+    #[case("test.ttl", "turtle", true)]
+    // Input with no extention
+    #[case("test", "turtle", false)]
+    fn triple_parsing(
+        #[case] input_filename: &str,
+        #[case] mock_input_type: &str,
+        #[case] correct_input: bool,
+    ) {
         let input_filename_string = input_filename.to_string();
         let input_path = Path::new(&input_filename_string);
         let mock_input: &[u8] = match mock_input_type {
@@ -138,15 +144,19 @@ mod tests {
             _ => "".as_bytes()
         };
         let buffer_input: Box<dyn BufRead> = Box::new(BufReader::new(mock_input));
-        let mut triples = parse_input(input_path, buffer_input).expect("Error parsing input");
-        triples
-            .parse_all(&mut |t| -> Result<(), Box<dyn std::error::Error>> {
-                assert_eq!(t.subject.to_string(), "<http://example.org/resource2>");
-                assert_eq!(t.predicate.to_string(), "<http://example.org/relatedTo>");
-                assert_eq!(t.object.to_string(), "<http://example.org/resource3>");
-                Ok(())
-            })
-            .expect("Error parsing triple");
+        if correct_input {
+            let mut triples = parse_input(input_path, buffer_input).expect("Error parsing input");
+            triples
+                .parse_all(&mut |t| -> Result<(), Box<dyn std::error::Error>> {
+                    assert_eq!(t.subject.to_string(), "<http://example.org/resource2>");
+                    assert_eq!(t.predicate.to_string(), "<http://example.org/relatedTo>");
+                    assert_eq!(t.object.to_string(), "<http://example.org/resource3>");
+                    Ok(())
+                })
+                .expect("Error parsing triple");
+        } else {
+            assert!(parse_input(input_path, buffer_input).is_err())
+        }
     }
     // Test the parsing of a config file.
     #[test]
