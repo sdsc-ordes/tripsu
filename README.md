@@ -22,8 +22,7 @@ through [pseudonymization](https://en.wikipedia.org/wiki/Pseudonymization). The
 goal is to offer a fast, secure and memory-efficient pseudonymization solution
 to any RDF graph.
 
-Note: code is still in development and we support only
-[NTriples format](https://en.wikipedia.org/wiki/N-Triples) as input.
+Note: Only [NTriples format](https://en.wikipedia.org/wiki/N-Triples) is currently supported as input.
 
 The tool works in two steps:
 
