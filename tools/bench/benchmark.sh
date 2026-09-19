@@ -41,6 +41,7 @@ INPUT="/tmp/dblp-sample.nt"
 if [ ! -f ${INPUT} ]; then
     curl -sNL "${DATA_URL}" |
         gzip -dc |
+        grep -v "urn:isbn:" |
         head -n 1000000 \
             >"${INPUT}" || rm "${INPUT}"
 fi
